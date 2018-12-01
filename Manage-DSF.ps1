@@ -269,6 +269,23 @@ function Invoke-IEWait {
 }
 
 function Manage-Product {
+	<#	
+		.Synopsis
+		Add or modify a product in DSF.
+		
+		.Description
+		Add or change a product in DSF.  Once added, pass to Update-Product which will handle all the details.
+		
+		.Parameter Product
+		Object containing the name and other properties of the target product.
+		
+		.Parameter Document
+		Object containing the web page (Document) we're using.
+		
+		.Parameter Mode
+		Add (create new product) or Change (modify existing product).
+		May include "Delete" in future.
+	#>
 
 	param (
 		[Parameter( Mandatory )]
