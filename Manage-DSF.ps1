@@ -423,12 +423,14 @@ function Update-Product {
 
 	# Product Name will already be filled in, based on the previous page.
 	
-	# Display As
+	# Display As, 50 chars max
+	#	Supposedly, product name as customer sees it in the storefront catalog.
+	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
 		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
 	
-	# Product ID (SKU)
+	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
 		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
 	}
@@ -444,7 +446,7 @@ function Update-Product {
 		We will use innerHTML, as the Word form allows formatting.
 	#>
 	
-	# Brief Description
+	# Brief Description, rich text field
 	if ( $Product.'Brief Description' -notlike $null ) {
 		$iFrame = $Document | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
 		$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
