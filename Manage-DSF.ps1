@@ -423,7 +423,7 @@ function Update-Product {
 
 	# Product Name will already be filled in, based on the previous page.
 	
-	# Display As, 50 chars max
+	# Display As, max length unknown
 	#	Supposedly, product name as customer sees it in the storefront catalog.
 	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
