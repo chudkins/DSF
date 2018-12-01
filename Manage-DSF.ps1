@@ -165,7 +165,19 @@ function Click-Wait {
 }
 
 function FixUp-Unit {
-	# Given a string, make sure it's a valid unit abbreviation, then return the unit.
+	<#
+		.Synopsis
+		Given a string, make sure it's a valid unit abbreviation, then return the unit.
+		
+		.Description
+		User data from CVS will not be consistent, so this function receives an input such as "pounds"
+		and returns a standardized unit like "lb".  This allows making comparisons later with less stress.
+		
+		.Parameter Input
+		The unit name to be standardized.
+	#>
+	
+	# 
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine )]
 		$Input
