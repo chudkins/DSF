@@ -453,6 +453,10 @@ function Update-Product {
 	}
 	
 	# Now, if there's a thumbnail image to upload, do that.
+	#	Issue 1
+	#	As long as the web form accepts a valid file path WITHOUT the user populating it via a dialog,
+	#	this should be possible.  We'll need to validate the path before attempting to upload, logging 
+	#	an error if it's bad.
 	if ( $Product.'Product Icon' -notlike $null ) {
 		#Upload-Thumbnail -Document $Document -URL $Product.'Product Icon'
 	}
