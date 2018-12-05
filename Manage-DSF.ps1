@@ -22,11 +22,19 @@
 
 	Register-PackageSource -name "Nuget.org" -providername NuGet -Location https://www.nuget.org/api/v2
 	Set-PackageSource -Name "Nuget.org" -Trusted
-	$pkg = find-package -Source Nuget.org | where Name -like "*selenium*"
+	$pkg = find-package -Source Nuget.org -Name "selenium*"
 	$pkg | where Name -eq "Selenium.WebDriver" | install-package
 	$pkg | where Name -eq "Selenium.Support" | install-package
 	$pkg | where Name -eq "Selenium.WebDriver.IEDriver" | install-package
 	#$pkg | where Name -eq "Selenium.WebDriver.IEDriver64" | install-package
+	
+	To update Selenium, we need to grab currently installed packages and install them:
+	
+	find-package -Source Nuget.org -Name "Selenium.WebDriver" | install-package -InstallUpdate
+	find-package -Source Nuget.org -Name "Selenium.Support" | install-package -InstallUpdate
+	find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver" | install-package -InstallUpdate
+	find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver64" | install-package -InstallUpdate
+	find-package -Source Nuget.org -Name "Selenium.WebDriver.GeckoDriver.Win64" | install-package -InstallUpdate
 #>
 
 [cmdletbinding()]
@@ -253,6 +261,7 @@ function Invoke-IEWait {
 			start-sleep -Seconds 1
 		}
 	}
+	# No handler yet for Selenium object.
 	
 	<#
 	# Wait if IE has not yet become busy...
@@ -1037,78 +1046,82 @@ function Write-DebugLog {
 Function Write-Log {
 # Write-Log based on code from http://jdhitsolutions.com/blog/2011/03/powershell-automatic-logging/
 <#
-   .Synopsis
-    Write a message to a log file. 
-    .Description
-    Write-Log can be used to write text messages to a log file. It can be used like Write-Verbose,
-    and looks for two variables that you can define in your scripts and functions. If the function
-    finds $LoggingPreference with a value of "Continue", the message text will be written to the file.
-    The default file is PowerShellLog.txt in your %TEMP% directory. You can specify a different file
-    path by parameter or set the $LoggingFilePreference variable. See the help examples.
-    
-    .Parameter Message
-    The message string to write to the log file. It will be prepended with a date time stamp.
-    .Parameter Path
-    The filename and path for the log file. The default is $env:temp\PowerShellLog.txt, 
-    unless the $loggingFilePreference variable is found. If so, then this value will be
-    used.
-  
-   .Notes
-    NAME: Write-Log
-    AUTHOR: Jeffery Hicks
-    VERSION: 1.0
-    LASTEDIT: 03/02/2011
-    
-    Learn more with a copy of Windows PowerShell 2.0: TFM (SAPIEN Press 2010)
-    
-   .Link
-   http://jdhitsolutions.com/blog/2011/03/powershell-automatic-logging/
-    
-    .Link
-    Write-Verbose
-    .Inputs
-    None
-    
-    .Outputs
-    None
+	.Synopsis
+	Write a message to a log file. 
+	
+	.Description
+	Write-Log can be used to write text messages to a log file. It can be used like Write-Verbose,
+	and looks for two variables that you can define in your scripts and functions. If the function
+	finds $LoggingPreference with a value of "Continue", the message text will be written to the file.
+	The default file is PowerShellLog.txt in your %TEMP% directory. You can specify a different file
+	path by parameter or set the $LoggingFilePreference variable. See the help examples.
+
+	.Parameter Message
+	The message string to write to the log file. It will be prepended with a date time stamp.
+	
+	.Parameter Path
+	The filename and path for the log file. The default is $env:temp\PowerShellLog.txt, 
+	unless the $loggingFilePreference variable is found. If so, then this value will be
+	used.
+
+	.Notes
+	NAME: Write-Log
+	AUTHOR: Jeffery Hicks
+	VERSION: 1.0
+	LASTEDIT: 03/02/2011
+
+	Learn more with a copy of Windows PowerShell 2.0: TFM (SAPIEN Press 2010)
+
+	.Link
+	http://jdhitsolutions.com/blog/2011/03/powershell-automatic-logging/
+
+	.Link
+	Write-Verbose
+	
+	.Inputs
+	None
+
+	.Outputs
+	None
 #>
 
-    #[cmdletbinding()]
+	#[cmdletbinding()]
 
-    Param(
+	Param(
 		[ConsoleColor]$ForegroundColor = "white",
 		[Parameter(Mandatory = $true, Position = 0)]
 		[AllowEmptyString()]
 		[string]$Message = "",
 		[string]$Path
-    )
-    
-    #Pass on the message to Write-Verbose if -Verbose was detected
-    Write-Host -fore $ForegroundColor -object $Message
-    
-    #only write to the log file if the $LoggingPreference variable is set to Continue
-    if ($LoggingPreference -eq "Continue")
-    {
-    
-        #if a $loggingFilePreference variable is found in the scope
-        #hierarchy then use that value for the file, otherwise use the default
-        #$path
-        if ($loggingFilePreference)
-        {
-            $LogFile=$loggingFilePreference
-        }
-        else
-        {
-            $LogFile=$Path
-        }
-        
+	)
+
+	#Pass on the message to Write-Verbose if -Verbose was detected
+	Write-Host -fore $ForegroundColor -object $Message
+
+	#only write to the log file if the $LoggingPreference variable is set to Continue
+	if ($LoggingPreference -eq "Continue")
+	{
+
+		#if a $loggingFilePreference variable is found in the scope
+		#hierarchy then use that value for the file, otherwise use the default
+		#$path
+		if ($loggingFilePreference)
+		{
+			$LogFile=$loggingFilePreference
+		}
+		else
+		{
+			$LogFile=$Path
+		}
+		
 		# Don't bother to log an empty message
-        if ( $Message ) {
+		if ( $Message ) {
 			Write-Output "$(Get-Date) $Message" | Out-File -FilePath $LogFile -Append
 		}
-    }
+	}
 
 } #end function
+
 
 	[string]$ScriptName = Split-Path $MyInvocation.MyCommand.Path -Leaf	# Name of script file
 	[string]$ScriptLocation = Split-Path $MyInvocation.MyCommand.Path	# Script is in this folder
