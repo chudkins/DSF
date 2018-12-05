@@ -1138,7 +1138,7 @@ Function Write-Log {
 	# Log file name for Write-Log function
 	$LoggingFilePreference = join-path $ScriptLocation "DSF_Task_Log.txt"	
 
-	# Setup for Selenium control of IE
+<#	# Setup for Selenium control of IE
 	# Web Driver - location of DLL
 	$SeWebDriverPath = join-path ( split-path (get-package -name Selenium.WebDriver).Source ) "\lib\net45"
 	Add-Type -Path ( join-path $SeWebDriverPath "WebDriver.dll" )
@@ -1161,6 +1161,7 @@ Function Write-Log {
 	if ( ( get-itemproperty ( join-path $IEFeatureControl $BFCache ) -EA SilentlyContinue | select -ExpandProperty "iexplore.exe" ) -ne 0 ) {
 		throw "BFCache not set!"
 	}
+#>
 
 	# Main site URL to start from
 	$SiteURL = "https://store.adocument.net/DSF/"
@@ -1205,11 +1206,11 @@ Function Write-Log {
 Process {
 	try {
 		write-log -fore cyan "Loading main URL: $SiteURL"
-		$IE.Navigate().GoToURL( $SiteURL )
+		Enter-SeUrl $SiteURL -Driver $Browser
 		#$IE.Navigate( $SiteURL )
-		$IE | Invoke-IEWait
+		#$IE | Invoke-IEWait
 		#$CurrentDoc = $IE.Document	# for IE
-		$CurrentDoc = $IE	# for Selenium (don't know how, or if, we should get just the Document part)
+		#$CurrentDoc = $IE	# for Selenium (don't know how, or if, we should get just the Document part)
 
 		<#
 		# Go to main Administration page
@@ -1222,24 +1223,24 @@ Process {
 
 		##### Log in
 		# Get input fields
-
-		$UserField = $CurrentDoc | Wait-LinkSe -TagName "input" -Property "name" -Pattern $UserFieldSnip
-		$PassField = $CurrentDoc | Wait-LinkSe -TagName "input" -Property "name" -Pattern $PassFieldSnip
+		$UserField = Find-SeElement -Driver $Browser -ID $UserFieldSnip
+		$PassField = Find-SeElement -Driver $Browser -ID $PassFieldSnip
 		exit
+		
 		# Fill in values from stored credential
-		$UserField.Value = $Credential.UserName
-		$PassField.Value = $Credential.GetNetworkCredential().Password
+		Send-SeKeys -Element $UserField -Keys $Credential.UserName
+		Send-SeKeys -Element $PassField -Keys $Credential.GetNetworkCredential().Password
 		# Find the Login button and click it
-		$LoginButton = $CurrentDoc | Wait-Link -TagName "input" -Property "name" -Pattern $LoginButtonSnip
+		$LoginButton = Find-SeElement -Driver $Browser -ID $LoginButtonSnip
 		# Note, for some forms it may be better to match like this:
 		#	$CurrentDoc.IHTMLDocument3_getElementsByTagName('input') | Where-Object {$_.type -eq "Submit" }
 		#$LoginButton.Click()
 		write-log -fore cyan "Logging in..."
-		Click-Link $LoginButton
-		$CurrentDoc = $IE.Document
+		Invoke-SeClick $LoginButton
+
 		# Verify that we're logged in.  There won't be an Administration link if we aren't.
-		$AdminLinkSnip = 'Administration'
-		$AdminLink = $CurrentDoc | Wait-Link -TagName "span" -Property "innerHTML" -Pattern $AdminLinkSnip
+		$AdminLinkSnip = 'myadmin-link'
+		$AdminLink = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
 		if ( $AdminLink -notlike $null ) {
 			write-log -fore green "Admin link found; successfully logged in!"
 		} # else Wait-Link should have timed out and thrown an exception.
@@ -1248,7 +1249,7 @@ Process {
 		
 		# Now we'll be on the Storefront page, but we need to get to the Administration page.
 		# We could do it by loading a URL, but it's more flexible to find the link and click it.
-		Click-Link $AdminLink
+		Invoke-SeClick $AdminLink
 
 		# Find Products link and click it.
 		$ProductsLink = $CurrentDoc | Wait-Link -TagName "a" -Property "title" -Pattern $ProductsLinkSnip
