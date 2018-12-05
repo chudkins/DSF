@@ -1175,9 +1175,9 @@ Function Write-Log {
 	# Snips of text we need to match, to find various controls or input fields
 	#	Use '' instead of "" to avoid accidental substitutions.
 	$ProductsLinkSnip = 'Manage Products'
-	$LoginButtonSnip = '*myLogin$Login'
-	$UserFieldSnip = '*userNameTB'
-	$PassFieldSnip = '*passWordTB'
+	$LoginButtonSnip = 'ctl00_ctl00_C_W__loginWP__myLogin_Login'
+	$UserFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__userNameTB'
+	$PassFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__passwordTB'
 
 	# What counts as a yes/no value?
 	$YesValues = "yes","y","true","x"
@@ -1188,9 +1188,13 @@ Function Write-Log {
 	# Check if there are extra tabs open, and close them if so.
 #>
 
-	# Create IE instance
+<#	# Create IE instance
 	$IE = New-Object OpenQA.Selenium.IE.InternetExplorerDriver
 	# Check if there are extra tabs open, and close them if so.
+#>
+	
+	# Create Firefox instance
+	$Browser = Start-SeFirefox
 
 	# Show the window -- not necessary for this to work, but useful to see what's going on.
 #	$IE.Visible = $true
