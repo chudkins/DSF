@@ -5,7 +5,7 @@
 	Maybe.
 #>
 
-
+#requires -Module Selenium
 
 <# Can we automate product creation in DSF?
 	Possibly -- see this page for ideas:
@@ -40,14 +40,15 @@
 [cmdletbinding()]
 
 Param (
-	[ValidateNotNullOrEmpty()]
+	#[ValidateNotNullOrEmpty()]
 	[ValidateScript({
-		if ( test-path $_ ) {
+		if ( ( $_ -like $null ) -or ( test-path $_ ) ) {
 			$true
 		} else {
 			throw "ProductFile - Supplied path not found: $_!"
 		}
 	})]
+#>
 	$ProductFile = "C:\Users\Carl\Documents\ADS Work\Automation\Test_Product_List.csv",
 	[ValidateNotNullOrEmpty()]
 	# Account name of user to log in.
@@ -111,14 +112,16 @@ Function Handle-Exception {
 function Click-Link {
 	<#
 		.Synopsis
-		Given a link, wait until IE is not busy, then click it.
+		Given a link, wait until browser is not busy, then click it.
 		
 		.Parameter Link
 		The link to click.
 	#>
 	
 	param (
-		$Link
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[ValidateNotNullOrEmpty()]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $Link
 	)
 	
 	Begin {
@@ -126,9 +129,10 @@ function Click-Link {
 	
 	Process {
 		if ( $Link -notlike $null ) {
-			$Link.Click()
-			# Now wait for IE to process the click and load the next page
-			$IE | Invoke-IEWait
+			#$Link.Click()
+			Invoke-SeClick $Link
+			# Now wait for browser to process the click and load the next page
+			$Link | Invoke-Wait
 		} else {
 			write-log -fore yellow "Link is empty?"
 			write-log "Link: $($Link.href)"
@@ -246,22 +250,29 @@ function Get-Link {
 	}
 }
 
-function Invoke-IEWait {
+function Invoke-Wait {
 
-    [cmdletbinding()]
+	<#
+		.Parameter BrowserObject
+		A Selenium browser (driver) object
+	#>
+	
+	[cmdletbinding()]
 	
 	Param(
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		$ieObject
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
 	)
 	
-	# Check if it's a COM object (IE) otherwise it's Selenium object.
-	if ( ( $ieObject | Get-TypeName ) -like "*ComObject*" ) {
-		while ( $ieObject.Busy -eq $true -Or $ieObject.ReadyState -ne 4 ) {
+<#	# Check if it's a COM object (IE) otherwise it's Selenium object.
+	if ( ( $BrowserObject | Get-TypeName ) -like "*ComObject*" ) {
+		while ( $BrowserObject.Busy -eq $true -Or $BrowserObject.ReadyState -ne 4 ) {
 			start-sleep -Seconds 1
 		}
 	}
-	# No handler yet for Selenium object.
+#>
+
+	
 	
 	<#
 	# Wait if IE has not yet become busy...
@@ -973,7 +984,7 @@ function Wait-LinkSe {
 		Browser Object to search.  May be passed via pipeline.
 		
 		.Parameter TagName
-		Tag name, such as "input" or "span"; will be passed to IHTMLDocument3_getElementsByTagName.
+		Tag name, such as "input" or "span"; will be passed to Find-SeElement.
 		
 		.Parameter Property
 		The property of the found element to search.
@@ -1175,7 +1186,7 @@ Function Write-Log {
 
 	# Snips of text we need to match, to find various controls or input fields
 	#	Use '' instead of "" to avoid accidental substitutions.
-	$ProductsLinkSnip = 'Manage Products'
+	$ProductsLinkSnip = 'ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem'
 	$LoginButtonSnip = 'ctl00_ctl00_C_W__loginWP__myLogin_Login'
 	$UserFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__userNameTB'
 	$PassFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__passwordTB'
@@ -1225,7 +1236,6 @@ Process {
 		# Get input fields
 		$UserField = Find-SeElement -Driver $Browser -ID $UserFieldSnip
 		$PassField = Find-SeElement -Driver $Browser -ID $PassFieldSnip
-		exit
 		
 		# Fill in values from stored credential
 		Send-SeKeys -Element $UserField -Keys $Credential.UserName
@@ -1252,8 +1262,9 @@ Process {
 		Invoke-SeClick $AdminLink
 
 		# Find Products link and click it.
-		$ProductsLink = $CurrentDoc | Wait-Link -TagName "a" -Property "title" -Pattern $ProductsLinkSnip
+		$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
 		Click-Link $ProductsLink
+		exit
 		
 		# Now we're on the Product Management page.
 		
