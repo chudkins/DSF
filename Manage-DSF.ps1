@@ -253,6 +253,9 @@ function Get-Link {
 function Invoke-Wait {
 
 	<#
+		.Synopsis
+		Wait for browser object to return "complete" and then return.
+		
 		.Parameter BrowserObject
 		A Selenium browser (driver) object
 	#>
@@ -264,28 +267,15 @@ function Invoke-Wait {
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
 	)
 	
-<#	# Check if it's a COM object (IE) otherwise it's Selenium object.
-	if ( ( $BrowserObject | Get-TypeName ) -like "*ComObject*" ) {
-		while ( $BrowserObject.Busy -eq $true -Or $BrowserObject.ReadyState -ne 4 ) {
-			start-sleep -Seconds 1
-		}
-	}
-#>
-
-	
-	
-	<#
-	# Wait if IE has not yet become busy...
-	while ( $ieObject.ReadyState -eq 4 ) { 
-		write-debug "Waiting for IE to start loading..."
-		Start-Sleep -Seconds 1 
-	}
-	# ... then wait for IE to finish being busy before trying to have it do something
-    While ( $ieObject.Busy ) { 
-		write-debug "Waiting for IE to finish working..."
-		Start-Sleep -Milliseconds 10 
-	}
+	<#	Wait until the main document returns "complete"
 	#>
+	$DocState = $BrowserObject.ExecuteScript("return document.readyState")
+	while ( $DocState -notlike "complete" ) {
+		# Not ready yet, so wait 1 second and check again.
+		write-debug "Waiting for page load to complete..."
+		Start-Sleep -Seconds 1
+		$DocState = $BrowserObject.ExecuteScript("return document.readyState")
+	}
 }
 
 function Manage-Product {
@@ -1246,7 +1236,7 @@ Process {
 		#	$CurrentDoc.IHTMLDocument3_getElementsByTagName('input') | Where-Object {$_.type -eq "Submit" }
 		#$LoginButton.Click()
 		write-log -fore cyan "Logging in..."
-		Invoke-SeClick $LoginButton
+		Click-Link $LoginButton
 
 		# Verify that we're logged in.  There won't be an Administration link if we aren't.
 		$AdminLinkSnip = 'myadmin-link'
@@ -1259,7 +1249,7 @@ Process {
 		
 		# Now we'll be on the Storefront page, but we need to get to the Administration page.
 		# We could do it by loading a URL, but it's more flexible to find the link and click it.
-		Invoke-SeClick $AdminLink
+		Click-Link $AdminLink
 
 		# Find Products link and click it.
 		$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
