@@ -129,10 +129,11 @@ function Click-Link {
 	
 	Process {
 		if ( $Link -notlike $null ) {
+			# 
 			#$Link.Click()
 			Invoke-SeClick $Link
 			# Now wait for browser to process the click and load the next page
-			$Link | Invoke-Wait
+			$Link.WrappedDriver | Invoke-Wait
 		} else {
 			write-log -fore yellow "Link is empty?"
 			write-log "Link: $($Link.href)"
