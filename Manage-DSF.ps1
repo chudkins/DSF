@@ -59,8 +59,19 @@ Param (
 )
 
 Begin {
+	<#	Things in here will be done only once per run of this script.
+		This is sort of like a class constructor, but geared more toward functions that process
+		pipeline input.  Those functions would have some setup in the BEGIN block, then everything
+		in the PROCESS block runs once per object received, and finally the END stuff runs for any
+		final actions, sort of like a destructor.
+		
+		I've chosen to use Begin/Process/End in case this script evolves to handle multiple inputs,
+		which could very well be useful, but even if that never happens it makes sense to me.
+		Setup, such as global variables and function declarations, goes in BEGIN.  Main loop goes
+		in PROCESS, followed by cleanup and summaries in END.
+	#>
 
-	# Put any random stuff BELOW functions!
+	# Put setup stuff BELOW functions!
 
 Function Handle-Exception {
 	# Custom error handling for this script
@@ -270,12 +281,12 @@ function Invoke-Wait {
 	
 	<#	Wait until the main document returns "complete"
 	#>
-	$DocState = $BrowserObject.ExecuteScript("return document.readyState")
+	$DocState = $BrowserObject.ExecuteScript($scrGetReadyState)
 	while ( $DocState -notlike "complete" ) {
 		# Not ready yet, so wait 1 second and check again.
 		write-debug "Waiting for page load to complete..."
 		Start-Sleep -Seconds 1
-		$DocState = $BrowserObject.ExecuteScript("return document.readyState")
+		$DocState = $BrowserObject.ExecuteScript($scrGetReadyState)
 	}
 }
 
@@ -1185,6 +1196,9 @@ Function Write-Log {
 	# What counts as a yes/no value?
 	$YesValues = "yes","y","true","x"
 	$NoValues = "no","n","false"
+	
+	# Selenium script snippets, to run using ExecuteScript:
+	$scrGetReadyState = "return document.readyState"
 	
 <#	# Create IE instance
 	$IE = New-Object -ComObject 'InternetExplorer.Application'
