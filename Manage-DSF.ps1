@@ -262,8 +262,79 @@ function Get-Link {
 	}
 }
 
-function Invoke-Wait {
+function Invoke-Login {
+	<#
+		.Synopsis
+		Log into web site.  Return the URL of the page that loads after login.
+		
+		.Parameter SiteURL
+		Link to login page.
+		
+		.Parameter UserName
+		Account name to use when logging in.
+		
+		.Parameter Password
+		Password to use when logging in.
+		
+		.Example
+		$HomePage = Invoke-Login "https://www.test.com" "Ford42" "/towel/0"
+	#>
+	
+	param (
+		[Parameter(Position=0)]
+		[string] $SiteURL,
+		
+		[Parameter(Position=1)]
+		[string] $UserName,
+		
+		[Parameter(Position=2)]
+		[string] $Password
+	)
+	
+	try {
+		# Web control names
+		$LoginButtonSnip = 'ctl00_ctl00_C_W__loginWP__myLogin_Login'
+		$UserFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__userNameTB'
+		$PassFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__passwordTB'
+		$AdminLinkSnip = 'myadmin-link'
 
+		# Navigate to page and attempt to sign in.
+		write-log -fore cyan "Loading site: $SiteURL"
+		Enter-SeUrl $SiteURL -Driver $Browser
+		
+		##### Log in
+		# Get input fields
+		$UserField = Find-SeElement -Driver $Browser -ID $UserFieldSnip
+		$PassField = Find-SeElement -Driver $Browser -ID $PassFieldSnip
+		
+		# Fill in values from stored credential
+		Send-SeKeys -Element $UserField -Keys $UserName
+		Send-SeKeys -Element $PassField -Keys $Password
+		# Find the Login button and click it
+		$LoginButton = Find-SeElement -Driver $Browser -ID $LoginButtonSnip
+
+		write-log -fore cyan "Logging in..."
+		Click-Link $LoginButton
+
+		# Verify that we're logged in.  There won't be an Administration link if we aren't.
+		$AdminLink = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
+		if ( $AdminLink -notlike $null ) {
+			write-log -fore green "Admin link found; successfully logged in!"
+		} # else Wait-Link should have timed out and thrown an exception.
+		
+		##### Logged in
+
+	}
+
+	catch {}
+	
+	finally {
+		# Do something, maybe emit optional debugging info about page details, load time, ???.
+		return $FinalPage
+	}
+}
+
+function Invoke-Wait {
 	<#
 		.Synopsis
 		Wait for browser object to return "complete" and then return.
@@ -1179,19 +1250,9 @@ Function Write-Log {
 	# Main site URL to start from
 	$SiteURL = "https://store.adocument.net/DSF/"
 
-	# To encrypt a password, put the password on the Clipboard and then run this:
-	# Get-Clipboard | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString | Out-Clipboard
-
-	# Make a Credential object using account name & password supplied to this script.
-	$CryptPass = $Password | ConvertTo-SecureString -AsPlainText -Force
-	$Credential = New-Object System.Management.Automation.PSCredential ($UserName,$CryptPass)
-
 	# Snips of text we need to match, to find various controls or input fields
 	#	Use '' instead of "" to avoid accidental substitutions.
 	$ProductsLinkSnip = 'ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem'
-	$LoginButtonSnip = 'ctl00_ctl00_C_W__loginWP__myLogin_Login'
-	$UserFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__userNameTB'
-	$PassFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__passwordTB'
 
 	# What counts as a yes/no value?
 	$YesValues = "yes","y","true","x"
@@ -1220,14 +1281,10 @@ Function Write-Log {
 }
 
 Process {
-	try {
-		write-log -fore cyan "Loading main URL: $SiteURL"
-		Enter-SeUrl $SiteURL -Driver $Browser
-		#$IE.Navigate( $SiteURL )
-		#$IE | Invoke-IEWait
-		#$CurrentDoc = $IE.Document	# for IE
-		#$CurrentDoc = $IE	# for Selenium (don't know how, or if, we should get just the Document part)
+	<#	This section will be run once for each object passed to the script.
+	#>
 
+	try {
 		<#
 		# Go to main Administration page
 		if ( $IE.LocationName -ne "Home" ) {
@@ -1237,30 +1294,7 @@ Process {
 		}
 		#>
 
-		##### Log in
-		# Get input fields
-		$UserField = Find-SeElement -Driver $Browser -ID $UserFieldSnip
-		$PassField = Find-SeElement -Driver $Browser -ID $PassFieldSnip
-		
-		# Fill in values from stored credential
-		Send-SeKeys -Element $UserField -Keys $Credential.UserName
-		Send-SeKeys -Element $PassField -Keys $Credential.GetNetworkCredential().Password
-		# Find the Login button and click it
-		$LoginButton = Find-SeElement -Driver $Browser -ID $LoginButtonSnip
-		# Note, for some forms it may be better to match like this:
-		#	$CurrentDoc.IHTMLDocument3_getElementsByTagName('input') | Where-Object {$_.type -eq "Submit" }
-		#$LoginButton.Click()
-		write-log -fore cyan "Logging in..."
-		Click-Link $LoginButton
-
-		# Verify that we're logged in.  There won't be an Administration link if we aren't.
-		$AdminLinkSnip = 'myadmin-link'
-		$AdminLink = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
-		if ( $AdminLink -notlike $null ) {
-			write-log -fore green "Admin link found; successfully logged in!"
-		} # else Wait-Link should have timed out and thrown an exception.
-		
-		##### Logged in
+		Invoke-Login $SiteURL -UserName $UserName -Password $Password
 		
 		# Now we'll be on the Storefront page, but we need to get to the Administration page.
 		# We could do it by loading a URL, but it's more flexible to find the link and click it.
