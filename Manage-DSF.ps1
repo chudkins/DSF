@@ -296,7 +296,6 @@ function Invoke-Login {
 		$LoginButtonSnip = 'ctl00_ctl00_C_W__loginWP__myLogin_Login'
 		$UserFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__userNameTB'
 		$PassFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__passwordTB'
-		$AdminLinkSnip = 'myadmin-link'
 
 		# Navigate to page and attempt to sign in.
 		write-log -fore cyan "Loading site: $SiteURL"
@@ -330,7 +329,7 @@ function Invoke-Login {
 	
 	finally {
 		# Do something, maybe emit optional debugging info about page details, load time, ???.
-		return $FinalPage
+		$FinalPage
 	}
 }
 
@@ -1252,6 +1251,7 @@ Function Write-Log {
 
 	# Snips of text we need to match, to find various controls or input fields
 	#	Use '' instead of "" to avoid accidental substitutions.
+	$AdminLinkSnip = 'myadmin-link'
 	$ProductsLinkSnip = 'ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem'
 
 	# What counts as a yes/no value?
