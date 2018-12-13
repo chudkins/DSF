@@ -140,8 +140,6 @@ function Click-Link {
 	
 	Process {
 		if ( $Link -notlike $null ) {
-			# 
-			#$Link.Click()
 			Invoke-SeClick $Link
 			# Now wait for browser to process the click and load the next page
 			$Link.WrappedDriver | Invoke-Wait
@@ -177,7 +175,7 @@ function Click-Wait {
 	
 	Process {
 		if ( $ClickMe -notlike $null ) {
-			$ClickMe.Click()
+			Invoke-SeClick $ClickMe
 			# Now wait for a bit
 			Start-Sleep -Seconds $SleepTime
 		} else {
@@ -320,7 +318,7 @@ function Invoke-Login {
 		#Click-Link $LoginButton
 		# Sleep after clicking, because we don't yet know how to reliably detect when storefront page is complete.
 		#	Issue 2.
-		Click-Wait $LoginButton 10
+		Click-Wait $LoginButton 30
 
 		return $ReturnLink
 	}
@@ -1286,7 +1284,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	#$IE.Silent = $true
 	
 	$AdminLink = Invoke-Login $SiteURL -UserName $UserName -Password $Password
-	write-host -fore yellow $AdminLink.GetAttribute("href")
+	#write-host -fore yellow $AdminLink.GetAttribute("href")
 
 	# Verify that we're logged in.  There won't be an Administration link if we aren't.
 	$AdminControl = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
@@ -1322,7 +1320,6 @@ Process {
 		#$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
 		$ProductsLink = Find-SeElement -Driver $Browser -ID $ProductsLinkSnip
 		Click-Link $ProductsLink
-		exit
 		
 		# Now we're on the Product Management page.
 		
@@ -1334,7 +1331,8 @@ Process {
 		$Counter = 1
 		
 		foreach ( $product in $Products ) {
-			Manage-Product -Document $CurrentDoc -Mode Add -Product $product
+#			Manage-Product -Document $CurrentDoc -Mode Add -Product $product
+			Manage-Product -Document $Browser -Mode Add -Product $product
 			$Counter++
 		}
 		
@@ -1344,17 +1342,6 @@ Process {
 		Handle-Exception $_
 	}
 	
-	<#
-		$evt = Register-ObjectEvent -InputObject $CurrentDoc -EventName DocumentComplete
-	#>
-	
-	
-	<#exit
-
-	# Go to Products page
-	$ProductsLink = @( Get-Link $IE.Document.Links -Href $ProductsHref )[0]
-	Click-Link $ProductsLink
-	#>
 }
 
 End {
