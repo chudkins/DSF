@@ -448,29 +448,52 @@ function Manage-Product {
 }
 
 function Select-FromList {
-	<# Given an element that is a pick-list, select the named item from it.
-		This is probably where we need to build a function using Selenium features.
-		Each browser seems to handle this differently, so we're using Selenium to make it
-		easier to change browsers in the future without rewriting everything.
+	<#
+		.Synopsis
+		Given a target text string, find it in a list and select it.
 		
-		Wrapping funky Selenium C# or whatever in a function will make the weird stuff
-		easier to use.
+		.Parameter ListObject
+		Web list object, such as you'd get from Find-SeElement.
+		
+		.Parameter Target
+		String to search for within the list of choices.
 	#>
-	
+
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		$List,
+		$ListObject,
 		
 		[Parameter( Mandatory )]
-		[string] $Item
+		[string] $Target
 	)
 	
-	$Target = $List | where innerText -eq $Item 
-	if ( $Target -notlike $null ) { 
-		$Target.Selected = $true 
-	} else {
-		write-log -fore red "Error: Option `'$Item`' not found in list!"
+	Begin {}
+	
+	Process {
+		try {
+			# Create a Selenium Select object to find what we want.
+			$Selector = New-Object -TypeName OpenQA.Selenium.Support.UI.SelectElement( $ListObject )
+			# Have it select out target out of the list.
+			# This will return NoSuchElementException if the option isn't found.
+			$Selector.SelectByText( $Target )
+			
+			# Now verify the item is actually selected.
+			if ( $Selector.SelectedOption.Text -ne $Target ) {
+				throw "Couldn't select `'$TargetItem`' as requested!"
+			}
+		}
+		
+		catch {
+			# We could do something here, but for now just hand it off to the main exception handler.
+			#Handle-Exception $_
+		}
+		
+		finally {
+			# Do we need to do anything for cleanup here, such as destroy the Select object?
+		}
 	}
+	
+	End {}
 }
 
 function Update-Product {
