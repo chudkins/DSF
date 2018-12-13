@@ -167,6 +167,7 @@ function Click-Wait {
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine, Position=1 )]
 		$ClickMe,
+		
 		[Parameter( ValueFromPipeLine, Position=2 )]
 		[int] $SleepTime = 1
 	)
@@ -316,8 +317,10 @@ function Invoke-Login {
 		$LoginButton = Find-SeElement -Driver $Browser -ID $LoginButtonSnip
 
 		write-log -fore cyan "Logging in..."
-		Click-Link $LoginButton
-
+		#Click-Link $LoginButton
+		# Sleep after clicking, because we don't yet know how to reliably detect when storefront page is complete.
+		#	Issue 2.
+		Click-Wait $LoginButton 10
 
 		return $ReturnLink
 	}
@@ -1317,7 +1320,7 @@ Process {
 
 		# Find Products link and click it.
 		#$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
-		$ProductsLink = Find-SeElement -Driver $Browser -ClassName $ProductsLinkSnip
+		$ProductsLink = Find-SeElement -Driver $Browser -ID $ProductsLinkSnip
 		Click-Link $ProductsLink
 		exit
 		
