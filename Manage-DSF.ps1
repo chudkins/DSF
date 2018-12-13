@@ -15,6 +15,9 @@
 	
 	See also this, which uses Invoke-Webrequest for a different approach:
 		https://www.gngrninja.com/script-ninja/2016/7/8/powershell-getting-started-utilizing-the-web
+	
+	List of web sites set up specifically for automation testing!
+		https://www.ultimateqa.com/best-test-automation-websites-to-practice-using-selenium-webdriver/
 #>
 
 <#	To install Selenium, I had to set up NuGet.org as a package source.
@@ -397,10 +400,11 @@ function Manage-Product {
 		"Add"	{
 			write-log "Add product: $($Product.'Product Name')"
 			# Press Create Product button, go about new product stuff.
-			Click-Link ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*ButtonCreateProduct" )
+			Invoke-SeClick ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*ButtonCreateProduct" )
 			
 			# Handle first page, which only asks for name and type.
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName" ).Value = $Product.'Product Name'
+			$ProductNameField = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
+			Send-SeKeys -Element $ProductNameField -Keys $product.'Product Name'
 			# We only deal with non-printed products, so set Type to 3
 			$Picklist = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*drpProductTypes"
 			( $Picklist | where innerHTML -eq "Non Printed Products" ).Selected = $true
@@ -444,7 +448,14 @@ function Manage-Product {
 }
 
 function Select-FromList {
-	# Given an element that is a pick-list, select the named item from it.
+	<# Given an element that is a pick-list, select the named item from it.
+		This is probably where we need to build a function using Selenium features.
+		Each browser seems to handle this differently, so we're using Selenium to make it
+		easier to change browsers in the future without rewriting everything.
+		
+		Wrapping funky Selenium C# or whatever in a function will make the weird stuff
+		easier to use.
+	#>
 	
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine )]
