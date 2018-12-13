@@ -292,6 +292,9 @@ function Invoke-Login {
 	)
 	
 	try {
+		# What do we return?
+		$ReturnLink = $null
+		
 		# Web control names
 		$LoginButtonSnip = 'ctl00_ctl00_C_W__loginWP__myLogin_Login'
 		$UserFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__userNameTB'
@@ -315,21 +318,14 @@ function Invoke-Login {
 		write-log -fore cyan "Logging in..."
 		Click-Link $LoginButton
 
-		# Verify that we're logged in.  There won't be an Administration link if we aren't.
-		$AdminLink = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
-		if ( $AdminLink -notlike $null ) {
-			write-log -fore green "Admin link found; successfully logged in!"
-		} # else Wait-Link should have timed out and thrown an exception.
-		
-		##### Logged in
 
+		return $ReturnLink
 	}
 
 	catch {}
 	
 	finally {
 		# Do something, maybe emit optional debugging info about page details, load time, ???.
-		$FinalPage
 	}
 }
 
@@ -954,7 +950,7 @@ function Update-Product {
 	
 }
 
-function Wait-Link {
+function Wait-LinkDoNotUse {
 	<#	Loop until the specified object becomes available.
 		So, where you might do this...
 			$UserField = $CurrentDoc.IHTMLDocument3_getElementsByTagName('input') | Where-Object {$_.name -like $UserFieldSnip }
@@ -1005,7 +1001,7 @@ function Wait-Link {
 		
 	)
 
-	Write-Debug "Wait for $TagName element with $Property matching `'$Pattern`'"
+	Write-DebugLog "Wait for $TagName element with $Property matching `'$Pattern`'"
 	
 	# Create a Stopwatch object to keep track of time
 	$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -1037,7 +1033,7 @@ function Wait-Link {
 
 }
 
-function Wait-LinkSe {
+function Wait-Link {
 	<#	Loop until the specified object becomes available.
 		So, where you might do this...
 			$UserField = $CurrentDoc.IHTMLDocument3_getElementsByTagName('input') | Where-Object {$_.name -like $UserFieldSnip }
@@ -1088,7 +1084,7 @@ function Wait-LinkSe {
 		
 	)
 
-	Write-Debug "Wait for $TagName element with $Property matching `'$Pattern`'"
+	Write-DebugLog "Wait for $TagName element with $Property matching `'$Pattern`'"
 	
 	# Create a Stopwatch object to keep track of time
 	$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -1261,6 +1257,13 @@ Function Write-Log {
 	# Selenium script snippets, to run using ExecuteScript:
 	$scrGetReadyState = "return document.readyState"
 	
+	# Wait for element to become visible if hidden
+	# From:  https://stackoverflow.com/questions/44724185/element-myelement-is-not-clickable-at-point-x-y-other-element-would-receiv
+	$scrWaitUntilVisible = @"
+WebDriverWait wait3 = new WebDriverWait(driver, 10);
+wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv")));
+"@
+	
 <#	# Create IE instance
 	$IE = New-Object -ComObject 'InternetExplorer.Application'
 	# Check if there are extra tabs open, and close them if so.
@@ -1278,6 +1281,20 @@ Function Write-Log {
 #	$IE.Visible = $true
 	# May want to set this, to prevent any IE popups like "Do you want to..."
 	#$IE.Silent = $true
+	
+	$AdminLink = Invoke-Login $SiteURL -UserName $UserName -Password $Password
+	write-host -fore yellow $AdminLink.GetAttribute("href")
+
+	# Verify that we're logged in.  There won't be an Administration link if we aren't.
+	$AdminControl = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
+	#$Browser.FindElementByClassName("myadmin-link")
+	#$AdminControl = $Browser | Wait-Link -TagName "div" -Property "class" -Pattern "myadmin-link"
+	if ( $AdminControl -notlike $null ) {
+		write-log -fore green "Admin link found; successfully logged in!"
+	} # else Wait-Link should have timed out and thrown an exception.
+	
+	##### Logged in
+	Click-Link $AdminControl
 }
 
 Process {
@@ -1294,14 +1311,13 @@ Process {
 		}
 		#>
 
-		Invoke-Login $SiteURL -UserName $UserName -Password $Password
 		
-		# Now we'll be on the Storefront page, but we need to get to the Administration page.
-		# We could do it by loading a URL, but it's more flexible to find the link and click it.
-		Click-Link $AdminLink
+		# BEGIN should have gotten us to the Administration page.
+		#Click-Link ( $Browser | Wait-Link -TagName "a" -Property "text" -Pattern "Administration" )
 
 		# Find Products link and click it.
-		$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
+		#$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
+		$ProductsLink = Find-SeElement -Driver $Browser -ClassName $ProductsLinkSnip
 		Click-Link $ProductsLink
 		exit
 		
@@ -1339,14 +1355,10 @@ Process {
 }
 
 End {
-	read-host "Press Enter to close IE and quit"
-	# Close IE application
-	$IE.Close()
-	$IE.Dispose()
-	$IE.Quit()
-	
-	#Release COM Object (not needed when using Selenium)
-	#[void][Runtime.Interopservices.Marshal]::ReleaseComObject($IE)
+	read-host "Press Enter to close browser and quit"
+	# Shut down driver and close browser
+	Stop-SeDriver $Browser
+	# if ('browser still running') get-process $BrowserPID | stop-process
 }
 
 <#
