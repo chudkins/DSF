@@ -407,7 +407,7 @@ function Manage-Product {
 			Send-SeKeys -Element $ProductNameField -Keys $product.'Product Name'
 			# We only deal with non-printed products, so set Type to 3
 			$Picklist = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_drpProductTypes"
-			$Picklist | Select-FromList -Target "Non Printed Products"
+			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
 			Click-Link ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
@@ -455,8 +455,8 @@ function Select-FromList {
 		.Parameter ListObject
 		Web list object, such as you'd get from Find-SeElement.
 		
-		.Parameter Target
-		String to search for within the list of choices.
+		.Parameter Item
+		Item to select from the list of choices.
 	#>
 
 	param (
@@ -464,7 +464,7 @@ function Select-FromList {
 		$ListObject,
 		
 		[Parameter( Mandatory )]
-		[string] $Target
+		[string] $Item
 	)
 	
 	Begin {}
@@ -494,6 +494,33 @@ function Select-FromList {
 	}
 	
 	End {}
+}
+
+function Set-TextField {
+	<#
+		.Synopsis
+		Given a fillable text field, set its value to the supplied string.
+		
+		.Parameter FieldObject
+		Text field to fill.
+		
+		.Parameter Text
+		String to put into the field.  If not supplied, defaults to empty string.
+	#>
+	
+	param(
+		[Parameter( Mandatory, Position=1 )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
+		
+		[Parameter( Position=2 )]
+		[string] $Text = ""
+	)
+	
+	# Clear the field first.
+	$FieldObject.Clear()
+	
+	# Set it to the string we were given.
+	$FieldObject.SendKeys( $Text )
 }
 
 function Update-Product {
@@ -551,7 +578,7 @@ function Update-Product {
 	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
 		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
-		Send-SeKeys -Element $Field -Keys $Product.'Display Name'
+		Set-TextField $Field $Product.'Display Name'
 		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
 	
@@ -564,7 +591,7 @@ function Update-Product {
 	if ( $Product.'Product ID' -notlike $null ) {
 		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
 		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
-		Send-SeKeys -Element $Field -Keys $Product.'Product Id'
+		Set-TextField $Field $Product.'Product Id'
 	}
 	
 	<#	Dealing with rich text editors!
@@ -912,11 +939,13 @@ function Update-Product {
 	#>
 	
 	if ( $Product.'Production Notes' -notlike $null ) {
-		( $Document | Wait-Link -TagName "textarea" -Property "id" -Pattern "*ProductionNotes" ).Value = $Product.'Production Notes'
+		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
+		Set-TextField $Field $Product.'Production Notes'
 	}
 	
 	if ( $Product.Keywords -notlike $null ) {
-		( $Document | Wait-Link -TagName "textarea" -Property "id" -Pattern "*Keywords" ).Value = $Product.Keywords
+		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
+		Set-TextField $Field $Product.Keywords
 	}
 	
 	<#
@@ -946,15 +975,16 @@ function Update-Product {
 	#>
 
 	# Product weight
+	$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
 	if ( $Product.Weight -notlike $null ) {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*WeightCtrl__Weight" ).Value = $Product.Weight
+		Set-TextField $Field $Product.Weight
 	} else {
 		# OK, somehow the weight IS null, so ensure it's set to zero.
 		# A zero weight will allow the product to be created, though it won't work for shipping quotes.
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*WeightCtrl__Weight" ).Value = "0"
+		Set-TextField $Field "0"
 	}
 	# Weight units - Get the list object, then select the right value.
-	$WeightList = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*WeightCtrl__Unit"
+	$WeightList = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
 	$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
 	
 	# Ship item separately?
