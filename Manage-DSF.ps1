@@ -550,14 +550,21 @@ function Update-Product {
 	#	Supposedly, product name as customer sees it in the storefront catalog.
 	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
-		Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName" | Send-SeKeys $Product.'Display Name'
+		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
+		Send-SeKeys -Element $Field -Keys $Product.'Display Name'
 		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
+	
+	<#	Problem:  In some cases, text field will already be populated.  Send-SeKeys does not clear a field
+		before sending text to it.  Can we either manipulate it directly, as we used to, or maybe wrap this
+		in a function that will clear the field first in some way?
+	#>
 	
 	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
 		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
-		Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU" | Send-SeKeys $Product.'Product Id'
+		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
+		Send-SeKeys -Element $Field -Keys $Product.'Product Id'
 	}
 	
 	<#	Dealing with rich text editors!
