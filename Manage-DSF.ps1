@@ -312,8 +312,8 @@ function Invoke-Login {
 		$PassField = Find-SeElement -Driver $Browser -ID $PassFieldSnip
 		
 		# Fill in values from stored credential
-		Send-SeKeys -Element $UserField -Keys $UserName
-		Send-SeKeys -Element $PassField -Keys $Password
+		Set-TextField $UserField $UserName
+		Set-TextField $PassField $Password
 		# Find the Login button and click it
 		$LoginButton = Find-SeElement -Driver $Browser -ID $LoginButtonSnip
 
@@ -371,8 +371,8 @@ function Manage-Product {
 		.Parameter Product
 		Object containing the name and other properties of the target product.
 		
-		.Parameter Document
-		Object containing the web page (Document) we're using.
+		.Parameter BrowserObject
+		Object containing the web browser object we're using.
 		
 		.Parameter Mode
 		Add (create new product) or Change (modify existing product).
@@ -384,7 +384,7 @@ function Manage-Product {
 		$Product,
 		
 		[Parameter( Mandatory )]
-		$Document,
+		$BrowserObject,
 		
 		[Parameter( Mandatory )]
 		[ValidateSet("Add","Change")]
@@ -400,20 +400,20 @@ function Manage-Product {
 		"Add"	{
 			write-log "Add product: $($Product.'Product Name')"
 			# Press Create Product button, go about new product stuff.
-			Invoke-SeClick ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*ButtonCreateProduct" )
+			Invoke-SeClick ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ButtonCreateProduct" )
 			
 			# Handle first page, which only asks for name and type.
-			$ProductNameField = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
-			Send-SeKeys -Element $ProductNameField -Keys $product.'Product Name'
+			$ProductNameField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
+			Set-TextField $ProductNameField $product.'Product Name'
 			# We only deal with non-printed products, so set Type to 3
-			$Picklist = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_drpProductTypes"
+			$Picklist = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_drpProductTypes"
 			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
-			Click-Link ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
+			Click-Link ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
 			
 			# The rest of the work is the same whether adding or updating, so let another function do it.
-			$Document | Update-Product -Product $Product
+			$BrowserObject | Update-Product -Product $Product
 		}
 		
 		"Change"	{
@@ -524,10 +524,24 @@ function Set-TextField {
 }
 
 function Update-Product {
+	<#
+		.Synopsis
+		Given an object containing product details, fill in the product pages as needed.
+		
+		.Description
+		This function takes a custom object populated with all details pertaining to a DSF product.
+		It will then step through all the pages necessary to update the details of that product,
+		provided that you're already at the first of those pages when it's called.
+		
+		Non-empty properties will be populated as needed.
+		
+		Currently, this function only handles "Non-printed products," not printed, kits, etc.
+		Other types may be added later.
+	#>
 
 	param (
 		[Parameter( Mandatory )]
-		$Product,
+		[System.Management.Automation.PSCustomObject] $Product,
 		
 		[Parameter( Mandatory, ValueFromPipeLine )]
 		$Document
