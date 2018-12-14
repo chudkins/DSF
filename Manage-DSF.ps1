@@ -406,8 +406,8 @@ function Manage-Product {
 			$ProductNameField = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
 			Send-SeKeys -Element $ProductNameField -Keys $product.'Product Name'
 			# We only deal with non-printed products, so set Type to 3
-			$Picklist = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*drpProductTypes"
-			( $Picklist | where innerHTML -eq "Non Printed Products" ).Selected = $true
+			$Picklist = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_drpProductTypes"
+			$Picklist | Select-FromList -Target "Non Printed Products"
 			
 			# Click Next to get to product creation page
 			Click-Link ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
@@ -550,12 +550,14 @@ function Update-Product {
 	#	Supposedly, product name as customer sees it in the storefront catalog.
 	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
+		Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName" | Send-SeKeys $Product.'Display Name'
+		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
 	
 	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
+		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
+		Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU" | Send-SeKeys $Product.'Product Id'
 	}
 	
 	<#	Dealing with rich text editors!
