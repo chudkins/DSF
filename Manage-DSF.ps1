@@ -384,7 +384,7 @@ function Manage-Product {
 		$Product,
 		
 		[Parameter( Mandatory )]
-		$BrowserObject,
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
 		
 		[Parameter( Mandatory )]
 		[ValidateSet("Add","Change")]
@@ -537,6 +537,12 @@ function Update-Product {
 		
 		Currently, this function only handles "Non-printed products," not printed, kits, etc.
 		Other types may be added later.
+		
+		.Parameter Product
+		Custom object containing the details of a product, typically populated via spreadsheet import.
+		
+		.Parameter BrowserObject
+		Selenium driver object representing the browser we're automating.
 	#>
 
 	param (
@@ -544,7 +550,7 @@ function Update-Product {
 		[System.Management.Automation.PSCustomObject] $Product,
 		
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		$Document
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
 	)
 
 	<#	Lots of conditionals here, but this way we have one function that handles the form filling.
@@ -591,9 +597,9 @@ function Update-Product {
 	#	Supposedly, product name as customer sees it in the storefront catalog.
 	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
-		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
+		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
 		Set-TextField $Field $Product.'Display Name'
-		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
+		#( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
 	
 	<#	Problem:  In some cases, text field will already be populated.  Send-SeKeys does not clear a field
@@ -603,8 +609,8 @@ function Update-Product {
 	
 	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
-		#( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
-		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
+		#( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
+		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
 		Set-TextField $Field $Product.'Product Id'
 	}
 	
@@ -621,7 +627,7 @@ function Update-Product {
 	
 	# Brief Description, rich text field
 	if ( $Product.'Brief Description' -notlike $null ) {
-		$iFrame = $Document | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
+		$iFrame = $BrowserObject | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
 		$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
 	}
 	
@@ -631,11 +637,11 @@ function Update-Product {
 	#	this should be possible.  We'll need to validate the path before attempting to upload, logging 
 	#	an error if it's bad.
 	if ( $Product.'Product Icon' -notlike $null ) {
-		#Upload-Thumbnail -Document $Document -URL $Product.'Product Icon'
+		#Upload-Thumbnail -Document $BrowserObject -URL $Product.'Product Icon'
 	}
 	
 	# Switch to Details section.
-	$NavTab = $Document | Wait-Link -TagName "a" -Property "id" -Pattern "*TabDetails"
+	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "*TabDetails"
 	$NavTab.Click()
 	
 	<#		Details section
@@ -645,12 +651,12 @@ function Update-Product {
 
 	# Long Description
 	if ( $Product.'Long Description' -notlike $null ) {
-		$RichTextEdit = $Document | Wait-Link -TagName "div" -Property "id" -Pattern "*LongDescription_contentDiv"
+		$RichTextEdit = $BrowserObject | Wait-Link -TagName "div" -Property "id" -Pattern "*LongDescription_contentDiv"
 		$RichTextEdit.innerHTML = $Product.'Long Description'
 	}
 	
 	# Switch to Settings section.
-	$NavTab = $Document | Wait-Link -TagName "a" -Property "id" -Pattern "*TabSettings"
+	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "*TabSettings"
 	$NavTab.Click()
 	
 	# Display priority
@@ -670,7 +676,7 @@ function Update-Product {
 	if ( $Product.'Display Priority' -notlike $null ) {	
 		# If a value is specified, try to set the selection to a matching value.
 		# If match fails, print a warning and set it to Standard.
-		$Picklist = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*DropDownListRank"
+		$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*DropDownListRank"
 		if ( $Picklist.innerHTML -eq $Product.'Display Priority' ) {
 			( $Picklist | where innerHTML -eq $Product.'Display Priority' ).Selected = $true 
 		} else {
@@ -712,24 +718,24 @@ function Update-Product {
 			that is the format DSF is expecting.
 		#>
 		$StartDate = [DateTime]$Product.'Start Date'
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*Begin_dateInput_text" ).Value = $StartDate.ToShortDateString()
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*Begin_dateInput_text" ).Value = $StartDate.ToShortDateString()
 	} else {
 		# Start Date is empty, so set product to Active.
-		$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl__YesNo_1" )
+		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl__YesNo_1" )
 		$RadioButton.Click()
 	}
 	
 	# Using similar logic, if End Date is empty, product will be active forever.
 	if ( $Product.'End Date' -notlike $null ) {
 		# Click the button to select End Date.
-		$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbEndDate" )
+		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbEndDate" )
 		$RadioButton.Click()
 		# Now set the date.
 		$StopDate = [DateTime]$Product.'End Date'
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*End_dateInput_text" ).Value = $StopDate.ToShortDateString()
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*End_dateInput_text" ).Value = $StopDate.ToShortDateString()
 	} else {
 		# End Date is empty, so set to Never.
-		$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbNever" )
+		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbNever" )
 		$RadioButton.Click()
 	}
 	
@@ -748,36 +754,36 @@ function Update-Product {
 	# Turnaround time is the same deal -- combo radio button and text field.
 	if ( $Product.'Turnaround Time' -notlike $null ) {
 		# Set Value (the second radio button)
-		$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbValue" )
+		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbValue" )
 		$RadioButton.Click()
 		# Now fill in the number of days.
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl__Value" ).Value = $Product.'Turnaround Time'
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl__Value" ).Value = $Product.'Turnaround Time'
 	} else {
 		# None specified; set radio button to None.
-		$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbNone" )
+		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbNone" )
 		$RadioButton.Click()
 	}
 	
 	# Exempt from Shipping Charge?
 	if ( $Product.'Exempt Shipping' -in $YesValues ) {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShippingExempt" ).Checked = $true
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShippingExempt" ).Checked = $true
 	} else {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShippingExempt" ).Checked = $false
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShippingExempt" ).Checked = $false
 	}
 	
 	# Exempt from Sales Tax?
 	if ( $Product.'Exempt Tax' -in $YesValues ) {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkTaxExempt" ).Checked = $true
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkTaxExempt" ).Checked = $true
 	} else {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkTaxExempt" ).Checked = $false
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkTaxExempt" ).Checked = $false
 	}
 	
 	# Show on the mobile version of the site?
 	if ( ( $Product.'Mobile' -in $YesValues ) -or ( $Product.'Mobile' -like $null ) ) {
 		# Set if Yes or unspecified.
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*IsMobileSupportedList_0" ).Checked = $true
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*IsMobileSupportedList_0" ).Checked = $true
 	} else {
-		( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*IsMobileSupportedList_0" ).Checked = $false
+		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*IsMobileSupportedList_0" ).Checked = $false
 	}
 
 	<#
@@ -800,7 +806,7 @@ function Update-Product {
 	# If any values are given for inventory management, turn this on and fill them in.
 	# If none of these values are specified, leave the setting alone.
 	$ManageInventory = $null
-	$Checkbox = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory"
+	$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory"
 	
 	switch ( $Product.'Manage Inventory' ) {
 		# If explicitly set to "Yes," turn the checkbox on.
@@ -824,7 +830,7 @@ function Update-Product {
 	#	that is deactivated if this checkbox is not checked.
 	# For now, see what happens if we submit the form anyway.
 	if ( $ManageInventory -eq $true ) {
-		$Checkbox = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory" )
+		$Checkbox = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory" )
 		#$Checkbox.SetActive()
 		# Set "checked" state to False, because Click will toggle it.
 		$Checkbox.Checked = $false
@@ -832,21 +838,21 @@ function Update-Product {
 		
 		# Threshold
 		if ( $Product.Threshold -notlike $null ) {
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*txtThQty" ).Value = $Product.Threshold
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtThQty" ).Value = $Product.Threshold
 		}
 		
 		# Allow back Order
-		$Checkbox = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkBackOrderAllowed"
+		$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkBackOrderAllowed"
 		$Checkbox.Checked = ( $Product.'Allow Back Order' -in $YesValues )
 		
 		# Show inventory when back ordered
-		$Checkbox = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShowInventoryWhenBackOrderIsAllowed"
+		$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShowInventoryWhenBackOrderIsAllowed"
 		$Checkbox.Checked = ( $Product.'Show Inventory with Back Order' -in $YesValues )
 		
 		# Notification Email Id
 		# If you want to CLEAR this field, input a blank space instead of leaving it empty.
 		if ( $Product.'Notify Emails' -notlike $null ) {
-			( $Document | Wait-Link -TagName "textarea" -Property "id" -Pattern "*txtEmailId" ).Value = $Product.'Notify Emails'
+			( $BrowserObject | Wait-Link -TagName "textarea" -Property "id" -Pattern "*txtEmailId" ).Value = $Product.'Notify Emails'
 		}
 		
 		# Replenish inventory - Note this is either one or the other!
@@ -857,21 +863,21 @@ function Update-Product {
 		#	to freeze -- at least from the GUI.  So, try proceeding without doing that.
 		
 		if ( $Product.'Add to Inventory' -notlike $null ) {
-			$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInv" )
+			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInv" )
 			$RadioButton.isDisabled = $false
 			#$RadioButton.SetActive()
 			$RadioButton | Click-Wait
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInvTextBox" ).Value = $Product.'Add to Inventory'
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInvTextBox" ).Value = $Product.'Add to Inventory'
 		} elseif ( $Product.'Reset Inventory' -notlike $null ) {
-			$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvReset" )
+			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvReset" )
 			$RadioButton.isDisabled = $false
 			#$RadioButton.SetActive()
 			$RadioButton | Click-Wait
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*RbResetInvTextBox" ).Value = $Product.'Reset Inventory'
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbResetInvTextBox" ).Value = $Product.'Reset Inventory'
 		}
 	} elseif ( $ManageInventory -eq $false ) {
 		# Turn the checkbox off.
-		$Checkbox = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory" )
+		$Checkbox = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory" )
 		#$Checkbox.SetActive()
 		$Checkbox.Checked = $true
 		$Checkbox.Click()
@@ -914,10 +920,10 @@ function Update-Product {
 				We don't handle this yet, so log a warning and move on.
 				Admin will need to update the allowed quantities by hand.
 			#>
-			$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantities" )
+			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantities" )
 			#$RadioButton.SetActive()
 			$RadioButton | Click-Wait
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantitiesValues_ctl02__Value" ).Value = $Product.'Fixed Qty'
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantitiesValues_ctl02__Value" ).Value = $Product.'Fixed Qty'
 			<# Now click the Update button, which will post the value to the server.
 			<input name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_FixedQuantitiesValues$ctl02$LinkButton1" class="button-mouseout" id="ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02_LinkButton1" onmouseover="this.className='button-mouseover'" onmouseout="this.className='button-mouseout'" onclick='javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions("ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_FixedQuantitiesValues$ctl02$LinkButton1", "", true, "_FixedQuantitiesValues", "", false, false))' type="submit" value="Update">
 			#>
@@ -931,16 +937,16 @@ function Update-Product {
 			write-log "$($Product.'Product Name') has Min/Max/Mult Qty."
 			# Min quantity can be used by itself or in conjunction with Max.
 			# For this to be available, "By Multiples" button must be clicked.
-			$RadioButton = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*_Multiples" )
+			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*_Multiples" )
 			$RadioButton | Click-Wait
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Minimum" ).Value = $Product.'Min Qty'
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Maximum" ).Value = $Product.'Max Qty'
-			( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Multiple" ).Value = $Product.'Mult Qty'
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Minimum" ).Value = $Product.'Min Qty'
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Maximum" ).Value = $Product.'Max Qty'
+			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Multiple" ).Value = $Product.'Mult Qty'
 		}
 		
 		# If a Max quantity was specified, check the box to enforce this in shopping cart.
 		if ( $Product.'Max Qty' -notlike $null ) {
-			$Checkbox = ( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkEnforceMaxQtyInCart" )
+			$Checkbox = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkEnforceMaxQtyInCart" )
 			# Set to False and then click, to ensure control is recognized.
 			$Checkbox.Checked = $false
 			$Checkbox | Click-Wait
@@ -953,12 +959,12 @@ function Update-Product {
 	#>
 	
 	if ( $Product.'Production Notes' -notlike $null ) {
-		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
+		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
 		Set-TextField $Field $Product.'Production Notes'
 	}
 	
 	if ( $Product.Keywords -notlike $null ) {
-		$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
+		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
 		Set-TextField $Field $Product.Keywords
 	}
 	
@@ -989,7 +995,7 @@ function Update-Product {
 	#>
 
 	# Product weight
-	$Field = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
+	$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
 	if ( $Product.Weight -notlike $null ) {
 		Set-TextField $Field $Product.Weight
 	} else {
@@ -998,29 +1004,29 @@ function Update-Product {
 		Set-TextField $Field "0"
 	}
 	# Weight units - Get the list object, then select the right value.
-	$WeightList = Find-SeElement -Driver $Document -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
+	$WeightList = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
 	$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
 	
 	# Ship item separately?
-	$Checkbox = $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*chkPackSeparately"
+	$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkPackSeparately"
 	$Checkbox.Checked = ( $Product.'Ship Separately' -in $YesValues )
 	
 	# Width
 	$Width = $Product.Width | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxX__Length" ).Value = $Product.Width
-	$UnitList = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*ShipmentDimensionCtrl__BoxX__Unit"
+	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxX__Length" ).Value = $Product.Width
+	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*ShipmentDimensionCtrl__BoxX__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
 	
 	# Length
 	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length" ).Value = $Product.Length
-	$UnitList = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxY__Unit"
+	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length" ).Value = $Product.Length
+	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxY__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
 	
 	# Height
 	$Height = $Product.Height | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	( $Document | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxZ__Length" ).Value = $Product.Height
-	$UnitList = $Document | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxZ__Unit"
+	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxZ__Length" ).Value = $Product.Height
+	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxZ__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
 			
 	<#		Pricing section:
