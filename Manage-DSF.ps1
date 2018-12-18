@@ -385,7 +385,7 @@ function Manage-Product {
 
 	param (
 		[Parameter( Mandatory )]
-		$Product,
+		[PSCustomObject] $Product,
 		
 		[Parameter( Mandatory )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
@@ -479,10 +479,10 @@ function Select-FromList {
 			$Selector = New-Object -TypeName OpenQA.Selenium.Support.UI.SelectElement( $ListObject )
 			# Have it select out target out of the list.
 			# This will return NoSuchElementException if the option isn't found.
-			$Selector.SelectByText( $Target )
+			$Selector.SelectByText( $Item )
 			
 			# Now verify the item is actually selected.
-			if ( $Selector.SelectedOption.Text -ne $Target ) {
+			if ( $Selector.SelectedOption.Text -ne $Item ) {
 				throw "Couldn't select `'$TargetItem`' as requested!"
 			}
 		}
@@ -512,7 +512,10 @@ function Set-RichTextField {
 		The iFrame containing the rich text editor.
 		
 		.Parameter ID
-		ID of the text field within the iFrame.
+		ID of the edit field within the iFrame.
+		
+		.Parameter XPath
+		XPath to the edit field within the iFrame.
 		
 		.Parameter Text
 		String to put into the field.  If not supplied, defaults to empty string.
@@ -521,16 +524,21 @@ function Set-RichTextField {
 	#>
 	
 	param(
-		[Parameter( Mandatory, Position=1 )]
+		[Parameter( Mandatory, ParameterSetName="ID", Position=1 )]
+		[Parameter( Mandatory, ParameterSetName="XPath", Position=1 )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
 	
-		[Parameter( Mandatory, Position=2 )]
+		[Parameter( Mandatory, ParameterSetName="ID", Position=2 )]
+		[Parameter( Mandatory, ParameterSetName="XPath", Position=2 )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
 		
-		[Parameter( Mandatory, Position=3 )]
+		[Parameter( Mandatory, ParameterSetName="ID", Position=3 )]
 		[string] $ID,
 		
-		[Parameter( Position=4 )]
+		[Parameter( Mandatory, ParameterSetName="XPath", Position=3 )]
+		[string] $XPath,
+		
+		[Parameter( ParameterSetName="XPath", Position=3 )]
 		[string] $Text = ""
 	)
 	
@@ -539,7 +547,10 @@ function Set-RichTextField {
 	$NewFrame = $BrowserObject.SwitchTo().Frame($FieldObject)
 	
 	# Next, search for the element in the new context.
-	$EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID
+	switch ( $true ){
+		( $ID )		{ $EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID }
+		( $XPath )	{ $EditorIFrame = Find-SeElement -Element $NewFrame -XPath $XPath }
+	}
 	
 	# Make sure we actually found something.
 	if ( $EditorIFrame -notlike $null ) {
@@ -549,7 +560,7 @@ function Set-RichTextField {
 		# Set it to the string we were given.
 		$EditorIFrame.SendKeys( $Text )
 	} else {
-		throw "Couldn't find an iFrame matching ID `'$ID`'."
+		throw "Couldn't find an iFrame matching ID `'$ID`' or XPath `'$XPath`'."
 	}
 }
 
@@ -604,7 +615,7 @@ function Update-Product {
 
 	param (
 		[Parameter( Mandatory )]
-		[System.Management.Automation.PSCustomObject] $Product,
+		[PSCustomObject] $Product,
 		
 		[Parameter( Mandatory, ValueFromPipeLine )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
@@ -679,8 +690,11 @@ function Update-Product {
 	
 	# Brief Description, rich text field
 	if ( $Product.'Brief Description' -notlike $null ) {
-		$iFrame = $BrowserObject | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
-		$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
+		#$iFrame = $BrowserObject | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
+		#$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
+		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
+		Set-RichTextField $BrowserObject $iFrame -XPath "/html/body" $Product.'Brief Description'
+		#Set-TextField $iFrame $Product.'Brief Description'
 	}
 	
 	# Now, if there's a thumbnail image to upload, do that.
@@ -1477,7 +1491,7 @@ Process {
 		
 		foreach ( $product in $Products ) {
 #			Manage-Product -Document $CurrentDoc -Mode Add -Product $product
-			Manage-Product -Document $Browser -Mode Add -Product $product
+			Manage-Product -BrowserObject $Browser -Mode Add -Product $product
 			$Counter++
 		}
 		
