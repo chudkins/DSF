@@ -7,6 +7,10 @@
 
 #requires -Module Selenium
 
+<#	Selenium class documentation for .NET:
+		https://seleniumhq.github.io/selenium/docs/api/dotnet/index.html
+#>
+
 <# Can we automate product creation in DSF?
 	Possibly -- see this page for ideas:
 		http://www.westerndevs.com/simple-powershell-automation-browser-based-tasks/
@@ -496,6 +500,59 @@ function Select-FromList {
 	End {}
 }
 
+function Set-RichTextField {
+	<#
+		.Synopsis
+		Find a rich text field, then set its value to the supplied string.
+		
+		.Parameter BrowserObject
+		Web driver containing a browser on the main page.
+		
+		.Parameter FieldObject
+		The iFrame containing the rich text editor.
+		
+		.Parameter ID
+		ID of the text field within the iFrame.
+		
+		.Parameter Text
+		String to put into the field.  If not supplied, defaults to empty string.
+		Note that rich text can include formatting.  Ideally, find some way to pass
+		formatted text through to the editor without losing formatting.
+	#>
+	
+	param(
+		[Parameter( Mandatory, Position=1 )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
+	
+		[Parameter( Mandatory, Position=2 )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
+		
+		[Parameter( Mandatory, Position=3 )]
+		[string] $ID,
+		
+		[Parameter( Position=4 )]
+		[string] $Text = ""
+	)
+	
+	# The editor will be inside an iFrame.  To navigate to the actual edit field,
+	#	we first need to switch focus to the iFrame.
+	$NewFrame = $BrowserObject.SwitchTo().Frame($FieldObject)
+	
+	# Next, search for the element in the new context.
+	$EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID
+	
+	# Make sure we actually found something.
+	if ( $EditorIFrame -notlike $null ) {
+		# Clear the field first.
+		$EditorIFrame.Clear()
+		
+		# Set it to the string we were given.
+		$EditorIFrame.SendKeys( $Text )
+	} else {
+		throw "Couldn't find an iFrame matching ID `'$ID`'."
+	}
+}
+
 function Set-TextField {
 	<#
 		.Synopsis
@@ -601,11 +658,6 @@ function Update-Product {
 		Set-TextField $Field $Product.'Display Name'
 		#( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
-	
-	<#	Problem:  In some cases, text field will already be populated.  Send-SeKeys does not clear a field
-		before sending text to it.  Can we either manipulate it directly, as we used to, or maybe wrap this
-		in a function that will clear the field first in some way?
-	#>
 	
 	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
