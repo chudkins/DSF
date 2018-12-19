@@ -505,6 +505,13 @@ function Set-RichTextField {
 		.Synopsis
 		Find a rich text field, then set its value to the supplied string.
 		
+		.Description
+		This function will place text into a rich text editor, when supplied with a way of
+		finding it.  In the case of an editor in an iFrame, you'll need to supply both a
+		browser object and the iFrame itself, plus either ID or XPath of the edit field.
+		
+		If the editor isn't in an iFrame, just supply the ID as a named parameter.
+		
 		.Parameter BrowserObject
 		Web driver containing a browser on the main page.
 		
@@ -523,55 +530,100 @@ function Set-RichTextField {
 		formatted text through to the editor without losing formatting.
 	#>
 	
+	<#	Parameter planning
+	
+		Expected uses:
+			Editor is in an iFrame, and can be identified by ID after switching to it.
+			We'd require:
+				BrowserObject (the web driver)
+				FieldObject (web element, specifically the iFrame in question)
+				ID (ID tag to search for)
+				Text (string to put into the edit field)
+				
+			Editor is in an iFrame, and can be identified by XPath after switching to it.
+			We'd require:
+				BrowserObject (the web driver)
+				FieldObject (web element, specifically the iFrame in question)
+				XPath (XPath to follow)
+				Text (string to put into the edit field)
+				
+			Editor is *NOT* in an iFrame, so we don't need to switch to it; caller will
+			supply the FieldObject similar to calling Set-TextField.  We need:
+				FieldObject
+				Text
+	#>
+	
 	param(
-		[Parameter( Mandatory, ParameterSetName="ID", Position=1 )]
-		[Parameter( Mandatory, ParameterSetName="XPath", Position=1 )]
+		[Parameter( Mandatory, ParameterSetName="ID" )]
+		[Parameter( Mandatory, ParameterSetName="XPath" )]
+		#[Parameter( Mandatory, ParameterSetName="NonIFrame" )]
+		#[Parameter( Mandatory )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
 	
-		[Parameter( Mandatory, ParameterSetName="ID", Position=2 )]
-		[Parameter( Mandatory, ParameterSetName="XPath", Position=2 )]
+		[Parameter( Mandatory, ParameterSetName="ID" )]
+		[Parameter( Mandatory, ParameterSetName="XPath" )]
+		[Parameter( Mandatory, ParameterSetName="NonIFrame" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
 		
-		[Parameter( Mandatory, ParameterSetName="ID", Position=3 )]
+		[Parameter( Mandatory, ParameterSetName="ID" )]
 		[string] $ID,
 		
-		[Parameter( Mandatory, ParameterSetName="XPath", Position=3 )]
+		[Parameter( Mandatory, ParameterSetName="XPath" )]
 		[string] $XPath,
 		
-		[Parameter( ParameterSetName="XPath", Position=3 )]
 		[string] $Text = ""
 	)
 	
-	# The editor will be inside an iFrame.  To navigate to the actual edit field,
-	#	we first need to switch focus to the iFrame.
-	$NewFrame = $BrowserObject.SwitchTo().Frame($FieldObject)
-	# $NewFrame is, on Firefox at least, of type OpenQA.Selenium.Firefox.FirefoxDriver.
-	#$NewFrame | get-member | format-table -auto | out-string | write-host
-	#$NewFrame | Out-string | write-host
-	
-	# Next, search for the element in the new context.
-	switch ( $PSCmdlet.ParameterSetName ){
-		"ID"	{ $EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID }
-		"XPath"	{ $EditorIFrame = Find-SeElement -Element $NewFrame -XPath $XPath }
-	}
-	
-	# Make sure we actually found something.
-	if ( $EditorIFrame -notlike $null ) {
-		# By snooping in Dev Mode, we find the editor HTML looks for a Click event,
-		#	on which it sets focus to the text area.
-		# So, let's invoke its Click event.
-		$EditorIFrame.Click()
-		# Clear the field first, in case it already has text.
-		$EditorIFrame.Clear()
+	if ( $PSCmdlet.ParameterSetName -eq "NonIFrame" ) {
+		# We have a rich text editor that isn't in an iFrame, so the caller
+		#	has supplied only the BrowserObject, ID and Text parameters.
+		$Editor = Find-SeElement -Driver $BrowserObject
 		
-		# Set it to the string we were given.
-		$EditorIFrame.SendKeys( $Text )
-	} else {
-		# Throw an error specific to which set was used.
-		switch ( $PSCmdlet.ParameterSetName ){
-			"ID"	{ throw "Couldn't find an iFrame matching ID `'$ID`'." }
-			"XPath"	{ throw "Couldn't find an iFrame matching XPath `'$XPath`'." }
+		# Make sure we actually got something we can use.
+		if ( $Editor -notlike $null ) {
+			# Clear anything that's already there.
+			$Editor.Clear()
+			# Send text to editor field.
+			$Editor.SendKeys( $Text )
+		} else {
+			throw "Couldn't find non-iFrame rich text editor with ID `'$ID`'."
 		}
+	} else {
+		# The editor will be inside an iFrame.  To navigate to the actual edit field,
+		#	we first need to switch focus to the iFrame.
+		$NewFrame = $BrowserObject.SwitchTo().Frame($FieldObject)
+		# $NewFrame is, on Firefox at least, of type OpenQA.Selenium.Firefox.FirefoxDriver.
+		#$NewFrame | get-member | format-table -auto | out-string | write-host
+		#$NewFrame | Out-string | write-host
+		
+		# Next, search for the element in the new context.
+		switch ( $PSCmdlet.ParameterSetName ){
+			"ID"	{ $EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID }
+			"XPath"	{ $EditorIFrame = Find-SeElement -Element $NewFrame -XPath $XPath }
+		}
+		
+		# Make sure we actually found something.
+		if ( $EditorIFrame -notlike $null ) {
+			# By snooping in Dev Mode, we find the editor HTML looks for a Click event,
+			#	on which it sets focus to the text area.
+			# So, let's invoke its Click event.
+			$EditorIFrame.Click()
+			# Clear the field first, in case it already has text.
+			$EditorIFrame.Clear()
+			
+			# Set it to the string we were given.
+			$EditorIFrame.SendKeys( $Text )
+		} else {
+			# Throw an error specific to which set was used.
+			switch ( $PSCmdlet.ParameterSetName ){
+				"ID"	{ throw "Couldn't find an iFrame matching ID `'$ID`'." }
+				"XPath"	{ throw "Couldn't find an iFrame matching XPath `'$XPath`'." }
+			}
+		}
+		
+		# Switch browser back to the parent frame so it will be able to find stuff
+		#	outside the iFrame.
+		$null = $BrowserObject.SwitchTo().parentFrame()
 	}
 }
 
@@ -705,7 +757,7 @@ function Update-Product {
 		#$iFrame = $BrowserObject | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
 		#$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
-		Set-RichTextField $BrowserObject $iFrame -XPath "/html/body" $Product.'Brief Description'
+		Set-RichTextField -BrowserObject $BrowserObject -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'
 		#Set-RichTextField $BrowserObject $iFrame -ID "something" $Product.'Brief Description'
 		#Set-TextField $iFrame $Product.'Brief Description'
 	}
@@ -720,7 +772,9 @@ function Update-Product {
 	}
 	
 	# Switch to Details section.
-	$NavTab = Find-SeElement -Driver $BrowserObject -ID "*TabDetails"
+	#	<a class="rtsLink rtsAfter" id="TabDetails" href="#">...
+	#$NavTab = Find-SeElement -Driver $BrowserObject -ID "TabDetails"
+	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabDetails"
 	$NavTab.Click()
 	
 	<#		Details section
@@ -730,8 +784,9 @@ function Update-Product {
 
 	# Long Description
 	if ( $Product.'Long Description' -notlike $null ) {
-		$RichTextEdit = $BrowserObject | Wait-Link -TagName "div" -Property "id" -Pattern "*LongDescription_contentDiv"
-		$RichTextEdit.innerHTML = $Product.'Long Description'
+		#$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
+		# This editor isn't in an iFrame.
+		Set-RichTextField -BrowserObject $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv" -Text $Product.'Long Description'
 	}
 	
 	# Switch to Settings section.
