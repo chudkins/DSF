@@ -1011,18 +1011,22 @@ function Update-Product {
 	}
 	
 	# Exempt from Sales Tax?
+		$ExemptTaxChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
 	if ( $Product.'Exempt Tax' -in $YesValues ) {
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkTaxExempt" ).Checked = $true
+		Set-CheckBox $ExemptTaxChk
 	} else {
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkTaxExempt" ).Checked = $false
+		Set-CheckBox $ExemptTaxChk -Off
 	}
 	
 	# Show on the mobile version of the site?
+	$MobileSupportYes = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
+	$MobileSupportNo = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
 	if ( ( $Product.'Mobile' -in $YesValues ) -or ( $Product.'Mobile' -like $null ) ) {
 		# Set if Yes or unspecified.
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*IsMobileSupportedList_0" ).Checked = $true
+		$MobileSupportYes.Click()
 	} else {
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*IsMobileSupportedList_0" ).Checked = $false
+		# Set No if we specifically don't want mobile support.
+		$MobileSupportNo.Click()
 	}
 
 	<#
