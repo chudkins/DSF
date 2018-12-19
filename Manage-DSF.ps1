@@ -545,22 +545,33 @@ function Set-RichTextField {
 	# The editor will be inside an iFrame.  To navigate to the actual edit field,
 	#	we first need to switch focus to the iFrame.
 	$NewFrame = $BrowserObject.SwitchTo().Frame($FieldObject)
+	# $NewFrame is, on Firefox at least, of type OpenQA.Selenium.Firefox.FirefoxDriver.
+	#$NewFrame | get-member | format-table -auto | out-string | write-host
+	#$NewFrame | Out-string | write-host
 	
 	# Next, search for the element in the new context.
-	switch ( $true ){
-		( $ID )		{ $EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID }
-		( $XPath )	{ $EditorIFrame = Find-SeElement -Element $NewFrame -XPath $XPath }
+	switch ( $PSCmdlet.ParameterSetName ){
+		"ID"	{ $EditorIFrame = Find-SeElement -Element $NewFrame -ID $ID }
+		"XPath"	{ $EditorIFrame = Find-SeElement -Element $NewFrame -XPath $XPath }
 	}
 	
 	# Make sure we actually found something.
 	if ( $EditorIFrame -notlike $null ) {
-		# Clear the field first.
+		# By snooping in Dev Mode, we find the editor HTML looks for a Click event,
+		#	on which it sets focus to the text area.
+		# So, let's invoke its Click event.
+		$EditorIFrame.Click()
+		# Clear the field first, in case it already has text.
 		$EditorIFrame.Clear()
 		
 		# Set it to the string we were given.
 		$EditorIFrame.SendKeys( $Text )
 	} else {
-		throw "Couldn't find an iFrame matching ID `'$ID`' or XPath `'$XPath`'."
+		# Throw an error specific to which set was used.
+		switch ( $PSCmdlet.ParameterSetName ){
+			"ID"	{ throw "Couldn't find an iFrame matching ID `'$ID`'." }
+			"XPath"	{ throw "Couldn't find an iFrame matching XPath `'$XPath`'." }
+		}
 	}
 }
 
@@ -685,7 +696,8 @@ function Update-Product {
 		
 		$iFrame.ContentWindow.Document.Body.innerHTML or .innerText
 		
-		We will use innerHTML, as the Word form allows formatting.
+		This is fine when you're manipulating the objects directly, but now with Selenium
+		we're using browser-independent methods so we can't do that.
 	#>
 	
 	# Brief Description, rich text field
@@ -694,6 +706,7 @@ function Update-Product {
 		#$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
 		Set-RichTextField $BrowserObject $iFrame -XPath "/html/body" $Product.'Brief Description'
+		#Set-RichTextField $BrowserObject $iFrame -ID "something" $Product.'Brief Description'
 		#Set-TextField $iFrame $Product.'Brief Description'
 	}
 	
@@ -707,7 +720,7 @@ function Update-Product {
 	}
 	
 	# Switch to Details section.
-	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "*TabDetails"
+	$NavTab = Find-SeElement -Driver $BrowserObject -ID "*TabDetails"
 	$NavTab.Click()
 	
 	<#		Details section
