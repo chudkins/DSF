@@ -661,7 +661,7 @@ function Set-TextField {
 	#>
 	
 	param(
-		[Parameter( Mandatory, Position=1 )]
+		[Parameter( Mandatory, ValueFromPipeLine, Position=1 )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
 		
 		[Parameter( Position=2 )]
@@ -853,9 +853,6 @@ function Update-Product {
 		x	Active, input id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1" type="radio" checked="checked" value="True"
 		x	Start Date, input id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__Begin_dateInput_text" 
 				defaults to current date; may be in the future
-		x	End Date, input id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__End_dateInput_text" 
-				Radio button: input id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever" type="radio" checked="checked" value="rdbNever"
-				defaults to "Never", may be in the future
 	#>
 	
 	<#	Note about radio buttons and checkboxes:
@@ -888,14 +885,28 @@ function Update-Product {
 		$RadioButton.Click()
 	}
 	
+<#
+		x	End Date
+				To specify a date, click the radio button and then set the text field.
+				Radio button: 
+					id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
+				Text field:
+					id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__End_dateInput_text" 
+					Date must be in the future.
+		
+			Never
+				Radio button:
+					id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
+#>
+
 	# Using similar logic, if End Date is empty, product will be active forever.
 	if ( $Product.'End Date' -notlike $null ) {
 		# Click the button to select End Date.
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbEndDate"
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
 		$RadioButton.Click()
 		# Now set the date.
 		$StopDate = [DateTime]$Product.'End Date'
-		$StopDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*End_dateInput_text"
+		$StopDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__End_dateInput_text"
 		$StopDateField | Set-TextField $StopDate.ToShortDateString()
 	} else {
 		# End Date is empty, so set to Never.
