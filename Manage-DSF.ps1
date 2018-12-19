@@ -845,7 +845,8 @@ function Update-Product {
 	#	this should be possible.  We'll need to validate the path before attempting to upload, logging 
 	#	an error if it's bad.
 	if ( $Product.'Product Icon' -notlike $null ) {
-		#Upload-Thumbnail -Document $BrowserObject -URL $Product.'Product Icon'
+		# Upload the image file 
+		Upload-Thumbnail -BrowserObject $BrowserObject -ImageURI $Product.'Product Icon'
 	}
 	
 	# Switch to Details section.
@@ -1285,6 +1286,42 @@ function Update-Product {
 		Finish (button), input id="ctl00_ctl00_C_M_ctl00_W_FinishNavigationTemplateContainerID_FinishButton"
 	#>
 	
+}
+
+function Upload-Thumbnail {
+	param (
+		[Parameter( Mandatory )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
+
+		[ValidateNotNullOrEmpty()]
+		[string] $ImageURI
+	)
+	
+	# Verify file actually exists.
+	if ( test-path $ImageURI ) {
+		# Seems legit; proceed with upload process.
+		# Start by clicking "Edit" button.
+		$EditButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_EditProductImage"
+		if ( $EditButton -notlike $null ) {
+			$EditButton.Click()
+			# Once clicked, image graphic is replaced with a set of radio buttons.
+			# Select "Upload Custom Icon" to proceed.
+			$UploadIconButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon"
+			$UploadIconButton.Click()
+			# Now we have a checkbox and a text field to manipulate.
+			# Check the box to use this image for all of this product's thumbnails.
+			$UseSameForAllChk = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
+			Set-CheckBox $UseSameForAllChk
+			# Try to set the text field so we don't have to mess with a file dialog.
+			$ThumbnailField = Find-SeElement -Driver $BrowserObject -Name "ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"
+			$ThumbnailField | Set-TextField $ImageURI
+			# Click the "Upload" button, which will cause the page to reload.
+			$UploadButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
+			$UploadButton.Click()
+		} else {
+			throw "Error: Couldn't find Edit button for image upload!"
+		}
+	}
 }
 
 function Wait-LinkDoNotUse {
