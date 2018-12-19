@@ -918,13 +918,14 @@ function Update-Product {
 	# Turnaround time is the same deal -- combo radio button and text field.
 	if ( $Product.'Turnaround Time' -notlike $null ) {
 		# Set Value (the second radio button)
-		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbValue" )
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
 		$RadioButton.Click()
 		# Now fill in the number of days.
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl__Value" ).Value = $Product.'Turnaround Time'
+		$TurnaroundField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl__Value"
+		$TurnaroundField | Set-TextField $Product.'Turnaround Time'
 	} else {
 		# None specified; set radio button to None.
-		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbNone" )
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbNone"
 		$RadioButton.Click()
 	}
 	
