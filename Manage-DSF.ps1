@@ -511,6 +511,62 @@ function Select-FromList {
 	End {}
 }
 
+function Set-CheckBox {
+	<#
+		.Description
+		Given a checkbox object and a desired state, check the checkbox' current state and 
+		change it if necessary.  Default is to set it "Checked;" supply -Off parameter if you
+		want to un-check it.
+		
+		.Synopsis
+		Given a checkbox object and desired state, set the object accordingly.
+		
+		.Parameter CheckBoxObject
+		Selenium web element representing the checkbox form object.
+		
+		.Parameter Off
+		Set this if you want to uncheck the box.
+	#>
+	
+	param (
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $CheckBoxObject,
+		
+		[switch] $Off = $false
+	)
+	
+	begin {}
+	
+	process {
+		# Check if we're turning it on or off.
+		if ( $Off ) {
+			# User requested uncheck.
+			if ( $CheckBoxObject.Selected -eq $True ) {
+				# Currently checked, so click to uncheck.
+				$CheckBoxObject.Click()
+				
+				# Verify it's now unchecked.
+				if ( $CheckBoxObject.Selected -ne $False ) {
+					throw "Error:  Unable to uncheck $($CheckBoxObject.GetAttribute("ID"))!"
+				}
+			}
+		} else {
+			# User requested check.
+			if ( $CheckBoxObject.Selected -eq $False ) {
+				# Currently not checked, so click to check.
+				$CheckBoxObject.Click()
+				
+				# Verify it's now checked.
+				if ( $CheckBoxObject.Selected -ne $True ) {
+					throw "Error:  Unable to check $($CheckBoxObject.GetAttribute("ID"))!"
+				}
+			}
+		}
+	}
+	
+	end {}
+}
+
 function Set-RichTextField {
 	<#
 		.Synopsis
@@ -947,10 +1003,11 @@ function Update-Product {
 	#>
 	
 	# Exempt from Shipping Charge?
+	$ExemptShipChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
 	if ( $Product.'Exempt Shipping' -in $YesValues ) {
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShippingExempt" ).Checked = $true
+		Set-CheckBox $ExemptShipChk
 	} else {
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShippingExempt" ).Checked = $false
+		Set-CheckBox $ExemptShipChk -Off
 	}
 	
 	# Exempt from Sales Tax?
