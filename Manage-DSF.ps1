@@ -918,27 +918,33 @@ function Update-Product {
 		x	Turn Around Time, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone" type="radio" checked="checked" value="rdbNone"
 				either "None" or number of days, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl__Value"
 				number of days field is disabled if "None" is selected
-		x	Shipping Charges:
-				Exempt Shipping Charges, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
-		x	Tax:
-				Exempt Taxes, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
-		x	Mobile Supported
-				Yes, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
+				To supply a value, first click:
+					id="ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
 	#>
 
 	# Turnaround time is the same deal -- combo radio button and text field.
 	if ( $Product.'Turnaround Time' -notlike $null ) {
 		# Set Value (the second radio button)
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
 		$RadioButton.Click()
 		# Now fill in the number of days.
-		$TurnaroundField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl__Value"
+		$TurnaroundField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl__Value"
 		Set-TextField $TurnaroundField $Product.'Turnaround Time'
 	} else {
 		# None specified; set radio button to None.
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbNone"
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
 		$RadioButton.Click()
 	}
+	
+	<#
+			x	Shipping Charges:
+				Exempt Shipping Charges, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
+		x	Tax:
+				Exempt Taxes, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
+		x	Mobile Supported
+				Yes, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
+				No, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
+	#>
 	
 	# Exempt from Shipping Charge?
 	if ( $Product.'Exempt Shipping' -in $YesValues ) {
