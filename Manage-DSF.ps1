@@ -661,7 +661,7 @@ function Set-TextField {
 	#>
 	
 	param(
-		[Parameter( Mandatory, ValueFromPipeLine, Position=1 )]
+		[Parameter( Mandatory, Position=1 )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
 		
 		[Parameter( Position=2 )]
@@ -878,7 +878,7 @@ function Update-Product {
 		#>
 		$StartDate = [DateTime]$Product.'Start Date'
 		$StartDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__Begin_dateInput_text"
-		$StartDateField | Set-TextField $StartDate.ToShortDateString()
+		Set-TextField $StartDateField $StartDate.ToShortDateString()
 	} else {
 		# Start Date is empty, so set product to Active.
 		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
@@ -907,7 +907,7 @@ function Update-Product {
 		# Now set the date.
 		$StopDate = [DateTime]$Product.'End Date'
 		$StopDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__End_dateInput_text"
-		$StopDateField | Set-TextField $StopDate.ToShortDateString()
+		Set-TextField $StopDateField $StopDate.ToShortDateString()
 	} else {
 		# End Date is empty, so set to Never.
 		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
@@ -933,7 +933,7 @@ function Update-Product {
 		$RadioButton.Click()
 		# Now fill in the number of days.
 		$TurnaroundField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl__Value"
-		$TurnaroundField | Set-TextField $Product.'Turnaround Time'
+		Set-TextField $TurnaroundField $Product.'Turnaround Time'
 	} else {
 		# None specified; set radio button to None.
 		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*TurnAroundTimeCtrl_rdbNone"
