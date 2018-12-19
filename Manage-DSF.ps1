@@ -475,6 +475,9 @@ function Select-FromList {
 	
 	Process {
 		try {
+			# Status indicator
+			$Success = $false
+			
 			# Create a Selenium Select object to find what we want.
 			$Selector = New-Object -TypeName OpenQA.Selenium.Support.UI.SelectElement( $ListObject )
 			# Have it select out target out of the list.
@@ -482,14 +485,22 @@ function Select-FromList {
 			$Selector.SelectByText( $Item )
 			
 			# Now verify the item is actually selected.
+			# This is different from not being found; the item exists but wasn't selected for some reason.
 			if ( $Selector.SelectedOption.Text -ne $Item ) {
 				throw "Couldn't select `'$TargetItem`' as requested!"
 			}
 		}
 		
+		catch [OpenQA.Selenium.NoSuchElementException] {
+			# SelectElement will throw this if the requested item wasn't found.
+			# This could be a critical failure, so we want to log it.
+			write-log -fore red "Error: Attempt to select '$Item' from list failed because it wasn't found."
+			write-log -fore red "Actual list contains:"
+			write-log -fore red "$( $ListObject | Out-String )"
+		}
+		
 		catch {
-			# We could do something here, but for now just hand it off to the main exception handler.
-			#Handle-Exception $_
+			write-log -fore red "Error: Attempt to select '$Item' from list failed because the selection didn't stick."
 		}
 		
 		finally {
@@ -532,6 +543,11 @@ function Set-RichTextField {
 	
 	<#	Parameter planning
 	
+		***	Note, apparently for parameter sets to work, each one must have one parameter
+			that is not used in any other set.  So, in our case the "ID" and "XPath" sets
+			should work because they have unique parameters, but "NonIFrame" needs a 
+			unique parameter.  Let's solve that by calling it RichEditFrame instead.
+	
 		Expected uses:
 			Editor is in an iFrame, and can be identified by ID after switching to it.
 			We'd require:
@@ -549,7 +565,7 @@ function Set-RichTextField {
 				
 			Editor is *NOT* in an iFrame, so we don't need to switch to it; caller will
 			supply the FieldObject similar to calling Set-TextField.  We need:
-				FieldObject
+				FieldObject (the editor itself)
 				Text
 	#>
 	
@@ -562,8 +578,10 @@ function Set-RichTextField {
 	
 		[Parameter( Mandatory, ParameterSetName="ID" )]
 		[Parameter( Mandatory, ParameterSetName="XPath" )]
-		[Parameter( Mandatory, ParameterSetName="NonIFrame" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
+		
+		[Parameter( Mandatory, ParameterSetName="NonIFrame" )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $RichEditFrame,
 		
 		[Parameter( Mandatory, ParameterSetName="ID" )]
 		[string] $ID,
@@ -571,13 +589,16 @@ function Set-RichTextField {
 		[Parameter( Mandatory, ParameterSetName="XPath" )]
 		[string] $XPath,
 		
-		[string] $Text = ""
+		[Parameter( Mandatory, ParameterSetName="ID" )]
+		[Parameter( Mandatory, ParameterSetName="XPath" )]
+		[Parameter( Mandatory, ParameterSetName="NonIFrame" )]
+		[string] $Text
 	)
 	
 	if ( $PSCmdlet.ParameterSetName -eq "NonIFrame" ) {
 		# We have a rich text editor that isn't in an iFrame, so the caller
-		#	has supplied only the BrowserObject, ID and Text parameters.
-		$Editor = Find-SeElement -Driver $BrowserObject
+		#	has supplied only the FieldObject and Text parameters.
+		$Editor = $RichEditFrame
 		
 		# Make sure we actually got something we can use.
 		if ( $Editor -notlike $null ) {
@@ -586,7 +607,7 @@ function Set-RichTextField {
 			# Send text to editor field.
 			$Editor.SendKeys( $Text )
 		} else {
-			throw "Couldn't find non-iFrame rich text editor with ID `'$ID`'."
+			throw "Editor object seems to be empty."
 		}
 	} else {
 		# The editor will be inside an iFrame.  To navigate to the actual edit field,
@@ -784,13 +805,13 @@ function Update-Product {
 
 	# Long Description
 	if ( $Product.'Long Description' -notlike $null ) {
-		#$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
+		$LongDescField = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
 		# This editor isn't in an iFrame.
-		Set-RichTextField -BrowserObject $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv" -Text $Product.'Long Description'
+		Set-RichTextField -RichEditFrame $LongDescField -Text $Product.'Long Description'
 	}
 	
 	# Switch to Settings section.
-	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "*TabSettings"
+	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabSettings"
 	$NavTab.Click()
 	
 	# Display priority
@@ -810,13 +831,20 @@ function Update-Product {
 	if ( $Product.'Display Priority' -notlike $null ) {	
 		# If a value is specified, try to set the selection to a matching value.
 		# If match fails, print a warning and set it to Standard.
-		$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*DropDownListRank"
-		if ( $Picklist.innerHTML -eq $Product.'Display Priority' ) {
+		$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
+		$Set = $Picklist | Select-FromList $Product.'Display Priority'
+		# Check result of request; log a message if it defaults to Standard.
+		if ( $Set -ne $true ) {
+			write-log -fore yellow "Warning: No Display Priority option matched the imported data; setting to Standard."
+			$null = $Picklist | Select-FromList "Standard"
+		}
+<#		if ( $Picklist.innerHTML -eq $Product.'Display Priority' ) {
 			( $Picklist | where innerHTML -eq $Product.'Display Priority' ).Selected = $true 
 		} else {
 			write-log -fore yellow "Warning: No Display Priority option found to match `'$($Product.'Display Priority')`'; setting to Standard."
 			( $Picklist | where innerHTML -eq "Standard" ).Selected = $true 
 		}
+#>
 	}
 	
 	<#
@@ -852,24 +880,26 @@ function Update-Product {
 			that is the format DSF is expecting.
 		#>
 		$StartDate = [DateTime]$Product.'Start Date'
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*Begin_dateInput_text" ).Value = $StartDate.ToShortDateString()
+		$StartDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__Begin_dateInput_text"
+		$StartDateField | Set-TextField $StartDate.ToShortDateString()
 	} else {
 		# Start Date is empty, so set product to Active.
-		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl__YesNo_1" )
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
 		$RadioButton.Click()
 	}
 	
 	# Using similar logic, if End Date is empty, product will be active forever.
 	if ( $Product.'End Date' -notlike $null ) {
 		# Click the button to select End Date.
-		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbEndDate" )
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbEndDate"
 		$RadioButton.Click()
 		# Now set the date.
 		$StopDate = [DateTime]$Product.'End Date'
-		( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*End_dateInput_text" ).Value = $StopDate.ToShortDateString()
+		$StopDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*End_dateInput_text"
+		$StopDateField | Set-TextField $StopDate.ToShortDateString()
 	} else {
 		# End Date is empty, so set to Never.
-		$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ProductActivationCtrl_rdbNever" )
+		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
 		$RadioButton.Click()
 	}
 	
