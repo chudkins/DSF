@@ -1314,7 +1314,15 @@ function Upload-Thumbnail {
 			Set-CheckBox $UseSameForAllChk
 			# Try to set the text field so we don't have to mess with a file dialog.
 			$ThumbnailField = Find-SeElement -Driver $BrowserObject -Name "ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"
-			$ThumbnailField | Set-TextField $ImageURI
+			# However, the element may not accept keyboard input.  Try to change its display style
+			#	to work around this problem.
+			<#
+				field = driver.find_element_by_id("selectedFile")
+				driver.execute_script("arguments[0].style.display = 'block';", field)
+			#>
+			$BrowserObject.ExecuteScript("arguments[0].style.display = 'block';", $ThumbnailField )
+			# If that worked, we should be able to set the text field now.
+			Set-TextField $ThumbnailField $ImageURI
 			# Click the "Upload" button, which will cause the page to reload.
 			$UploadButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
 			$UploadButton.Click()
