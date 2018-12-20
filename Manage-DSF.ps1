@@ -880,9 +880,10 @@ function Update-Product {
 		# Log a message if SkipImageUpload is set.
 		if ( $SkipImageUpload ) {
 			write-log -fore yellow "Warning: File path provided but SkipImageUpload is set; ignoring."
+		} else {
+			# Upload the image file 
+			Upload-Thumbnail -BrowserObject $BrowserObject -ImageURI $Product.'Product Icon'
 		}
-		# Upload the image file 
-		Upload-Thumbnail -BrowserObject $BrowserObject -ImageURI $Product.'Product Icon'
 	}
 	
 	# Switch to Details section.
@@ -1070,10 +1071,10 @@ function Update-Product {
 		Manage inventory:
 			Enabled, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
 			if checked, more fields become available...
-				Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
-				Allow back Order, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
-				Show inventory when back order is allowed, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
-				Notification Email Id, <textarea name="ctl00$ctl00$C$M$ctl00$W$ctl01$txtEmailId" id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId" rows="3" cols="45"></textarea>
+				
+				
+				
+				
 				Replenish inventory - either Add or Reset:
 					Add XXX to existing
 						Radio button to activate, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInv" type="radio" value="RbInvAddToExistingInv"
@@ -1086,7 +1087,6 @@ function Update-Product {
 	# If any values are given for inventory management, turn this on and fill them in.
 	# If none of these values are specified, leave the setting alone.
 	$ManageInventory = $null
-	$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory"
 	
 	switch ( $Product.'Manage Inventory' ) {
 		# If explicitly set to "Yes," turn the checkbox on.
@@ -1110,37 +1110,45 @@ function Update-Product {
 	#	that is deactivated if this checkbox is not checked.
 	# For now, see what happens if we submit the form anyway.
 	if ( $ManageInventory -eq $true ) {
-		$Checkbox = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory" )
-		#$Checkbox.SetActive()
-		# Set "checked" state to False, because Click will toggle it.
-		$Checkbox.Checked = $false
-		Click-Wait $Checkbox
+		# Check the box for Manage Inventory = Enabled.
+		$MgInvenChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
+		Set-CheckBox $MgInvenChk
 		
-		# Threshold
+		# Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
 		if ( $Product.Threshold -notlike $null ) {
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtThQty" ).Value = $Product.Threshold
+			$InvThreshold = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
+			Set-TextField $InvThreshold $Product.Threshold
 		}
 		
-		# Allow back Order
-		$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkBackOrderAllowed"
-		$Checkbox.Checked = ( $Product.'Allow Back Order' -in $YesValues )
+		# Allow Back Order, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
+		$AllowBkOrdChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
+		if ( $Product.'Allow Back Order' -in $YesValues ) {
+			Set-CheckBox $AllowBkOrdChk
+		} else {
+			Set-CheckBox $AllowBkOrdChk -Off
+		}
 		
-		# Show inventory when back ordered
-		$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkShowInventoryWhenBackOrderIsAllowed"
-		$Checkbox.Checked = ( $Product.'Show Inventory with Back Order' -in $YesValues )
+		# Show inventory when back order is allowed, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
+		$ShowInvBOChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
+		if ( $Product.'Show Inventory with Back Order' -in $YesValues ) {
+			Set-CheckBox $ShowInvBOChk
+		} else {
+			Set-CheckBox $ShowInvBOChk -Off
+		}
 		
-		# Notification Email Id
-		# If you want to CLEAR this field, input a blank space instead of leaving it empty.
+		# Notification Email Id, id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
+		$NotifyEmailField = $BrowserObject | Wait-Link -TagName "textarea" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
 		if ( $Product.'Notify Emails' -notlike $null ) {
-			( $BrowserObject | Wait-Link -TagName "textarea" -Property "id" -Pattern "*txtEmailId" ).Value = $Product.'Notify Emails'
+			Set-TextField $NotifyEmailField $Product.'Notify Emails'
 		}
 		
-		# Replenish inventory - Note this is either one or the other!
-		#	o Add XXX to existing
-		#	o Reset to XXX
-		
-		# For some reason, calling SetActive or Click on these radio buttons causes the web form
-		#	to freeze -- at least from the GUI.  So, try proceeding without doing that.
+		<#	Replenish inventory - Note this is either one or the other!
+				o Add XXX to existing
+				o Reset to XXX
+			
+			For some reason, calling SetActive or Click on these radio buttons causes the web form
+			to freeze -- at least from the GUI.  So, try proceeding without doing that.
+		#>
 		
 		if ( $Product.'Add to Inventory' -notlike $null ) {
 			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInv" )
