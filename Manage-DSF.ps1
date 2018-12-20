@@ -46,8 +46,24 @@
 
 [cmdletbinding()]
 
+<#
+	.Synopsis
+	Given a CSV file, add or update products in EFI's Digital Storefront.
+	
+	.Parameter ProductFile
+	The file containing product details.
+	
+	.Parameter UserName
+	Account name to use when signing into the web site.
+	
+	.Parameter Password
+	Password associated with the account.
+	
+	.Parameter SkipImageUpload
+	Don't upload product thumbnail images.  Default is to upload them if a valid file path is provided.
+#>
+
 Param (
-	#[ValidateNotNullOrEmpty()]
 	[ValidateScript({
 		if ( ( $_ -like $null ) -or ( test-path $_ ) ) {
 			$true
@@ -55,14 +71,15 @@ Param (
 			throw "ProductFile - Supplied path not found: $_!"
 		}
 	})]
-#>
 	$ProductFile = "C:\Users\Carl\Documents\ADS Work\Automation\Test_Product_List.csv",
+
 	[ValidateNotNullOrEmpty()]
-	# Account name of user to log in.
 	[string] $UserName = "DefaultUser",
+
 	[ValidateNotNullOrEmpty()]
-	# Password for user account.
-	[string] $Password
+	[string] $Password,
+	
+	[switch] $SkipImageUpload = $false
 )
 
 Begin {
@@ -448,6 +465,19 @@ function Manage-Product {
 				<option value="12">Digital Download</option>
 				<option value="20">EFI SmartCanvas Powered by DirectSmile</option>
 			Next, input id="ctl00_ctl00_C_M_btnNext"		
+	#>
+}
+
+function Run-JavaScript {
+	<#
+		.Synopsis
+		Execute JavaScript using the specified web driver object.
+		
+		.Parameter WebDriver
+		The driver/browser object that will execute the script.
+		
+		.Parameter Arguments
+		Object or collection containing arguments to the script.
 	#>
 }
 
@@ -842,9 +872,15 @@ function Update-Product {
 	# Now, if there's a thumbnail image to upload, do that.
 	#	Issue 1
 	#	As long as the web form accepts a valid file path WITHOUT the user populating it via a dialog,
-	#	this should be possible.  We'll need to validate the path before attempting to upload, logging 
+	#	this should be possible.  Upload-Thumbnail will validate the path before attempting to upload, logging 
 	#	an error if it's bad.
+	
+	# If we have a path to image file, and SkipImageUpload isn't set, try to upload.
 	if ( $Product.'Product Icon' -notlike $null ) {
+		# Log a message if SkipImageUpload is set.
+		if ( $SkipImageUpload ) {
+			write-log -fore yellow "Warning: File path provided but SkipImageUpload is set; ignoring."
+		}
 		# Upload the image file 
 		Upload-Thumbnail -BrowserObject $BrowserObject -ImageURI $Product.'Product Icon'
 	}
@@ -1310,8 +1346,8 @@ function Upload-Thumbnail {
 			$UploadIconButton.Click()
 			# Now we have a checkbox and a text field to manipulate.
 			# Check the box to use this image for all of this product's thumbnails.
-			$UseSameForAllChk = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
-			Set-CheckBox $UseSameForAllChk
+			$SameImageForAllChk = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
+			Set-CheckBox $SameImageForAllChk
 			# Try to set the text field so we don't have to mess with a file dialog.
 			$ThumbnailField = Find-SeElement -Driver $BrowserObject -Name "ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"
 			# However, the element may not accept keyboard input.  Try to change its display style
@@ -1320,8 +1356,11 @@ function Upload-Thumbnail {
 				field = driver.find_element_by_id("selectedFile")
 				driver.execute_script("arguments[0].style.display = 'block';", field)
 			#>
-			$BrowserObject.ExecuteScript("arguments[0].style.display = 'block';", $ThumbnailField )
+			$ScriptString = 'document.getElementsByName("ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01")[0].style.display = ''block'';'
+			$BrowserObject.ExecuteScript( $ScriptString )
 			# If that worked, we should be able to set the text field now.
+			# Find it again because it has now changed?
+			$ThumbnailField = Find-SeElement -Driver $BrowserObject -Name "ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"
 			Set-TextField $ThumbnailField $ImageURI
 			# Click the "Upload" button, which will cause the page to reload.
 			$UploadButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
