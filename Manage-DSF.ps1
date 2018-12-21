@@ -399,7 +399,10 @@ function Invoke-Login {
 		#Click-Link $LoginButton
 		# Sleep after clicking, because we don't yet know how to reliably detect when storefront page is complete.
 		#	Issue 2.
-		Click-Wait $LoginButton 30
+		#Click-Wait $LoginButton 30
+		$LoginButton.Click()
+		
+		$ReturnLink = $Browser.Url
 
 		return $ReturnLink
 	}
@@ -625,6 +628,10 @@ function Set-CheckBox {
 	begin {}
 	
 	process {
+		# Grab the ID attribute and save it for later.
+		$ChkBoxID = $CheckBoxObject.GetAttribute("Id")
+		$ChkBoxDriver = $CheckBoxObject.WrappedDriver
+		
 		# Check if we're turning it on or off.
 		if ( $Off ) {
 			# User requested uncheck.
@@ -633,8 +640,9 @@ function Set-CheckBox {
 				$CheckBoxObject.Click()
 				
 				# Verify it's now unchecked.
-				if ( $CheckBoxObject.Selected -ne $False ) {
-					throw "Error:  Unable to uncheck $($CheckBoxObject.GetAttribute("ID"))!"
+				$RealCheckBox = WaitFor-ElementToBeClickable $ChkBoxDriver -ID $ChkBoxID 5
+				if ( $RealCheckBox.Selected -ne $False ) {
+					throw "Error:  Unable to uncheck $($RealCheckBox.GetAttribute("ID"))!"
 				}
 			}
 		} else {
@@ -647,8 +655,9 @@ function Set-CheckBox {
 				# If this happens, the element reference will become stale.
 				
 				# Verify it's now checked.
-				if ( $CheckBoxObject.Selected -ne $True ) {
-					throw "Error:  Unable to check $($CheckBoxObject.GetAttribute("ID"))!"
+				$RealCheckBox = WaitFor-ElementToBeClickable $ChkBoxDriver -ID $ChkBoxID 5
+				if ( $RealCheckBox.Selected -ne $True ) {
+					throw "Error:  Unable to check $($RealCheckBox.GetAttribute("ID"))!"
 				}
 			}
 		}
@@ -1179,9 +1188,6 @@ function Update-Product {
 	#	that is deactivated if this checkbox is not checked.
 	# For now, see what happens if we submit the form anyway.
 	if ( $ManageInventory -eq $true ) {
-		# Debug:  Dump info on this element.
-		$MgInvenChk | Dump-ElementInfo -All
-		
 		# Check the box for Manage Inventory = Enabled.
 		Set-CheckBox $MgInvenChk
 		
@@ -1540,7 +1546,7 @@ function WaitFor-ElementExists {
 		
 		Note that just because it exists, it's not necessarily usable yet.  See WaitFor-ElementToBeClickable.
 		
-		.Parameter $WebDriver
+		.Parameter WebDriver
 		Web driver (browser) to use in finding the element.
 		
 		.Parameter TimeInSeconds
@@ -1557,9 +1563,14 @@ function WaitFor-ElementExists {
 	#>
 	
 	param (
-		[Parameter( Mandatory )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="ID" )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="XPath" )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="LinkText" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
+		[Parameter( ParameterSetName="ID" )]
+		[Parameter( ParameterSetName="XPath" )]
+		[Parameter( ParameterSetName="LinkText" )]
 		[int] $TimeInSeconds = 10,
 
 		[Parameter( ParameterSetName="ID" )]
@@ -1607,17 +1618,16 @@ function WaitFor-ElementExists {
 function WaitFor-ElementToBeClickable {
 	<#
 		.Synopsis
-		Given some way of finding a web element, wait until it exists somewhere in the page.
+		Given some way of finding a web element, wait until it exists and can be clicked.
 		
 		.Description
-		Try to find a web element using the specified information.  
-		When it exists and is clickable, return the element.
+		Try to find a web element using the specified information.  When it is clickable, return the element.
 		
-		.Parameter $WebDriver
+		.Parameter WebDriver
 		Web driver (browser) to use in finding the element.
 		
-		.Parameter TimeInSeconds
-		Number of seconds to wait before giving up.  Default is 10.
+		.Parameter WebElement
+		Web element to wait for.
 		
 		.Parameter ID
 		ID tag to search by.
@@ -1627,22 +1637,35 @@ function WaitFor-ElementToBeClickable {
 		
 		.Parameter LinkText
 		Link text string to search by.
+		
+		.Parameter TimeInSeconds
+		Number of seconds to wait before giving up.  Default is 10.
 	#>
 	
 	param (
-		[Parameter( Mandatory )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="ID" )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="XPath" )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="LinkText" )]
+		[Parameter( Mandatory, Position=1, ParameterSetName="Element" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
-		[int] $TimeInSeconds = 10,
-
-		[Parameter( ParameterSetName="ID" )]
+		[Parameter( Position=2, ParameterSetName="Element" )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
+		
+		[Parameter( Position=2, ParameterSetName="ID" )]
 		[string] $ID,
 		
-		[Parameter( ParameterSetName="XPath" )]
+		[Parameter( Position=2, ParameterSetName="XPath" )]
 		[string] $XPath,
 		
-		[Parameter( ParameterSetName="LinkText" )]
-		[string] $LinkText
+		[Parameter( Position=2, ParameterSetName="LinkText" )]
+		[string] $LinkText,
+		
+		[Parameter( Position=3, ParameterSetName="ID" )]
+		[Parameter( Position=3, ParameterSetName="XPath" )]
+		[Parameter( Position=3, ParameterSetName="LinkText" )]
+		[Parameter( Position=3, ParameterSetName="Element" )]
+		[int] $TimeInSeconds = 10
 	)
 	
 	# This object's job is to wait for something.
@@ -1663,6 +1686,10 @@ function WaitFor-ElementToBeClickable {
 			"LinkText"	{
 				$Locator = "LinkText: $LinkText"
 				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( [OpenQA.Selenium.by]::LinkText($LinkText)))
+			}
+			"Element"	{
+				$Locator = "Element: $($WebElement.TagName)"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( $WebElement ))
 			}
 		}
 		
@@ -1808,7 +1835,8 @@ Function Write-Log {
 
 	# Snips of text we need to match, to find various controls or input fields
 	#	Use '' instead of "" to avoid accidental substitutions.
-	$AdminLinkSnip = 'myadmin-link'
+	#$AdminLinkSnip = 'myadmin-link'
+	$AdminLinkText = "Administration"
 	$ProductsLinkSnip = 'ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem'
 
 	# What counts as a yes/no value?
@@ -1847,15 +1875,15 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	#write-host -fore yellow $AdminLink.GetAttribute("href")
 
 	# Verify that we're logged in.  There won't be an Administration link if we aren't.
-	$AdminControl = Find-SeElement -Driver $Browser -ClassName $AdminLinkSnip
-	#$Browser.FindElementByClassName("myadmin-link")
-	#$AdminControl = $Browser | Wait-Link -TagName "div" -Property "class" -Pattern "myadmin-link"
+	$AdminControl = $Browser.FindElementByCssSelector(".myadmin-link")
+	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
+	$AdminControl = WaitFor-ElementToBeClickable -WebDriver $Browser -WebElement $AdminControl 30
 	if ( $AdminControl -notlike $null ) {
 		write-log -fore green "Admin link found; successfully logged in!"
-	} # else Wait-Link should have timed out and thrown an exception.
+	}
 	
-	##### Logged in
-	Click-Link $AdminControl
+	# Finally, we can click the Administration link to get started!
+	$AdminControl.Click()
 }
 
 Process {
