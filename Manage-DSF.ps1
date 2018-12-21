@@ -211,6 +211,63 @@ function Click-Wait {
 	}
 }
 
+function Dump-ElementInfo {
+	<#
+		.Description
+		Print out information about the supplied web element, for debugging purposes.
+		Call this function instead of sticking "blah | gm | ft-auto | out-string" into the code.
+		
+		If you only want one section, specify it with the appropriate switch.
+		If you want everything, specify -All.
+		
+		.Parameter WebElement
+		Selenium web element to examine.
+		
+		.Parameter WebInfo
+		Dump the element's properties, the ones you can see in the shell.
+		
+		.Parameter MemberInfo
+		Dump the output of Get-Member for this object.
+		
+		.Parameter All
+		Dump all types of info.
+	#>
+	
+	param (
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
+		
+		[switch] $WebInfo,
+		
+		[switch] $MemberInfo,
+		
+		[switch] $All
+	)
+	
+	begin {}
+	
+	process {
+		# Check if object is empty; if so, log a message but don't bother trying to dump info.
+		if ( $WebElement -like $null ) {
+			write-log -fore yellow "Warning: Attempted to dump info from a null element."
+		} else {
+			# WebElement info section.
+			if ( $WebInfo -or $All ) {
+				$Output = $WebElement | out-string
+				write-log -fore gray $Output
+			}
+			
+			# Member info section.
+			if ( $MemberInfo -or $All ) {
+				$Output = $WebElement | get-member | format-table -auto | out-string
+				write-log -fore gray $Output
+			}
+		}
+	}
+	
+	end {}
+}
+
 function FixUp-Unit {
 	<#
 		.Synopsis
@@ -585,6 +642,9 @@ function Set-CheckBox {
 			if ( $CheckBoxObject.Selected -eq $False ) {
 				# Currently not checked, so click to check.
 				$CheckBoxObject.Click()
+				
+				# Sometimes, changing checkbox state causes the page to be refreshed.
+				# If this happens, the element reference will become stale.
 				
 				# Verify it's now checked.
 				if ( $CheckBoxObject.Selected -ne $True ) {
@@ -1088,19 +1148,28 @@ function Update-Product {
 	# If none of these values are specified, leave the setting alone.
 	$ManageInventory = $null
 	
+	# Get the checkbox control; ID is the same whether checked or not.
+	$MgInvenChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
+	
 	switch ( $Product.'Manage Inventory' ) {
 		# If explicitly set to "Yes," turn the checkbox on.
 		{ $_ -in $YesValues }	{ write-debug "ManageInv = True" ; $ManageInventory = $true }
+		
 		# If explicitly set to "No," turn the checkbox off.
 		{ $_ -in $NoValues }	{ write-debug "ManageInv = False" ; $ManageInventory = $false }
-		# Check the box if any inventory management values are given,
+		
+		# Enable management if any inventory management values are given,
 		#	even if Manage isn't specified.  (Sanity check!)
 		{ $Product.Threshold -or
 			$Product.'Allow Back Order' -or
 			$Product.'Show Inventory with Back Order' -or
 			$Product.'Add to Inventory' -or
 			$Product.'Reset Inventory'
-		}						{ $ManageInventory = $true }
+		}						{ 
+									# Enable and log a warning.
+									$ManageInventory = $true
+									write-log -fore yellow "Warning: Manage Inventory not specified, but management items were; enabling."
+								}
 	}
 	
 	# So if none of the conditions are met, $ManageInventory will still be NULL.
@@ -1110,8 +1179,10 @@ function Update-Product {
 	#	that is deactivated if this checkbox is not checked.
 	# For now, see what happens if we submit the form anyway.
 	if ( $ManageInventory -eq $true ) {
+		# Debug:  Dump info on this element.
+		$MgInvenChk | Dump-ElementInfo -All
+		
 		# Check the box for Manage Inventory = Enabled.
-		$MgInvenChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
 		Set-CheckBox $MgInvenChk
 		
 		# Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
@@ -1149,7 +1220,7 @@ function Update-Product {
 			For some reason, calling SetActive or Click on these radio buttons causes the web form
 			to freeze -- at least from the GUI.  So, try proceeding without doing that.
 		#>
-		
+		#[nwch]
 		if ( $Product.'Add to Inventory' -notlike $null ) {
 			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInv" )
 			$RadioButton.isDisabled = $false
@@ -1165,10 +1236,7 @@ function Update-Product {
 		}
 	} elseif ( $ManageInventory -eq $false ) {
 		# Turn the checkbox off.
-		$Checkbox = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkManageInventory" )
-		#$Checkbox.SetActive()
-		$Checkbox.Checked = $true
-		$Checkbox.Click()
+		Set-CheckBox $MgInvenChk -Off
 	}
 	
 	<#
@@ -1379,89 +1447,6 @@ function Upload-Thumbnail {
 	}
 }
 
-function Wait-LinkDoNotUse {
-	<#	Loop until the specified object becomes available.
-		So, where you might do this...
-			$UserField = $CurrentDoc.IHTMLDocument3_getElementsByTagName('input') | Where-Object {$_.name -like $UserFieldSnip }
-		...instead you do this:
-			$UserField = $CurrentDoc | Wait-Link -TagName "input" -Property "name" -Pattern $UserFieldSnip
-			
-		TODO: Return something unique if wait times out, so the calling function has a chance to handle
-			the lack of link, such as forcing a page reload or navigating to some known location.
-	#>
-	
-	<#
-		.Synopsis
-		Find an element in an IE Document by waiting until it becomes available.
-		
-		.Parameter Document
-		IE Document to search.  May be passed via pipeline.
-		
-		.Parameter TagName
-		Tag name, such as "input" or "span"; will be passed to IHTMLDocument3_getElementsByTagName.
-		
-		.Parameter Property
-		The property of the found element to search.
-		
-		.Parameter Pattern
-		Wildcard pattern to match when searching, such as "*my_UserName".
-		
-		.Parameter Timeout
-		Number of seconds after which to give up waiting.  Default is 30.
-	#>
-	
-	Param(
-		[Parameter( Mandatory, ValueFromPipeLine )]
-		$Document,
-		
-		[Parameter( Mandatory )]
-		[ValidateNotNullOrEmpty()]
-		$TagName,
-		
-		[Parameter( Mandatory )]
-		[ValidateNotNullOrEmpty()]
-		$Property,
-		
-		[Parameter( Mandatory )]
-		[ValidateNotNullOrEmpty()]
-		$Pattern,
-		
-		$Timeout = 30
-		
-	)
-
-	Write-DebugLog "Wait for $TagName element with $Property matching `'$Pattern`'"
-	
-	# Create a Stopwatch object to keep track of time
-	$Stopwatch = New-Object System.Diagnostics.Stopwatch
-	$Stopwatch.Start()
-	
-	$TimedOut = $false
-	
-	do {
-		# Check if too much time has elapsed; break out if so.
-		if ( $Stopwatch.Elapsed.Seconds -ge $Timeout ) {
-			$TimedOut = $true
-			break
-		}
-		
-		# Test the result of the requested search.
-		# If the document hasn't loaded yet, or otherwise isn't populated, this should return nothing.
-		# Therefore, only when document is complete will we get our result.
-		$result = $Document.IHTMLDocument3_getElementsByTagName( $TagName ) | Where-Object { $_.$Property -like $Pattern }
-	}
-	until ( $result -notlike $null )
-	
-	if ( $TimedOut ) {
-		write-log -fore yellow "Timeout reached. Add better error handling to Wait-Link!"
-		throw "Timed out while waiting for $TagName element with $Property matching `'$Pattern`'"
-	}
-
-	# We made it this far, so presumably we got what we need.  Return it.
-	$result
-
-}
-
 function Wait-Link {
 	<#	Loop until the specified object becomes available.
 		So, where you might do this...
@@ -1543,6 +1528,153 @@ function Wait-Link {
 	# We made it this far, so presumably we got what we need.  Return it.
 	$result
 
+}
+
+function WaitFor-ElementExists {
+	<#
+		.Synopsis
+		Given some way of finding a web element, wait until it exists somewhere in the page.
+		
+		.Description
+		Try to find a web element using the specified information.  When it exists, return the element.
+		
+		Note that just because it exists, it's not necessarily usable yet.  See WaitFor-ElementToBeClickable.
+		
+		.Parameter $WebDriver
+		Web driver (browser) to use in finding the element.
+		
+		.Parameter TimeInSeconds
+		Number of seconds to wait before giving up.  Default is 10.
+		
+		.Parameter ID
+		ID tag to search by.
+		
+		.Parameter XPath
+		XPath to search by.
+		
+		.Parameter LinkText
+		Link text string to search by.
+	#>
+	
+	param (
+		[Parameter( Mandatory )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
+
+		[int] $TimeInSeconds = 10,
+
+		[Parameter( ParameterSetName="ID" )]
+		[string] $ID,
+		
+		[Parameter( ParameterSetName="XPath" )]
+		[string] $XPath,
+		
+		[Parameter( ParameterSetName="LinkText" )]
+		[string] $LinkText
+	)
+	
+	# This object's job is to wait for something.
+	$Waiter = New-Object OpenQA.Selenium.Support.UI.WebDriverWait($WebDriver, $TimeInSeconds)
+	
+	try {
+		# Check which info we're given, then wait until it exists or times out.
+		# If the waiter times out, it will throw an exception, which we'll handle.
+		switch ( $PSCmdlet.ParameterSetName ) {
+			"ID"		{
+				$Locator = "ID: $ID"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( [OpenQA.Selenium.by]::Id($ID)))
+			}
+			"XPath"		{
+				$Locator = "XPath: $XPath"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( [OpenQA.Selenium.by]::XPath($XPath)))
+			}
+			"LinkText"	{
+				$Locator = "LinkText: $LinkText"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( [OpenQA.Selenium.by]::LinkText($LinkText)))
+			}
+		}
+		
+		# We got something, so return the element to caller.
+		return $Gotcha
+	}
+	
+	catch [OpenQA.Selenium.WebDriverTimeoutException] {
+		# Timed out waiting for element.  What should we do here?
+		# Nothing.  Caller must check if something was returned.
+		write-log -fore yellow "Timed out waiting for $Locator"
+	}
+}
+
+function WaitFor-ElementToBeClickable {
+	<#
+		.Synopsis
+		Given some way of finding a web element, wait until it exists somewhere in the page.
+		
+		.Description
+		Try to find a web element using the specified information.  
+		When it exists and is clickable, return the element.
+		
+		.Parameter $WebDriver
+		Web driver (browser) to use in finding the element.
+		
+		.Parameter TimeInSeconds
+		Number of seconds to wait before giving up.  Default is 10.
+		
+		.Parameter ID
+		ID tag to search by.
+		
+		.Parameter XPath
+		XPath to search by.
+		
+		.Parameter LinkText
+		Link text string to search by.
+	#>
+	
+	param (
+		[Parameter( Mandatory )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
+
+		[int] $TimeInSeconds = 10,
+
+		[Parameter( ParameterSetName="ID" )]
+		[string] $ID,
+		
+		[Parameter( ParameterSetName="XPath" )]
+		[string] $XPath,
+		
+		[Parameter( ParameterSetName="LinkText" )]
+		[string] $LinkText
+	)
+	
+	# This object's job is to wait for something.
+	$Waiter = New-Object OpenQA.Selenium.Support.UI.WebDriverWait($WebDriver, $TimeInSeconds)
+	
+	try {
+		# Check which info we're given, then wait until it exists or times out.
+		# If the waiter times out, it will throw an exception, which we'll handle.
+		switch ( $PSCmdlet.ParameterSetName ) {
+			"ID"		{
+				$Locator = "ID: $ID"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( [OpenQA.Selenium.by]::Id($ID)))
+			}
+			"XPath"		{
+				$Locator = "XPath: $XPath"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( [OpenQA.Selenium.by]::XPath($XPath)))
+			}
+			"LinkText"	{
+				$Locator = "LinkText: $LinkText"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( [OpenQA.Selenium.by]::LinkText($LinkText)))
+			}
+		}
+		
+		# We got something, so return the element to caller.
+		return $Gotcha
+	}
+	
+	catch [OpenQA.Selenium.WebDriverTimeoutException] {
+		# Timed out waiting for element.  What should we do here?
+		# Nothing.  Caller must check if something was returned.
+		write-log -fore yellow "Timed out waiting for clickable $Locator"
+	}
 }
 
 function Write-DebugLog {
