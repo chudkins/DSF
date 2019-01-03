@@ -347,6 +347,7 @@ function Invoke-Login {
 		# Navigate to page and attempt to sign in.
 		write-log -fore cyan "Loading site: $SiteURL"
 		Enter-SeUrl $SiteURL -Driver $Browser
+		# Issue 7: $Browser is a global variable but not intentionally so.  Fix this for better scoping.
 		
 		##### Log in
 		# Get input fields
