@@ -306,42 +306,6 @@ function FixUp-Unit {
 	$Output
 }
 
-function Get-Link {
-	<#
-		.Synopsis
-		Given a document, find a link based on a property, such as "href".
-		
-		.Parameter Links
-		Collection of links to search.
-		
-		.Parameter Href
-		String containing the pattern to match in "href" property.
-	#>
-	
-	param (
-		$Links,
-		[string] $Href
-	)
-	
-	Begin {
-		# Initialize $Collection to an empty array
-		$Collection = @()
-	}
-	
-	Process {
-		foreach ( $l in $Links ) {
-			if ( $l.href -like $href ) {
-				#write-host $l.href
-				$Collection += $l
-			}
-		}
-	}
-	
-	End {
-		$Collection
-	}
-}
-
 function Invoke-Login {
 	<#
 		.Synopsis
@@ -1891,16 +1855,6 @@ Process {
 	#>
 
 	try {
-		<#
-		# Go to main Administration page
-		if ( $IE.LocationName -ne "Home" ) {
-			# Get links containing the admin snippet and click the first one, as there may be multiple.
-			$AdminLink = @( Get-Link $IE.Document.Links -Href $AdminHref )[0]
-			Click-Link $AdminLink
-		}
-		#>
-
-		
 		# BEGIN should have gotten us to the Administration page.
 		#Click-Link ( $Browser | Wait-Link -TagName "a" -Property "text" -Pattern "Administration" )
 
