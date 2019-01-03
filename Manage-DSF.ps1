@@ -504,6 +504,8 @@ function Run-JavaScript {
 		.Parameter Arguments
 		Object or collection containing arguments to the script.
 	#>
+	
+	# Nothing here yet; placeholder function in case we do need a JavaScript runner.
 }
 
 function Select-FromList {
@@ -638,13 +640,10 @@ function Set-RichTextField {
 		
 		.Description
 		This function will place text into a rich text editor, when supplied with a way of
-		finding it.  In the case of an editor in an iFrame, you'll need to supply both a
-		browser object and the iFrame itself, plus either ID or XPath of the edit field.
+		finding it.  In the case of an editor in an iFrame, you'll need to supply the iFrame 
+		itself, plus either ID or XPath of the edit field.
 		
 		If the editor isn't in an iFrame, just supply the ID as a named parameter.
-		
-		.Parameter BrowserObject
-		Web driver containing a browser on the main page.
 		
 		.Parameter FieldObject
 		The iFrame containing the rich text editor.
@@ -671,14 +670,12 @@ function Set-RichTextField {
 		Expected uses:
 			Editor is in an iFrame, and can be identified by ID after switching to it.
 			We'd require:
-				BrowserObject (the web driver)
 				FieldObject (web element, specifically the iFrame in question)
 				ID (ID tag to search for)
 				Text (string to put into the edit field)
 				
 			Editor is in an iFrame, and can be identified by XPath after switching to it.
 			We'd require:
-				BrowserObject (the web driver)
 				FieldObject (web element, specifically the iFrame in question)
 				XPath (XPath to follow)
 				Text (string to put into the edit field)
@@ -690,12 +687,6 @@ function Set-RichTextField {
 	#>
 	
 	param(
-		[Parameter( Mandatory, ParameterSetName="ID" )]
-		[Parameter( Mandatory, ParameterSetName="XPath" )]
-		#[Parameter( Mandatory, ParameterSetName="NonIFrame" )]
-		#[Parameter( Mandatory )]
-		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
-	
 		[Parameter( Mandatory, ParameterSetName="ID" )]
 		[Parameter( Mandatory, ParameterSetName="XPath" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $FieldObject,
@@ -732,6 +723,7 @@ function Set-RichTextField {
 	} else {
 		# The editor will be inside an iFrame.  To navigate to the actual edit field,
 		#	we first need to switch focus to the iFrame.
+		$BrowserObject = $FieldObject.WrappedDriver
 		$NewFrame = $BrowserObject.SwitchTo().Frame($FieldObject)
 		# $NewFrame is, on Firefox at least, of type OpenQA.Selenium.Firefox.FirefoxDriver.
 		#$NewFrame | get-member | format-table -auto | out-string | write-host
