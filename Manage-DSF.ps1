@@ -348,17 +348,17 @@ function Get-Control {
 	
 	Param(
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		$WebDriver,
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
-		$Type,
+		[string] $Type,
 		
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
-		$ID,
+		[string] $ID,
 		
-		$Timeout = 10
+		[int] $Timeout = 10
 		
 	)
 
