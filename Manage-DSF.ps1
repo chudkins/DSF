@@ -387,7 +387,7 @@ function Get-Control {
 		}
 		
 		# Debug:  Output the TypeTag
-		Write-DebugLog -fore gray "Get-Control: TypeTag trying to match $Type"
+		Write-DebugLog -fore gray "Get-Control: TypeTag '$TypeTag' trying to match '$Type'"
 		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -1588,7 +1588,7 @@ function Wait-Link {
 		
 	)
 
-	Write-DebugLog "Wait for $TagName element with $Property matching `'$Pattern`'"
+	Write-DebugLog -fore gray "Wait-Link: Wait for '$TagName' element with '$Property' matching '$Pattern'"
 	
 	# Create a Stopwatch object to keep track of time
 	$Stopwatch = New-Object System.Diagnostics.Stopwatch
