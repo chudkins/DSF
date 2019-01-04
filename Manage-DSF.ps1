@@ -308,7 +308,102 @@ function FixUp-Unit {
 	$Output
 }
 
-#
+function Get-Control {
+	<#
+		.Synopsis
+		Find a control, such as a checkbox, in the provided web driver or element.
+		
+		.Description
+		Given a web driver or web element, and search criteria such as ID, find the control element.
+		Return the control as a web element.
+		
+		.Parameter WebDriver
+		Web driver to search.  May be passed via pipeline.
+		
+		.Parameter Type
+		Type of control, such as "checkbox" or "radiobutton".
+		
+		.Parameter Property
+		The property of the found element to search.
+		
+		.Parameter Pattern
+		Wildcard pattern to match when searching, such as "*my_UserName".
+		
+		.Parameter Timeout
+		Number of seconds after which to give up waiting.  Default is 10.
+	#>
+	
+	<#	
+		TODO: Return something unique if wait times out, so the calling function has a chance to handle
+			the lack of link, such as forcing a page reload or navigating to some known location.
+	#>
+	
+	Param(
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		$WebDriver,
+		
+		[Parameter( Mandatory )]
+		[ValidateNotNullOrEmpty()]
+		$Type,
+		
+		[Parameter( Mandatory )]
+		[ValidateNotNullOrEmpty()]
+		$Property,
+		
+		[Parameter( Mandatory )]
+		[ValidateNotNullOrEmpty()]
+		$Pattern,
+		
+		$Timeout = 10
+		
+	)
+
+	try {
+		Write-DebugLog "Get-Control: Input element with $Property matching `'$Pattern`'"
+		
+		# Create a Stopwatch object to keep track of time
+		$Stopwatch = New-Object System.Diagnostics.Stopwatch
+		$Stopwatch.Start()
+		
+		$TimedOut = $false
+		
+		do {
+			# Check if too much time has elapsed; break out if so.
+			if ( $Stopwatch.Elapsed.Seconds -ge $Timeout ) {
+				$TimedOut = $true
+				break
+			}
+			
+			# Test the result of the requested search.
+			# If the document hasn't loaded yet, or otherwise isn't populated, this should return nothing.
+			# Therefore, only when document is complete will we get our result.
+			$result = $WebDriver.FindElementsByTagName( "input" ) | Where-Object { $_.GetProperty($Property) -like $Pattern }
+		}
+		until ( $result -notlike $null )
+		
+		if ( $TimedOut ) {
+			write-log -fore yellow "Timeout reached. Add better error handling to Get-Control!"
+			throw "Timed out while waiting for Input element with $Property matching `'$Pattern`'"
+		}
+
+		# We made it this far, so presumably we got what we need.  Return it.
+		$result
+	}
+	
+	catch {
+		<# Handle any exceptions thrown within function, or they'll pass to main exception handler.
+		$Msg = $_.Exception.Message
+		
+		if () {
+			# Check for things we want to handle
+		} else {
+			Handle-Exception $_
+		}
+		#>
+	}
+	
+	finally {}
+}
 
 function Invoke-Login {
 	<#
