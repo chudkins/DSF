@@ -363,7 +363,7 @@ function Get-Control {
 	)
 
 	try {
-		Write-DebugLog "Get-Control: Input element with $Property matching `'$Pattern`'"
+		Write-DebugLog -fore gray "Get-Control: Input element with ID matching `'$ID`'"
 		<#
 			Typical controls would include:
 				Radio button, input type="radio" id="whatever"
@@ -387,7 +387,7 @@ function Get-Control {
 		}
 		
 		# Debug:  Output the TypeTag
-		write-debuglog	"Get-Control:  TypeTag matches $TypeTag"
+		Write-DebugLog -fore gray "Get-Control: TypeTag trying to match $Type"
 		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -399,7 +399,7 @@ function Get-Control {
 			# Check if too much time has elapsed; break out if so.
 			if ( $Stopwatch.Elapsed.Seconds -ge $Timeout ) {
 				$TimedOut = $true
-				write-debuglog "Get-Control: Timed out after $Timeout seconds waiting for control element."
+				Write-DebugLog -fore gray "Get-Control: Timed out after $Timeout seconds waiting for control element."
 				break
 			}
 			
