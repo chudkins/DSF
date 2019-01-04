@@ -574,7 +574,7 @@ function Manage-Product {
 			Set-TextField $ProductNameField $product.'Product Name'
 			# We only deal with non-printed products, so set Type to 3
 			#$Picklist = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_drpProductTypes"
-			$Picklist = Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
+			$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
 			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
