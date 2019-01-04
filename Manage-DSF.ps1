@@ -568,7 +568,7 @@ function Manage-Product {
 		"Add"	{
 			write-log "Add product: $($Product.'Product Name')"
 			# Press Create Product button, go about new product stuff.
-			Invoke-SeClick ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*ButtonCreateProduct" )
+			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonCreateProduct" )
 			
 			# Handle first page, which only asks for name and type.
 			$ProductNameField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
@@ -578,7 +578,6 @@ function Manage-Product {
 			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
-			#Click-Link ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
 			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_btnNext" )
 			
 			# The rest of the work is the same whether adding or updating, so let another function do it.
@@ -1026,7 +1025,7 @@ function Update-Product {
 	if ( $Product.'Product Icon' -notlike $null ) {
 		# Log a message if SkipImageUpload is set.
 		if ( $SkipImageUpload ) {
-			write-log -fore yellow "Warning: File path provided but SkipImageUpload is set; ignoring."
+			write-log -fore yellow "Warning: File path provided but SkipImageUpload is set; ignoring for '$($Product.'Product ID')'."
 		} else {
 			# Upload the image file 
 			Upload-Thumbnail -BrowserObject $BrowserObject -ImageURI $Product.'Product Icon'
