@@ -1071,20 +1071,14 @@ function Update-Product {
 	if ( $Product.'Display Priority' -notlike $null ) {	
 		# If a value is specified, try to set the selection to a matching value.
 		# If match fails, print a warning and set it to Standard.
-		$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
+		#$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
+		$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
 		$Set = $Picklist | Select-FromList $Product.'Display Priority'
 		# Check result of request; log a message if it defaults to Standard.
 		if ( $Set -ne $true ) {
-			write-log -fore yellow "Warning: No Display Priority option matched the imported data; setting to Standard."
+			write-log -fore yellow "Warning: No Display Priority option matched the imported data; setting to Standard for '$($Product.'Product ID')'."
 			$null = $Picklist | Select-FromList "Standard"
 		}
-<#		if ( $Picklist.innerHTML -eq $Product.'Display Priority' ) {
-			( $Picklist | where innerHTML -eq $Product.'Display Priority' ).Selected = $true 
-		} else {
-			write-log -fore yellow "Warning: No Display Priority option found to match `'$($Product.'Display Priority')`'; setting to Standard."
-			( $Picklist | where innerHTML -eq "Standard" ).Selected = $true 
-		}
-#>
 	}
 	
 	<#
@@ -1121,7 +1115,8 @@ function Update-Product {
 		Set-TextField $StartDateField $StartDate.ToShortDateString()
 	} else {
 		# Start Date is empty, so set product to Active.
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
+		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
+		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
 		$RadioButton.Click()
 	}
 	
@@ -1142,7 +1137,8 @@ function Update-Product {
 	# Using similar logic, if End Date is empty, product will be active forever.
 	if ( $Product.'End Date' -notlike $null ) {
 		# Click the button to select End Date.
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
+		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
+		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
 		$RadioButton.Click()
 		# Now set the date.
 		$StopDate = [DateTime]$Product.'End Date'
@@ -1150,7 +1146,8 @@ function Update-Product {
 		Set-TextField $StopDateField $StopDate.ToShortDateString()
 	} else {
 		# End Date is empty, so set to Never.
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
+		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
+		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
 		$RadioButton.Click()
 	}
 	
@@ -1165,14 +1162,16 @@ function Update-Product {
 	# Turnaround time is the same deal -- combo radio button and text field.
 	if ( $Product.'Turnaround Time' -notlike $null ) {
 		# Set Value (the second radio button)
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
+		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
+		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
 		$RadioButton.Click()
 		# Now fill in the number of days.
 		$TurnaroundField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl__Value"
 		Set-TextField $TurnaroundField $Product.'Turnaround Time'
 	} else {
 		# None specified; set radio button to None.
-		$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
+		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
+		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
 		$RadioButton.Click()
 	}
 	
@@ -1187,7 +1186,8 @@ function Update-Product {
 	#>
 	
 	# Exempt from Shipping Charge?
-	$ExemptShipChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
+	#$ExemptShipChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
+	$ExemptShipChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
 	if ( $Product.'Exempt Shipping' -in $YesValues ) {
 		Set-CheckBox $ExemptShipChk
 	} else {
@@ -1195,7 +1195,8 @@ function Update-Product {
 	}
 	
 	# Exempt from Sales Tax?
-		$ExemptTaxChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
+	#$ExemptTaxChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
+	$ExemptTaxChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
 	if ( $Product.'Exempt Tax' -in $YesValues ) {
 		Set-CheckBox $ExemptTaxChk
 	} else {
@@ -1203,8 +1204,8 @@ function Update-Product {
 	}
 	
 	# Show on the mobile version of the site?
-	$MobileSupportYes = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
-	$MobileSupportNo = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
+	$MobileSupportYes = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
+	$MobileSupportNo = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
 	if ( ( $Product.'Mobile' -in $YesValues ) -or ( $Product.'Mobile' -like $null ) ) {
 		# Set if Yes or unspecified.
 		$MobileSupportYes.Click()
@@ -1235,7 +1236,7 @@ function Update-Product {
 	$ManageInventory = $null
 	
 	# Get the checkbox control; ID is the same whether checked or not.
-	$MgInvenChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
+	$MgInvenChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
 	
 	switch ( $Product.'Manage Inventory' ) {
 		# If explicitly set to "Yes," turn the checkbox on.
@@ -1254,7 +1255,7 @@ function Update-Product {
 		}						{ 
 									# Enable and log a warning.
 									$ManageInventory = $true
-									write-log -fore yellow "Warning: Manage Inventory not specified, but management items were; enabling."
+									write-log -fore yellow "Warning: Manage Inventory not specified, but management items were; enabling for '$($Product.'Product ID')'."
 								}
 	}
 	
@@ -1275,7 +1276,7 @@ function Update-Product {
 		}
 		
 		# Allow Back Order, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
-		$AllowBkOrdChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
+		$AllowBkOrdChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
 		if ( $Product.'Allow Back Order' -in $YesValues ) {
 			Set-CheckBox $AllowBkOrdChk
 		} else {
@@ -1283,7 +1284,7 @@ function Update-Product {
 		}
 		
 		# Show inventory when back order is allowed, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
-		$ShowInvBOChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
+		$ShowInvBOChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
 		if ( $Product.'Show Inventory with Back Order' -in $YesValues ) {
 			Set-CheckBox $ShowInvBOChk
 		} else {
