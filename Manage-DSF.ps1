@@ -372,10 +372,10 @@ function Get-Control {
 				$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
 		#>
 		
-		switch $Type {
-			"Radio","RadioButton"	{ $TypeTag = "input" }
-			"Checkbox"				{ $TypeTag = "input" }
-			"List"					{ $TypeTag = "select" }
+		$TypeTag = switch -regex ( $Type ) {
+			"Radio|RadioButton"		{ "input" }
+			"Checkbox"				{ "input" }
+			"List"					{ "select" }
 			default	{
 				throw "Get-Control: Unexpected control type '$Type'"
 			}
@@ -395,7 +395,7 @@ function Get-Control {
 			}
 			
 			# For most DSF web controls, use the ID tag to find them; double-check control type for sanity.
-			$result = $WebDriver.FindElementsByID( $ID ) | Where-Object { $_.TagName -like $TypeTag }
+			$result = $WebDriver.FindElementsByID( $ID ) | Where-Object { $_.TagName -eq $TypeTag }
 		}
 		until ( $result -notlike $null )
 		
