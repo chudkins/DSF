@@ -376,11 +376,11 @@ function Get-Control {
 				$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
 		#>
 		
-		$TypeTag = switch -regex ( $Type ) {
-			"Button"				{ "input" ; continue }
-			"Checkbox"				{ "input" ; continue }
-			"List"					{ "select" ; continue }
-			"Radio|RadioButton"		{ "input" ; continue }
+		$TypeTag = switch ( $Type ) {
+			"Button"			{ "input" ; continue }
+			"Checkbox"			{ "input" ; continue }
+			"List"				{ "select" ; continue }
+			"RadioButton"		{ "input" ; continue }
 			default	{
 				throw "Get-Control: Unexpected control type '$Type'"
 			}
@@ -1310,18 +1310,20 @@ function Update-Product {
 			For some reason, calling SetActive or Click on these radio buttons causes the web form
 			to freeze -- at least from the GUI.  So, try proceeding without doing that.
 		#>
-		#[nwch]
+		
 		if ( $Product.'Add to Inventory' -notlike $null ) {
-			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInv" )
-			$RadioButton.isDisabled = $false
+			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInv"
+			#$RadioButton.isDisabled = $false
 			#$RadioButton.SetActive()
-			$RadioButton | Click-Wait
+			#$RadioButton | Click-Wait
+			$RadioButton.Click()
 			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInvTextBox" ).Value = $Product.'Add to Inventory'
 		} elseif ( $Product.'Reset Inventory' -notlike $null ) {
-			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvReset" )
-			$RadioButton.isDisabled = $false
+			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvReset"
+			#$RadioButton.isDisabled = $false
 			#$RadioButton.SetActive()
-			$RadioButton | Click-Wait
+			#$RadioButton | Click-Wait
+			$RadioButton.Click()
 			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbResetInvTextBox" ).Value = $Product.'Reset Inventory'
 		}
 	} elseif ( $ManageInventory -eq $false ) {
