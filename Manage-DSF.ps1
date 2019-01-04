@@ -377,9 +377,10 @@ function Get-Control {
 		#>
 		
 		$TypeTag = switch -regex ( $Type ) {
-			"Radio|RadioButton"		{ "input" }
+			"Button"				{ "input" }
 			"Checkbox"				{ "input" }
 			"List"					{ "select" }
+			"Radio|RadioButton"		{ "input" }
 			default	{
 				throw "Get-Control: Unexpected control type '$Type'"
 			}
@@ -572,13 +573,13 @@ function Manage-Product {
 			# Handle first page, which only asks for name and type.
 			$ProductNameField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
 			Set-TextField $ProductNameField $product.'Product Name'
-			# We only deal with non-printed products, so set Type to 3
-			#$Picklist = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_drpProductTypes"
+			# We only deal with non-printed products, so set Type to that.
 			$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
 			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
-			Click-Link ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
+			#Click-Link ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*btnNext" )
+			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_btnNext" )
 			
 			# The rest of the work is the same whether adding or updating, so let another function do it.
 			$BrowserObject | Update-Product -Product $Product
