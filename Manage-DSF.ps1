@@ -1225,9 +1225,6 @@ function Update-Product {
 			Enabled, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkManageInventory"
 			if checked, more fields become available...
 				
-				
-				
-				
 				Replenish inventory - either Add or Reset:
 					Add XXX to existing
 						Radio button to activate, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInv" type="radio" value="RbInvAddToExistingInv"
@@ -1323,7 +1320,7 @@ function Update-Product {
 		# Turn the checkbox off.
 		Set-CheckBox $MgInvenChk -Off
 	}
-	#[nwch]
+	
 	<#
 		Settings section
 			Order Quantities:
@@ -1361,36 +1358,39 @@ function Update-Product {
 				We don't handle this yet, so log a warning and move on.
 				Admin will need to update the allowed quantities by hand.
 			#>
-			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantities" )
-			#$RadioButton.SetActive()
-			$RadioButton | Click-Wait
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantitiesValues_ctl02__Value" ).Value = $Product.'Fixed Qty'
-			<# Now click the Update button, which will post the value to the server.
-			<input name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_FixedQuantitiesValues$ctl02$LinkButton1" class="button-mouseout" id="ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02_LinkButton1" onmouseover="this.className='button-mouseover'" onmouseout="this.className='button-mouseout'" onclick='javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions("ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_FixedQuantitiesValues$ctl02$LinkButton1", "", true, "_FixedQuantitiesValues", "", false, false))' type="submit" value="Update">
-			#>
-			# TODO: Handle quantities...
-			write-log -fore red "Warning: Fixed Quantities selected for $($Product.'Product Name'); values must be entered by hand!"
+			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantities"
+			$RadioButton.Click()
+			$InvFixedQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantitiesValues_ctl02__Value"
+			Set-TextField $InvFixedQtyText $Product.'Fixed Qty'
+			# Now click the Update button, which will post the value to the server.
+			$UpdateButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02_LinkButton1"
+			$UpdateButton | Click-Link
+			# Issue 9:  Add logic to handle this option.
+			write-log -fore red "Warning [Issue 9]: Fixed Quantities selected for $($Product.'Product ID'); values must be entered by hand!"
 			# This option doesn't coexist with others, so break out after doing this.
 			break
 		}
 		
 		if ( ( $Product.'Min Qty' -or $Product.'Max Qty' -or $Product.'Mult Qty' ) -notlike $null ) {
-			write-log "$($Product.'Product Name') has Min/Max/Mult Qty."
+			write-log "$($Product.'Product ID') has Min/Max/Mult Qty."
 			# Min quantity can be used by itself or in conjunction with Max.
 			# For this to be available, "By Multiples" button must be clicked.
-			$RadioButton = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*_Multiples" )
-			$RadioButton | Click-Wait
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Minimum" ).Value = $Product.'Min Qty'
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Maximum" ).Value = $Product.'Max Qty'
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Multiple" ).Value = $Product.'Mult Qty'
+			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiples"
+			$RadioButton.Click()
+			$MinQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Minimum"
+			Set-TextField $MinQtyText $Product.'Min Qty'
+			$MaxQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Maximum"
+			Set-TextField $MaxQtyText $Product.'Max Qty'
+			$MultQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Multiple"
+			Set-TextField $MultQtyText $Product.'Mult Qty'
 		}
 		
 		# If a Max quantity was specified, check the box to enforce this in shopping cart.
 		if ( $Product.'Max Qty' -notlike $null ) {
-			$Checkbox = ( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkEnforceMaxQtyInCart" )
+			$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
 			# Set to False and then click, to ensure control is recognized.
-			$Checkbox.Checked = $false
-			$Checkbox | Click-Wait
+			Set-CheckBox $Checkbox.Checked
+			#$Checkbox | Click-Wait
 		}		
 	}	
 	
