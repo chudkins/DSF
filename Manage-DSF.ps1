@@ -318,7 +318,8 @@ function Get-Control {
 		Return the control as a web element.
 		
 		.Parameter WebDriver
-		Web driver to search.  May be passed via pipeline.
+		Web driver to search.  May be passed via pipeline.  Mandatory because function doesn't accept
+		a WebElement.
 		
 		.Parameter Type
 		Type of control, such as "checkbox" or "radiobutton".
@@ -346,6 +347,9 @@ function Get-Control {
 	#>
 	
 	Param(
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		$WebDriver,
+
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
 		$Type,
@@ -1998,8 +2002,10 @@ Process {
 		$Products = import-csv $ProductFile
 		$Counter = 1
 		
+		# Issue 8:  Check $Product.ProcessedStatus (better name?) and if already set, skip this item.
+		#	When product has been processed, update this property in the data file.
+	
 		foreach ( $product in $Products ) {
-#			Manage-Product -Document $CurrentDoc -Mode Add -Product $product
 			Manage-Product -BrowserObject $Browser -Mode Add -Product $product
 			$Counter++
 		}
