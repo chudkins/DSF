@@ -1449,15 +1449,21 @@ function Update-Product {
 	$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
 	
 	# Ship item separately?
-	$Checkbox = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*chkPackSeparately"
-	$Checkbox.Checked = ( $Product.'Ship Separately' -in $YesValues )
+	$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_chkPackSeparately"
+	if ( $Product.'Ship Separately' -in $YesValues ) {
+		Set-CheckBox $Checkbox
+	} else {
+		Set-CheckBox $Checkbox -Off
+	}
 	
 	# Width
+	# What is with the ForEach-Object stuff here?  Shouldn't we only ever have one value per cell?
 	$Width = $Product.Width | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxX__Length" ).Value = $Product.Width
-	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*ShipmentDimensionCtrl__BoxX__Unit"
+	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
+	Set-TextField $NumField $Product.Width
+	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
-	
+	#[nwch]
 	# Length
 	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
 	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length" ).Value = $Product.Length
