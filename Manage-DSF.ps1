@@ -1833,7 +1833,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# If "display" attribute is "none" then it's hidden and shouldn't obscure the link.
 	$LoadingSpinner = $Browser.FindElementByID("loadingSpinner")
 	Dump-ElementInfo $LoadingSpinner -WebInfo
-	write-host ( $LoadingSpinner.GetAttribute("outerHTML") | out-string )
+	write-host ( $LoadingSpinner.GetAttribute("style") | out-string )
 	# Wait for spinner to be hidden.
 	$WaitCount = 1
 	while ( $LoadingSpinner.GetAttribute("display") -notlike "none" ) {
