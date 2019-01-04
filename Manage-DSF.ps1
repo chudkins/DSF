@@ -164,9 +164,11 @@ function Click-Link {
 	
 	Process {
 		if ( $Link -notlike $null ) {
-			Invoke-SeClick $Link
+			# Make sure link is clickable before trying it.
+			$ClickableLink = WaitFor-ElementToBeClickable -Element $Link
+			Invoke-SeClick $ClickableLink
 			# Now wait for browser to process the click and load the next page
-			$Link.WrappedDriver | Invoke-Wait
+			$ClickableLink.WrappedDriver | Invoke-Wait
 		} else {
 			write-log -fore yellow "Link is empty?"
 			write-log "Link: $($Link.href)"
@@ -890,9 +892,7 @@ function Update-Product {
 		#$iFrame = $BrowserObject | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
 		#$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
-		Set-RichTextField -BrowserObject $BrowserObject -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'
-		#Set-RichTextField $BrowserObject $iFrame -ID "something" $Product.'Brief Description'
-		#Set-TextField $iFrame $Product.'Brief Description'
+		Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'
 	}
 	
 	# Now, if there's a thumbnail image to upload, do that.
@@ -1603,10 +1603,9 @@ function WaitFor-ElementToBeClickable {
 		[Parameter( Mandatory, Position=1, ParameterSetName="ID" )]
 		[Parameter( Mandatory, Position=1, ParameterSetName="XPath" )]
 		[Parameter( Mandatory, Position=1, ParameterSetName="LinkText" )]
-		[Parameter( Mandatory, Position=1, ParameterSetName="Element" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
-		[Parameter( Position=2, ParameterSetName="Element" )]
+		[Parameter( Position=1, ParameterSetName="Element" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
 		
 		[Parameter( Position=2, ParameterSetName="ID" )]
@@ -1621,9 +1620,13 @@ function WaitFor-ElementToBeClickable {
 		[Parameter( Position=3, ParameterSetName="ID" )]
 		[Parameter( Position=3, ParameterSetName="XPath" )]
 		[Parameter( Position=3, ParameterSetName="LinkText" )]
-		[Parameter( Position=3, ParameterSetName="Element" )]
+		[Parameter( Position=2, ParameterSetName="Element" )]
 		[int] $TimeInSeconds = 10
 	)
+	
+	if ( $WebElement -notlike $null ) {
+		$WebDriver = $WebElement.WrappedDriver
+	}
 	
 	# This object's job is to wait for something.
 	$Waiter = New-Object OpenQA.Selenium.Support.UI.WebDriverWait($WebDriver, $TimeInSeconds)
@@ -1823,24 +1826,33 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# Create Firefox instance
 	$Browser = Start-SeFirefox
 
-	# Show the window -- not necessary for this to work, but useful to see what's going on.
-#	$IE.Visible = $true
-	# May want to set this, to prevent any IE popups like "Do you want to..."
-	#$IE.Silent = $true
+	$StorefrontURL = Invoke-Login $SiteURL -UserName $UserName -Password $Password
+	# Just a string, the URL of the page that loads after logging in.
 	
-	$AdminLink = Invoke-Login $SiteURL -UserName $UserName -Password $Password
-	#write-host -fore yellow $AdminLink.GetAttribute("href")
+	# Wait a few seconds and check if LoadingSpinner is visible.
+	# If "display" attribute is "none" then it's hidden and shouldn't obscure the link.
+	$LoadingSpinner = $Browser.FindElementByID("loadingSpinner")
+	# Wait for spinner to be hidden.
+	while ( $LoadingSpinner.GetAttribute("display") -notlike $null ) {
+		write-host "Wait 1 second for Loading Spinner."
+		Start-Sleep -Seconds 1
+	}
 
 	# Verify that we're logged in.  There won't be an Administration link if we aren't.
-	$AdminControl = $Browser.FindElementByCssSelector(".myadmin-link")
+	#$AdminControl = $Browser.FindElementByCssSelector(".myadmin-link")
+	$AdminLink = $Browser.FindElementsByTagName("span") | where { $_.GetAttribute("ng-localize") -eq "StoreFront.Administration" }
+	Dump-ElementInfo $AdminLink -All
 	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
-	$AdminControl = WaitFor-ElementToBeClickable -WebDriver $Browser -WebElement $AdminControl 30
-	if ( $AdminControl -notlike $null ) {
+	# By now, the element should no longer be obscured.
+	#$AdminClickable = WaitFor-ElementToBeClickable $Browser -LinkText "Administration" -TimeInSeconds 30
+	$AdminClickable = WaitFor-ElementToBeClickable -WebElement $AdminLink -TimeInSeconds 30
+	if ( $AdminClickable -notlike $null ) {
 		write-log -fore green "Admin link found; successfully logged in!"
+		$AdminClickable.Click()
+	} else {
+		Dump-ElementInfo $AdminClickable -WebInfo
+		throw "Error: Unable to log in; clickable link to Administration page not found."
 	}
-	
-	# Finally, we can click the Administration link to get started!
-	$AdminControl.Click()
 }
 
 Process {
