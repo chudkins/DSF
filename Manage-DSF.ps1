@@ -165,7 +165,7 @@ function Click-Link {
 	Process {
 		if ( $Link -notlike $null ) {
 			# Make sure link is clickable before trying it.
-			$ClickableLink = WaitFor-ElementToBeClickable -Element $Link
+			$ClickableLink = WaitFor-ElementToBeClickable -WebElement $Link
 			Invoke-SeClick $ClickableLink
 			# Now wait for browser to process the click and load the next page
 			$ClickableLink.WrappedDriver | Invoke-Wait
