@@ -386,6 +386,9 @@ function Get-Control {
 			}
 		}
 		
+		# Debug:  Output the TypeTag
+		write-debuglog	"Get-Control:  TypeTag matches $TypeTag"
+		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
 		$Stopwatch.Start()
@@ -396,6 +399,7 @@ function Get-Control {
 			# Check if too much time has elapsed; break out if so.
 			if ( $Stopwatch.Elapsed.Seconds -ge $Timeout ) {
 				$TimedOut = $true
+				write-debuglog "Get-Control: Timed out after $Timeout seconds waiting for control element."
 				break
 			}
 			
@@ -405,7 +409,7 @@ function Get-Control {
 		until ( $result -notlike $null )
 		
 		if ( $TimedOut ) {
-			write-log -fore yellow "Timeout reached. Add better error handling to Get-Control!"
+			write-log -fore yellow "Get-Control: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
 			throw "Timed out while waiting for Input element with ID matching `'$ID`'"
 		}
 
@@ -423,6 +427,8 @@ function Get-Control {
 			Handle-Exception $_
 		}
 		#>
+		
+		throw $_
 	}
 	
 	finally {}
@@ -522,7 +528,7 @@ function Invoke-Wait {
 	$DocState = $BrowserObject.ExecuteScript($scrGetReadyState)
 	while ( $DocState -notlike "complete" ) {
 		# Not ready yet, so wait 1 second and check again.
-		write-debug "Waiting for page load to complete..."
+		Write-DebugLog "Waiting for page load to complete..."
 		Start-Sleep -Seconds 1
 		$DocState = $BrowserObject.ExecuteScript($scrGetReadyState)
 	}
@@ -1240,10 +1246,10 @@ function Update-Product {
 	
 	switch ( $Product.'Manage Inventory' ) {
 		# If explicitly set to "Yes," turn the checkbox on.
-		{ $_ -in $YesValues }	{ write-debug "ManageInv = True" ; $ManageInventory = $true }
+		{ $_ -in $YesValues }	{ Write-DebugLog "ManageInv = True" ; $ManageInventory = $true }
 		
 		# If explicitly set to "No," turn the checkbox off.
-		{ $_ -in $NoValues }	{ write-debug "ManageInv = False" ; $ManageInventory = $false }
+		{ $_ -in $NoValues }	{ Write-DebugLog "ManageInv = False" ; $ManageInventory = $false }
 		
 		# Enable management if any inventory management values are given,
 		#	even if Manage isn't specified.  (Sanity check!)
@@ -1953,13 +1959,11 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# Wait a few seconds and check if LoadingSpinner is visible.
 	# If "display" attribute is "none" then it's hidden and shouldn't obscure the link.
 	$LoadingSpinner = $Browser.FindElementByID("loadingSpinner")
-	Dump-ElementInfo $LoadingSpinner -WebInfo
-	write-host ( $LoadingSpinner.GetAttribute("style").display | out-string )
 	# Wait for spinner to be hidden.
 	$WaitCount = 1
 	while ( $LoadingSpinner.GetAttribute("style") -notlike "*display: none*" ) {
-		write-host "Waiting for Loading Spinner:  $WaitCount"
-		write-host "Spinner attribute 'style' = $($LoadingSpinner.GetAttribute("style"))"
+		Write-DebugLog "Waiting for Loading Spinner:  $WaitCount"
+		Write-DebugLog "Spinner attribute 'style' = $($LoadingSpinner.GetAttribute("style"))"
 		$WaitCount++
 		Start-Sleep -Seconds 1
 	}
@@ -1967,7 +1971,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# Verify that we're logged in.  There won't be an Administration link if we aren't.
 	#$AdminControl = $Browser.FindElementByCssSelector(".myadmin-link")
 	$AdminLink = $Browser.FindElementsByTagName("span") | where { $_.GetAttribute("ng-localize") -eq "StoreFront.Administration" }
-	Dump-ElementInfo $AdminLink -WebInfo
+
 	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
 	# By now, the element should no longer be obscured.
 	#$AdminClickable = WaitFor-ElementToBeClickable $Browser -LinkText "Administration" -TimeInSeconds 30
