@@ -1832,6 +1832,8 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# Wait a few seconds and check if LoadingSpinner is visible.
 	# If "display" attribute is "none" then it's hidden and shouldn't obscure the link.
 	$LoadingSpinner = $Browser.FindElementByID("loadingSpinner")
+	Dump-ElementInfo $LoadingSpinner -MemberInfo
+	write-host $LoadingSpinner.GetAttribute("OuterHTML")
 	# Wait for spinner to be hidden.
 	$WaitCount = 1
 	while ( $LoadingSpinner.GetAttribute("display") -notlike "none" ) {
@@ -1844,7 +1846,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# Verify that we're logged in.  There won't be an Administration link if we aren't.
 	#$AdminControl = $Browser.FindElementByCssSelector(".myadmin-link")
 	$AdminLink = $Browser.FindElementsByTagName("span") | where { $_.GetAttribute("ng-localize") -eq "StoreFront.Administration" }
-	Dump-ElementInfo $AdminLink -All
+	Dump-ElementInfo $AdminLink -WebInfo
 	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
 	# By now, the element should no longer be obscured.
 	#$AdminClickable = WaitFor-ElementToBeClickable $Browser -LinkText "Administration" -TimeInSeconds 30
