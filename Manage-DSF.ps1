@@ -1306,31 +1306,24 @@ function Update-Product {
 		<#	Replenish inventory - Note this is either one or the other!
 				o Add XXX to existing
 				o Reset to XXX
-			
-			For some reason, calling SetActive or Click on these radio buttons causes the web form
-			to freeze -- at least from the GUI.  So, try proceeding without doing that.
 		#>
 		
 		if ( $Product.'Add to Inventory' -notlike $null ) {
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInv"
-			#$RadioButton.isDisabled = $false
-			#$RadioButton.SetActive()
-			#$RadioButton | Click-Wait
 			$RadioButton.Click()
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInvTextBox" ).Value = $Product.'Add to Inventory'
+			$AddToInvText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInvTextBox" 
+			Set-TextField $AddToInvText $Product.'Add to Inventory'
 		} elseif ( $Product.'Reset Inventory' -notlike $null ) {
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvReset"
-			#$RadioButton.isDisabled = $false
-			#$RadioButton.SetActive()
-			#$RadioButton | Click-Wait
 			$RadioButton.Click()
-			( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbResetInvTextBox" ).Value = $Product.'Reset Inventory'
+			$ResetInvText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbResetInvTextBox" 
+			Set-TextField $ResetInvText $Product.'Reset Inventory'
 		}
 	} elseif ( $ManageInventory -eq $false ) {
 		# Turn the checkbox off.
 		Set-CheckBox $MgInvenChk -Off
 	}
-	
+	#[nwch]
 	<#
 		Settings section
 			Order Quantities:
