@@ -323,14 +323,21 @@ function Get-Control {
 		.Parameter Type
 		Type of control, such as "checkbox" or "radiobutton".
 		
-		.Parameter Property
-		The property of the found element to search.
-		
-		.Parameter Pattern
-		Wildcard pattern to match when searching, such as "*my_UserName".
+		.Parameter ID
+		The ID of the found element to search.
 		
 		.Parameter Timeout
 		Number of seconds after which to give up waiting.  Default is 10.
+		
+		.Example
+		Get a checkbox whose ID is "GiftWrap".
+		
+		$GiftWrapChk = Get-Control -Type Checkbox -ID "GiftWrap"
+		
+		.Example
+		Get a picklist whose ID is "SelectProductA".
+		
+		$Picklist = Get-Control -Type List -ID "SelectProductA"
 	#>
 	
 	<#	
@@ -339,20 +346,13 @@ function Get-Control {
 	#>
 	
 	Param(
-		[Parameter( Mandatory, ValueFromPipeLine )]
-		$WebDriver,
-		
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
 		$Type,
 		
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
-		$Property,
-		
-		[Parameter( Mandatory )]
-		[ValidateNotNullOrEmpty()]
-		$Pattern,
+		$ID,
 		
 		$Timeout = 10
 		
@@ -360,6 +360,26 @@ function Get-Control {
 
 	try {
 		Write-DebugLog "Get-Control: Input element with $Property matching `'$Pattern`'"
+		<#
+			Typical controls would include:
+				Radio button, input type="radio" id="whatever"
+				Checkbox, input type="checkbox" id="whatever"
+				List, select  id="whatever"
+		#>
+		
+		<#
+			Typical use of Wait-Link:
+				$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
+		#>
+		
+		switch $Type {
+			"Radio","RadioButton"	{ $TypeTag = "input" }
+			"Checkbox"				{ $TypeTag = "input" }
+			"List"					{ $TypeTag = "select" }
+			default	{
+				throw "Get-Control: Unexpected control type '$Type'"
+			}
+		}
 		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -374,16 +394,14 @@ function Get-Control {
 				break
 			}
 			
-			# Test the result of the requested search.
-			# If the document hasn't loaded yet, or otherwise isn't populated, this should return nothing.
-			# Therefore, only when document is complete will we get our result.
-			$result = $WebDriver.FindElementsByTagName( "input" ) | Where-Object { $_.GetProperty($Property) -like $Pattern }
+			# For most DSF web controls, use the ID tag to find them; double-check control type for sanity.
+			$result = $WebDriver.FindElementsByID( $ID ) | Where-Object { $_.TagName -like $TypeTag }
 		}
 		until ( $result -notlike $null )
 		
 		if ( $TimedOut ) {
 			write-log -fore yellow "Timeout reached. Add better error handling to Get-Control!"
-			throw "Timed out while waiting for Input element with $Property matching `'$Pattern`'"
+			throw "Timed out while waiting for Input element with ID matching `'$ID`'"
 		}
 
 		# We made it this far, so presumably we got what we need.  Return it.
@@ -551,7 +569,8 @@ function Manage-Product {
 			$ProductNameField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
 			Set-TextField $ProductNameField $product.'Product Name'
 			# We only deal with non-printed products, so set Type to 3
-			$Picklist = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_drpProductTypes"
+			#$Picklist = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_drpProductTypes"
+			$Picklist = Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
 			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
