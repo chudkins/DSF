@@ -388,6 +388,7 @@ function Get-Control {
 		
 		# Debug:  Output the TypeTag
 		Write-DebugLog -fore gray "Get-Control: TypeTag '$TypeTag' trying to match '$Type'"
+		Write-DebugLog -fore gray "Get-Control: 'Type' is '$Type'"
 		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -1843,9 +1844,11 @@ Function Write-Log {
 
 	Param(
 		[ConsoleColor]$ForegroundColor = "white",
+		
 		[Parameter(Mandatory = $true, Position = 0)]
 		[AllowEmptyString()]
 		[string]$Message = "",
+		
 		[string]$Path
 	)
 
