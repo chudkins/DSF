@@ -377,18 +377,17 @@ function Get-Control {
 		#>
 		
 		$TypeTag = switch -regex ( $Type ) {
-			"Button"				{ "input" }
-			"Checkbox"				{ "input" }
-			"List"					{ "select" }
-			"Radio|RadioButton"		{ "input" }
+			"Button"				{ "input" ; continue }
+			"Checkbox"				{ "input" ; continue }
+			"List"					{ "select" ; continue }
+			"Radio|RadioButton"		{ "input" ; continue }
 			default	{
 				throw "Get-Control: Unexpected control type '$Type'"
 			}
 		}
 		
 		# Debug:  Output the TypeTag
-		Write-DebugLog -fore gray "Get-Control: TypeTag '$TypeTag' trying to match '$Type'"
-		Write-DebugLog -fore gray "Get-Control: 'Type' is '$Type'"
+		Write-DebugLog -fore gray "Get-Control: TypeTag '$TypeTag' trying to match Type '$Type'"
 		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
