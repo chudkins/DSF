@@ -663,6 +663,8 @@ function Select-FromList {
 			# Status indicator
 			$Success = $false
 			
+			Write-DebugLog "Select-FromList: Try to select '$Item' from list containing '$($ListObject.Text)'"
+			
 			# Create a Selenium Select object to find what we want.
 			$Selector = New-Object -TypeName OpenQA.Selenium.Support.UI.SelectElement( $ListObject )
 			# Have it select out target out of the list.
@@ -672,7 +674,7 @@ function Select-FromList {
 			# Now verify the item is actually selected.
 			# This is different from not being found; the item exists but wasn't selected for some reason.
 			if ( $Selector.SelectedOption.Text -ne $Item ) {
-				throw "Couldn't select `'$TargetItem`' as requested!"
+				throw "Select-FromList: Couldn't select '$TargetItem' as requested!"
 			}
 		}
 		
@@ -1494,6 +1496,13 @@ function Update-Product {
 	#>
 	
 	# Switch to Pricing section.
+	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabPricing"
+	$NavTab.Click()
+	
+	# Switch to Security section.
+	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabSecurity"
+	$NavTab.Click()
+	
 }
 
 function Upload-Thumbnail {
