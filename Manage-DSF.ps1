@@ -1461,21 +1461,21 @@ function Update-Product {
 	$Width = $Product.Width | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
 	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
 	Set-TextField $NumField $Product.Width
-	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
+	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
 	
 	# Length
 	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
 	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length"
 	Set-TextField $NumField $Product.Length
-	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxY__Unit"
+	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
 	
 	# Height
 	$Height = $Product.Height | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
 	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxZ__Length"
 	Set-TextField $NumField $Product.Height
-	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxZ__Unit"
+	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
 			
 	<#		Pricing section:
