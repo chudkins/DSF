@@ -1463,16 +1463,18 @@ function Update-Product {
 	Set-TextField $NumField $Product.Width
 	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
-	#[nwch]
+	
 	# Length
 	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length" ).Value = $Product.Length
+	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length"
+	Set-TextField $NumField $Product.Length
 	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxY__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
 	
 	# Height
 	$Height = $Product.Height | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxZ__Length" ).Value = $Product.Height
+	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxZ__Length"
+	Set-TextField $NumField $Product.Height
 	$UnitList = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "*BoxZ__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
 			
@@ -1484,11 +1486,14 @@ function Update-Product {
 					Regular Price, input id="tbl_0_PriceCatalog_regularprice_1"
 					Setup Price, input id="tbl_0_PriceCatalog_setupprice_1"
 			Security section:
-				There are some things here, but we probably don't need to change them.
+				There are some things here, but we probably don't need to change them, except for
+				Owner.  That should be set to a Group, for easier management particularly in
+				environments where more than one person administrates, without sharing credentials.
 			
 		Finish (button), input id="ctl00_ctl00_C_M_ctl00_W_FinishNavigationTemplateContainerID_FinishButton"
 	#>
 	
+	# Switch to Pricing section.
 }
 
 function Upload-Thumbnail {
