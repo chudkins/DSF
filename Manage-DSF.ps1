@@ -297,9 +297,9 @@ function FixUp-Unit {
 	
 	switch ( $Input ) {
 		# DSF is not consistent with abbreviations or plurals of units!
-		{ $_ -in $InchValues }	{ $Output = "inches"}
-		{ $_ -in $FootValues }	{ $Output = "feet"}
-		{ $_ -in $YardValues }	{ $Output = "yard"}
+		{ $_ -in $InchValues }	{ $Output = "Inches"}
+		{ $_ -in $FootValues }	{ $Output = "Feet"}
+		{ $_ -in $YardValues }	{ $Output = "Yard"}
 		{ $_ -in $PoundValues }	{ $Output = "lb"}
 		{ $_ -in $OunceValues }	{ $Output = "oz"}
 		default					{ $Output = "undefined"}
