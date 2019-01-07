@@ -381,6 +381,8 @@ function Get-Control {
 			"Checkbox"			{ "input" ; continue }
 			"List"				{ "select" ; continue }
 			"RadioButton"		{ "input" ; continue }
+			"RichText"			{ "input" ; continue }
+			"Text"				{ "input" ; continue }
 			default	{
 				throw "Get-Control: Unexpected control type '$Type'"
 			}
@@ -1040,12 +1042,10 @@ function Update-Product {
 	if ( $Product.'Display Name' -notlike $null ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
 		Set-TextField $Field $Product.'Display Name'
-		#( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*StorefrontName" ).Value = $Product.'Display Name'
 	}
 	
 	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
-		#( $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*SKU" ).Value = $Product.'Product Id'
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
 		Set-TextField $Field $Product.'Product Id'
 	}
@@ -1064,8 +1064,6 @@ function Update-Product {
 	
 	# Brief Description, rich text field
 	if ( $Product.'Brief Description' -notlike $null ) {
-		#$iFrame = $BrowserObject | Wait-Link -TagName "iframe" -Property "id" -Pattern "*Description_contentIframe"
-		#$iFrame.ContentWindow.Document.Body.innerHTML = $Product.'Brief Description'
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
 		Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'
 	}
@@ -1089,7 +1087,6 @@ function Update-Product {
 	
 	# Switch to Details section.
 	#	<a class="rtsLink rtsAfter" id="TabDetails" href="#">...
-	#$NavTab = Find-SeElement -Driver $BrowserObject -ID "TabDetails"
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabDetails"
 	$NavTab.Click()
 	
@@ -1126,7 +1123,6 @@ function Update-Product {
 	if ( $Product.'Display Priority' -notlike $null ) {	
 		# If a value is specified, try to set the selection to a matching value.
 		# If match fails, print a warning and set it to Standard.
-		#$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
 		$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
 		$Set = $Picklist | Select-FromList $Product.'Display Priority'
 		# Check result of request; log a message if it defaults to Standard.
@@ -1166,13 +1162,12 @@ function Update-Product {
 			that is the format DSF is expecting.
 		#>
 		$StartDate = [DateTime]$Product.'Start Date'
-		$StartDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__Begin_dateInput_text"
+		$StartDateField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__Begin_dateInput_text"
 		Set-TextField $StartDateField $StartDate.ToShortDateString()
 	} else {
 		# Start Date is empty, so set product to Active.
-		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__YesNo_1"
-		$RadioButton.Click()
+		$RadioButton | Set-RadioButton
 	}
 	
 <#
@@ -1192,18 +1187,16 @@ function Update-Product {
 	# Using similar logic, if End Date is empty, product will be active forever.
 	if ( $Product.'End Date' -notlike $null ) {
 		# Click the button to select End Date.
-		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
-		$RadioButton.Click()
+		$RadioButton | Set-RadioButton
 		# Now set the date.
 		$StopDate = [DateTime]$Product.'End Date'
-		$StopDateField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__End_dateInput_text"
+		$StopDateField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl__End_dateInput_text"
 		Set-TextField $StopDateField $StopDate.ToShortDateString()
 	} else {
 		# End Date is empty, so set to Never.
-		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbNever"
-		$RadioButton.Click()
+		$RadioButton | Set-RadioButton
 	}
 	
 	<#
@@ -1217,17 +1210,15 @@ function Update-Product {
 	# Turnaround time is the same deal -- combo radio button and text field.
 	if ( $Product.'Turnaround Time' -notlike $null ) {
 		# Set Value (the second radio button)
-		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
-		$RadioButton.Click()
+		$RadioButton | Set-RadioButton
 		# Now fill in the number of days.
-		$TurnaroundField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl__Value"
+		$TurnaroundField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl__Value"
 		Set-TextField $TurnaroundField $Product.'Turnaround Time'
 	} else {
 		# None specified; set radio button to None.
-		#$RadioButton = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbNone"
-		$RadioButton.Click()
+		$RadioButton | Set-RadioButton
 	}
 	
 	<#
@@ -1241,7 +1232,6 @@ function Update-Product {
 	#>
 	
 	# Exempt from Shipping Charge?
-	#$ExemptShipChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
 	$ExemptShipChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
 	if ( $Product.'Exempt Shipping' -in $YesValues ) {
 		Set-CheckBox $ExemptShipChk
@@ -1250,7 +1240,6 @@ function Update-Product {
 	}
 	
 	# Exempt from Sales Tax?
-	#$ExemptTaxChk = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
 	$ExemptTaxChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
 	if ( $Product.'Exempt Tax' -in $YesValues ) {
 		Set-CheckBox $ExemptTaxChk
@@ -1263,10 +1252,10 @@ function Update-Product {
 	$MobileSupportNo = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
 	if ( ( $Product.'Mobile' -in $YesValues ) -or ( $Product.'Mobile' -like $null ) ) {
 		# Set if Yes or unspecified.
-		$MobileSupportYes.Click()
+		$MobileSupportYes | Set-RadioButton
 	} else {
 		# Set No if we specifically don't want mobile support.
-		$MobileSupportNo.Click()
+		$MobileSupportNo | Set-RadioButton
 	}
 
 	<#
@@ -1323,7 +1312,7 @@ function Update-Product {
 		
 		# Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
 		if ( $Product.Threshold -notlike $null ) {
-			$InvThreshold = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
+			$InvThreshold = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
 			Set-TextField $InvThreshold $Product.Threshold
 		}
 		
@@ -1344,9 +1333,14 @@ function Update-Product {
 		}
 		
 		# Notification Email Id, id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
-		$NotifyEmailField = $BrowserObject | Wait-Link -TagName "textarea" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
+		$NotifyEmailField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
 		if ( $Product.'Notify Emails' -notlike $null ) {
-			Set-TextField $NotifyEmailField $Product.'Notify Emails'
+			if ( $Product.'Notify Emails' -eq "-" ) {
+				# Clear field if cell contains only "-"
+				Set-TextField $NotifyEmailField ""
+			} else {
+				Set-TextField $NotifyEmailField $Product.'Notify Emails'
+			}
 		}
 		
 		<#	Replenish inventory - Note this is either one or the other!
@@ -1356,13 +1350,13 @@ function Update-Product {
 		
 		if ( $Product.'Add to Inventory' -notlike $null ) {
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInv"
-			$RadioButton.Click()
-			$AddToInvText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbInvAddToExistingInvTextBox" 
+			$RadioButton | Set-RadioButton
+			$AddToInvText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInvTextBox" 
 			Set-TextField $AddToInvText $Product.'Add to Inventory'
 		} elseif ( $Product.'Reset Inventory' -notlike $null ) {
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvReset"
-			$RadioButton.Click()
-			$ResetInvText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*RbResetInvTextBox" 
+			$RadioButton | Set-RadioButton
+			$ResetInvText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbResetInvTextBox" 
 			Set-TextField $ResetInvText $Product.'Reset Inventory'
 		}
 	} elseif ( $ManageInventory -eq $false ) {
@@ -1399,7 +1393,7 @@ function Update-Product {
 			$Product.'Mult Qty' -or
 			$Product.'Advanced Qty' ) {
 		# One of these is not empty, so act accordingly.
-		write-log -fore red "TODO: Fixed/Mult/Advanced section is incomplete."
+		write-log -fore red "TODO: [Issue 9] Fixed/Mult/Advanced section is incomplete."
 		
 		if ( $Product.'Fixed Qty' -notlike $null ) {
 			<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
@@ -1408,7 +1402,7 @@ function Update-Product {
 				Admin will need to update the allowed quantities by hand.
 			#>
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantities"
-			$RadioButton.Click()
+			$RadioButton | Set-RadioButton
 			$InvFixedQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantitiesValues_ctl02__Value"
 			Set-TextField $InvFixedQtyText $Product.'Fixed Qty'
 			# Now click the Update button, which will post the value to the server.
@@ -1425,12 +1419,12 @@ function Update-Product {
 			# Min quantity can be used by itself or in conjunction with Max.
 			# For this to be available, "By Multiples" button must be clicked.
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiples"
-			$RadioButton.Click()
-			$MinQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Minimum"
+			$RadioButton | Set-RadioButton
+			$MinQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Minimum"
 			Set-TextField $MinQtyText $Product.'Min Qty'
-			$MaxQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Maximum"
+			$MaxQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Maximum"
 			Set-TextField $MaxQtyText $Product.'Max Qty'
-			$MultQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*OrderQuantitiesCtrl__Multiple"
+			$MultQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiple"
 			Set-TextField $MultQtyText $Product.'Mult Qty'
 		}
 		
@@ -1438,7 +1432,7 @@ function Update-Product {
 		if ( $Product.'Max Qty' -notlike $null ) {
 			$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
 			# Set to False and then click, to ensure control is recognized.
-			Set-CheckBox $Checkbox.Checked
+			Set-CheckBox $Checkbox
 			#$Checkbox | Click-Wait
 		}		
 	}	
@@ -1449,12 +1443,12 @@ function Update-Product {
 	#>
 	
 	if ( $Product.'Production Notes' -notlike $null ) {
-		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
+		$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
 		Set-TextField $Field $Product.'Production Notes'
 	}
 	
 	if ( $Product.Keywords -notlike $null ) {
-		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
+		$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
 		Set-TextField $Field $Product.Keywords
 	}
 	
@@ -1485,7 +1479,7 @@ function Update-Product {
 	#>
 
 	# Product weight
-	$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
+	$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
 	if ( $Product.Weight -notlike $null ) {
 		Set-TextField $Field $Product.Weight
 	} else {
@@ -1494,7 +1488,7 @@ function Update-Product {
 		Set-TextField $Field "0"
 	}
 	# Weight units - Get the list object, then select the right value.
-	$WeightList = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
+	$WeightList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
 	$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
 	
 	# Ship item separately?
@@ -1508,21 +1502,21 @@ function Update-Product {
 	# Width
 	# What is with the ForEach-Object stuff here?  Shouldn't we only ever have one value per cell?
 	$Width = $Product.Width | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
+	$NumField = $BrowserObject | $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
 	Set-TextField $NumField $Product.Width
 	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
 	
 	# Length
 	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxY__Length"
+	$NumField = $BrowserObject | $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
 	Set-TextField $NumField $Product.Length
 	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
 	
 	# Height
 	$Height = $Product.Height | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*BoxZ__Length"
+	$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Length"
 	Set-TextField $NumField $Product.Height
 	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
