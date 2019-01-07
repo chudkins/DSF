@@ -728,6 +728,7 @@ function Set-CheckBox {
 		# Grab the ID attribute and save it for later.
 		$ChkBoxID = $CheckBoxObject.GetAttribute("Id")
 		$ChkBoxDriver = $CheckBoxObject.WrappedDriver
+		Write-DebugLog "Set-CheckBox: Set checkbox with ID matching '$ChkBoxID' to $( $Off -eq $false )"
 		
 		# Check if we're turning it on or off.
 		if ( $Off ) {
@@ -739,7 +740,7 @@ function Set-CheckBox {
 				# Verify it's now unchecked.
 				$RealCheckBox = WaitFor-ElementToBeClickable $ChkBoxDriver -ID $ChkBoxID 5
 				if ( $RealCheckBox.Selected -ne $False ) {
-					throw "Error:  Unable to uncheck $($RealCheckBox.GetAttribute("ID"))!"
+					throw "Error:  Unable to uncheck $($RealCheckBox.GetAttribute('ID'))!"
 				}
 			}
 		} else {
@@ -754,7 +755,7 @@ function Set-CheckBox {
 				# Verify it's now checked.
 				$RealCheckBox = WaitFor-ElementToBeClickable $ChkBoxDriver -ID $ChkBoxID 5
 				if ( $RealCheckBox.Selected -ne $True ) {
-					throw "Error:  Unable to check $($RealCheckBox.GetAttribute("ID"))!"
+					throw "Error:  Unable to check $($RealCheckBox.GetAttribute('ID'))!"
 				}
 			}
 		}
@@ -763,6 +764,52 @@ function Set-CheckBox {
 	end {}
 }
 
+function Set-RadioButton {
+	<#
+		.Description
+		Given a radio button object, set the button to be clicked.  Considering that radio buttons
+		cannot be turned off, and must be cleared by clicking a different button in the set,
+		and that normal user action via the GUI cannot clear a button without clicking another one,
+		this function has no provision for clearing a button.
+		
+		.Synopsis
+		Given a radio button object, click the button.
+		
+		.Parameter RadioButton
+		Selenium web element representing the radio button object.
+	#>
+	
+	param (
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $RadioButton
+	)
+	
+	begin {}
+	
+	process {
+		# Grab the ID attribute and save it for later.
+		$RButnID = $RadioButton.GetAttribute("Id")
+		$RButnDriver = $RadioButton.WrappedDriver
+		Write-DebugLog "Set-RadioButton: Click radio button with ID matching '$RButnID'"
+		
+		# Check if button is already clicked.
+		if ( $RadioButton.Selected -eq $False ) {
+			# Currently not checked, so click to check.
+			$RadioButton.Click()
+			
+			# Sometimes, changing button state causes the page to be refreshed.
+			# If this happens, the element reference will become stale.
+			
+			# Verify it's now checked.
+			$RealRButton = WaitFor-ElementToBeClickable $RButnDriver -ID $RButnID 5
+			if ( $RealRButton.Selected -ne $True ) {
+				throw "Error:  Unable to select $($RealRButton.GetAttribute('ID'))!"
+			}
+		}
+	}
+	
+	end {}
+}
 function Set-RichTextField {
 	<#
 		.Synopsis
