@@ -383,6 +383,7 @@ function Get-Control {
 			"RadioButton"		{ "input" ; continue }
 			"RichText"			{ "input" ; continue }
 			"Text"				{ "input" ; continue }
+			"TextArea"			{ "textarea" ; continue }
 			default	{
 				throw "Get-Control: Unexpected control type '$Type'"
 			}
@@ -1333,7 +1334,7 @@ function Update-Product {
 		}
 		
 		# Notification Email Id, id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
-		$NotifyEmailField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
+		$NotifyEmailField = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
 		if ( $Product.'Notify Emails' -notlike $null ) {
 			if ( $Product.'Notify Emails' -eq "-" ) {
 				# Clear field if cell contains only "-"
@@ -1443,12 +1444,12 @@ function Update-Product {
 	#>
 	
 	if ( $Product.'Production Notes' -notlike $null ) {
-		$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
+		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
 		Set-TextField $Field $Product.'Production Notes'
 	}
 	
 	if ( $Product.Keywords -notlike $null ) {
-		$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
+		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
 		Set-TextField $Field $Product.Keywords
 	}
 	
@@ -1502,14 +1503,14 @@ function Update-Product {
 	# Width
 	# What is with the ForEach-Object stuff here?  Shouldn't we only ever have one value per cell?
 	$Width = $Product.Width | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
+	$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
 	Set-TextField $NumField $Product.Width
 	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
 	
 	# Length
 	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
+	$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
 	Set-TextField $NumField $Product.Length
 	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
 	$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )

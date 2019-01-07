@@ -11,4 +11,4 @@ Alpha quality, at best.  Using Selenium library, I'm working through the DSF web
 Digital StoreFront 9.8 series.
 
 ## Notes on input data
-### To clear the E-mail Notification field, put `-` as the only data in the cell.
+To clear the E-mail Notification field, put `-` as the only data in the cell.
