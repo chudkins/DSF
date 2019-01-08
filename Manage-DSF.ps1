@@ -71,7 +71,7 @@ Param (
 			throw "ProductFile - Supplied path not found: $_!"
 		}
 	})]
-	$ProductFile = "C:\Users\Carl\Documents\ADS Work\Automation\Test_Product_List.csv",
+	[string] $ProductFile,
 
 	[ValidateNotNullOrEmpty()]
 	[string] $UserName = "DefaultUser",
@@ -1573,12 +1573,24 @@ function Update-Product {
 	
 	# Switch to Pricing section.
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabPricing"
-	$NavTab.Click()
+	$NavTab | Click-Link
+	
+	# Issue 10:  Add price handling.
 	
 	# Switch to Security section.
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabSecurity"
-	$NavTab.Click()
+	$NavTab | Click-Link
 	
+	# Issue 11:  Add code to add, verify and change security groups.
+	
+	# For now, just click the Finish button to save the updated product.
+	# Also, hit the Done button on the following page, to get through Category assignment.
+	
+	$FinishButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_FinishNavigationTemplateContainerID_FinishButton"
+	$FinishButton | Click-Link
+	
+	$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done"
+	$CategoryDoneBtn | Click-Link
 }
 
 function Upload-Thumbnail {
