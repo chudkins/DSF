@@ -1743,19 +1743,23 @@ function WaitFor-ElementExists {
 		[Parameter( Mandatory, Position=1, ParameterSetName="LinkText" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
-		[Parameter( ParameterSetName="ID" )]
-		[Parameter( ParameterSetName="XPath" )]
-		[Parameter( ParameterSetName="LinkText" )]
-		[int] $TimeInSeconds = 10,
-
-		[Parameter( ParameterSetName="ID" )]
+		[Parameter( Position=1, ParameterSetName="Element" )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
+		
+		[Parameter( Position=2, ParameterSetName="ID" )]
 		[string] $ID,
 		
-		[Parameter( ParameterSetName="XPath" )]
+		[Parameter( Position=2, ParameterSetName="XPath" )]
 		[string] $XPath,
 		
-		[Parameter( ParameterSetName="LinkText" )]
-		[string] $LinkText
+		[Parameter( Position=2, ParameterSetName="LinkText" )]
+		[string] $LinkText,
+		
+		[Parameter( Position=3, ParameterSetName="ID" )]
+		[Parameter( Position=3, ParameterSetName="XPath" )]
+		[Parameter( Position=3, ParameterSetName="LinkText" )]
+		[Parameter( Position=2, ParameterSetName="Element" )]
+		[int] $TimeInSeconds = 10
 	)
 	
 	# This object's job is to wait for something.
@@ -1777,6 +1781,10 @@ function WaitFor-ElementExists {
 				$Locator = "LinkText: $LinkText"
 				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( [OpenQA.Selenium.by]::LinkText($LinkText)))
 			}
+			"Element"	{
+				$Locator = "Element: $($WebElement.TagName)"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( $WebElement ))
+			}
 		}
 		
 		# We got something, so return the element to caller.
@@ -1786,7 +1794,7 @@ function WaitFor-ElementExists {
 	catch [OpenQA.Selenium.WebDriverTimeoutException] {
 		# Timed out waiting for element.  What should we do here?
 		# Nothing.  Caller must check if something was returned.
-		write-log -fore yellow "Timed out waiting for $Locator"
+		write-log -fore yellow "Timed out waiting for '$Locator'"
 	}
 }
 
@@ -1878,7 +1886,7 @@ function WaitFor-ElementToBeClickable {
 	catch [OpenQA.Selenium.WebDriverTimeoutException] {
 		# Timed out waiting for element.  What should we do here?
 		# Nothing.  Caller must check if something was returned.
-		write-log -fore yellow "Timed out waiting for clickable $Locator"
+		write-log -fore yellow "Timed out waiting for clickable '$Locator'"
 	}
 }
 
