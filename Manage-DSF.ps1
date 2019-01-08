@@ -1783,7 +1783,7 @@ function WaitFor-ElementExists {
 			}
 			"Element"	{
 				$Locator = "Element: $($WebElement.TagName)"
-				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementToBeClickable( $WebElement ))
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( $WebElement ))
 			}
 		}
 		
