@@ -580,14 +580,20 @@ function Manage-Product {
 			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonCreateProduct" )
 			
 			# Handle first page, which only asks for name and type.
-			$ProductNameField = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*txtName"
-			Set-TextField $ProductNameField $product.'Product Name'
+			$ProductNameField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_txtName"
+			Set-TextField $ProductNameField $Product.'Product Name'
 			# We only deal with non-printed products, so set Type to that.
 			$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
 			$Picklist | Select-FromList -Item "Non Printed Products"
 			
 			# Click Next to get to product creation page
 			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_btnNext" )
+			
+			<# Issue 12
+				Function must check to make sure there wasn't a problem.  For example...
+					Attempting to provide a product name that already exists results in this same page
+					loading again, with a message next to the Product Name field reading "This name already exists"
+			#>
 			
 			# The rest of the work is the same whether adding or updating, so let another function do it.
 			$BrowserObject | Update-Product -Product $Product
