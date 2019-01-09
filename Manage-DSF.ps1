@@ -437,6 +437,55 @@ function Get-Control {
 	finally {}
 }
 
+function Get-PriceRow {
+	<#
+		.Synopsis
+		Find a pricing row on the product details page; output a WebElement containing it.
+		
+		.Parameter PriceSheetName
+		Name, such as "Contoso Base Price Sheet" that identifies the table containing the price row
+		you want.
+		
+		.Example
+		$PriceElement = Get-PriceRow
+	#>
+
+	<#	Pricing Structure
+	
+		Price tables are contained in <div id="ctl00_ctl00_C_M_ctl00_W_ctl01_PricingPanel">.
+		
+		Now things get tricky because these are dynamically generated and will be different for each
+		DSF setup.  Hard-coding cell names or whatever will cause the script to break if anything changes.
+		Therefore, find the right parts relative to the page structure.
+		
+		Within that, each price sheet seems to be in <div class="ctr-contentcontainer" style="margin-top:0px;">.
+		There will be one for each price sheet shown.
+		
+		Default "price sheet" can be addressed by name, if you get all "ctr-contentcontainer" and then find the
+		one containing a "span" with text equal to whatever your price sheet is named.
+		I think we could do this by getting each one into a WebElement, then searching within that for 
+		the matching span.
+		
+		Price Sheet name must be a variable.  Options for how it's set include:
+			Global script variable.
+			Script parameter.
+			Product property in input data.  (This might be best if we want to allow modifying different sheets.)
+		
+	#>
+	
+	<#
+		Finding the right row:
+			Get all tables with class="border-Ads-000001".  This is used for other tables besides
+			price sheets.
+			Within each table, find <td class="bg-Ads-010000">.  This is used only for price sheets.
+			Within price sheet, find <span class="bold">$PriceSheetName</span> to get the right one.
+			Inside that, row can be found using input fields.  Range Begin field will have an ID matching
+			"*_rngbegin_*", and its value will be set to an integer we can match.
+				In the row, Regular Price has ID matching "*_PriceCatalog_regularprice_*".
+				Setup Price ID matches "*_PriceCatalog_setupprice_*".
+	#>
+}
+
 function Invoke-Login {
 	<#
 		.Synopsis
@@ -1537,32 +1586,9 @@ function Update-Product {
 					Setup Price, input id="tbl_0_PriceCatalog_setupprice_1"
 	#>
 	
-	<#	Pricing Structure
-	
-		Price tables are contained in <div id="ctl00_ctl00_C_M_ctl00_W_ctl01_PricingPanel">.
-		
-		Now things get tricky because these are dynamically generated and will be different for each
-		DSF setup.  Hard-coding cell names or whatever will cause the script to break if anything changes.
-		Therefore, find the right parts relative to the page structure.
-		
-		Within that, each price sheet seems to be in <div class="ctr-contentcontainer" style="margin-top:0px;">.
-		There will be one for each price sheet shown.
-		
-		Default "price sheet" can be addressed by name, if you get all "ctr-contentcontainer" and then find the
-		one containing a "span" with text equal to whatever your price sheet is named.
-		I think we could do this by getting each one into a WebElement, then searching within that for 
-		the matching span.
-		
-		Price Sheet name must be a variable.  Options for how it's set include:
-			Global script variable.
-			Script parameter.
-			Product property in input data.  (This might be best if we want to allow modifying different sheets.)
-		
-	#>
-	
 	<#
 		Functions needed for pricing rows:
-			Add-PriceRow, to make a new one.
+			New-PriceRow, to make a new one.
 			Get-PriceRow, to find a row based on some reliable criteria.
 			Set-PriceRow, to modify an existing one, such as the default row you get with a new product.
 			Remove-PriceRow, to delete one.
