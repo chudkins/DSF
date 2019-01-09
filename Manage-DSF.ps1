@@ -318,8 +318,10 @@ function Get-Control {
 		Return the control as a web element.
 		
 		.Parameter WebDriver
-		Web driver to search.  May be passed via pipeline.  Mandatory because function doesn't accept
-		a WebElement.
+		Web driver to search.  May be passed via pipeline.
+		
+		.Parameter WebElement
+		Web element to search.  May be passed via pipeline.
 		
 		.Parameter Type
 		Type of control, such as "checkbox" or "radiobutton".
@@ -333,12 +335,17 @@ function Get-Control {
 		.Example
 		Get a checkbox whose ID is "GiftWrap".
 		
-		$GiftWrapChk = Get-Control -Type Checkbox -ID "GiftWrap"
+		$GiftWrapChk = $Browser | Get-Control -Type Checkbox -ID "GiftWrap"
 		
 		.Example
 		Get a picklist whose ID is "SelectProductA".
 		
-		$Picklist = Get-Control -Type List -ID "SelectProductA"
+		$Picklist = $Browser | Get-Control -Type List -ID "SelectProductA"
+		
+		.Example
+		Get an input text box within an existing element.
+		
+		$PriceField = $BigTable | Get-Control -Type Text -ID "UnitPrice"
 	#>
 	
 	<#	
@@ -347,8 +354,11 @@ function Get-Control {
 	#>
 	
 	Param(
-		[Parameter( Mandatory, ValueFromPipeLine )]
+		[Parameter( Position=1, Mandatory, ValueFromPipeLine, ParameterSetName="Driver" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
+
+		[Parameter( Position=1, Mandatory, ValueFromPipeLine, ParameterSetName="Element" )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
 
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
@@ -375,7 +385,7 @@ function Get-Control {
 			Typical use of Wait-Link:
 				$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
 		#>
-		
+
 		$TypeTag = switch ( $Type ) {
 			"Button"			{ "input" ; continue }
 			"Checkbox"			{ "input" ; continue }
@@ -406,8 +416,15 @@ function Get-Control {
 				break
 			}
 			
-			# For most DSF web controls, use the ID tag to find them; double-check control type for sanity.
-			$result = $WebDriver.FindElementsByID( $ID ) | Where-Object { $_.TagName -eq $TypeTag }
+				switch ( $PSCmdlet.ParameterSetName ) {
+					"Driver"	{
+						# For most DSF web controls, use the ID tag to find them; double-check control type for sanity.
+						$result = $WebDriver.FindElementsByID( $ID ) | Where-Object { $_.TagName -eq $TypeTag }
+					}
+					"Element"	{
+						$result = $WebElement.FindElementsByID( $ID ) | Where-Object { $_.TagName -eq $TypeTag }
+					}
+			}
 		}
 		until ( $result -notlike $null )
 		
@@ -442,6 +459,9 @@ function Get-PriceRow {
 		.Synopsis
 		Find a pricing row on the product details page; output a WebElement containing it.
 		
+		.Parameter WebDriver
+		WebDriver object to search within.
+		
 		.Parameter PriceSheetName
 		Name, such as "Contoso Base Price Sheet" that identifies the table containing the price row
 		you want.
@@ -450,17 +470,20 @@ function Get-PriceRow {
 		Integer representing the beginning of the range we want.  Default is 1.
 		
 		.Example
-		$PriceElement = Get-PriceRow "My Price Sheet" 101
+		$PriceElement = $Browser | Get-PriceRow "My Price Sheet" 101
 		
 		Returns the row in "My Price Sheet" where the range starts at 101.
 	#>
 
 	param (
-		[Parameter( Position=1, Mandatory, ValueFromPipeLine )]
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
+
+		[Parameter( Position=2, Mandatory )]
 		[ValidateNotNullOrEmpty()]
 		[string] $PriceSheetName,
 		
-		[Parameter( Position=2 )]
+		[Parameter( Position=3 )]
 		[int] $RangeStart = 1
 	)
 	
@@ -509,7 +532,7 @@ function Get-PriceRow {
 	Process {
 		try {
 			# Find all tables with class="border-Ads-000001".
-			$colTables = 
+			$colTables = $WebDriver | Wait-Link -TagName "table" -Property "class" -Pattern "border-Ads-000001"
 			#$PriceRow
 		}
 		
