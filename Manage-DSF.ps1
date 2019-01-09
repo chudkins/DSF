@@ -446,11 +446,27 @@ function Get-PriceRow {
 		Name, such as "Contoso Base Price Sheet" that identifies the table containing the price row
 		you want.
 		
+		.Parameter RangeStart
+		Integer representing the beginning of the range we want.  Default is 1.
+		
 		.Example
-		$PriceElement = Get-PriceRow
+		$PriceElement = Get-PriceRow "My Price Sheet" 101
+		
+		Returns the row in "My Price Sheet" where the range starts at 101.
 	#>
 
+	param (
+		[Parameter( Position=1, Mandatory, ValueFromPipeLine )]
+		[ValidateNotNullOrEmpty()]
+		[string] $PriceSheetName,
+		
+		[Parameter( Position=2 )]
+		[int] $RangeStart = 1
+	)
+	
 	<#	Pricing Structure
+	
+		Even if a product has no price yet, it will have at least one Price Sheet with one row in it.
 	
 		Price tables are contained in <div id="ctl00_ctl00_C_M_ctl00_W_ctl01_PricingPanel">.
 		
@@ -477,13 +493,32 @@ function Get-PriceRow {
 		Finding the right row:
 			Get all tables with class="border-Ads-000001".  This is used for other tables besides
 			price sheets.
+			
 			Within each table, find <td class="bg-Ads-010000">.  This is used only for price sheets.
+			
 			Within price sheet, find <span class="bold">$PriceSheetName</span> to get the right one.
+			
 			Inside that, row can be found using input fields.  Range Begin field will have an ID matching
 			"*_rngbegin_*", and its value will be set to an integer we can match.
 				In the row, Regular Price has ID matching "*_PriceCatalog_regularprice_*".
 				Setup Price ID matches "*_PriceCatalog_setupprice_*".
 	#>
+	
+	Begin {}
+	
+	Process {
+		try {
+			# Find all tables with class="border-Ads-000001".
+			$colTables = 
+			#$PriceRow
+		}
+		
+		catch {}
+		
+		finally {}
+	}
+	
+	End {}
 }
 
 function Invoke-Login {
@@ -820,6 +855,29 @@ function Set-CheckBox {
 	}
 	
 	end {}
+}
+
+function Set-PriceRow {
+	<#
+		.Synopsis
+		Given a WebElement containing a pricing row, and price data, sets the prices.
+		
+		.Parameter RegularPrice
+		Number representing the normal price for the item, such as 2.55.
+		
+		.Parameter SetupPrice
+		Number representing the setup fee for the item.  Default is 0.
+	#>
+	
+	param (
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $PriceRow,
+		
+		[Parameter( Mandatory) ]
+		[float] $RegularPrice,
+		
+		[float] $SetupPrice = 0
+	)
 }
 
 function Set-RadioButton {
