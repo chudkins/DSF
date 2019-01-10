@@ -1433,30 +1433,36 @@ function Update-Product {
 	#>
 	
 	# Exempt from Shipping Charge?
-	$ExemptShipChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
-	if ( $Product.'Exempt Shipping' -in $YesValues ) {
-		Set-CheckBox $ExemptShipChk
-	} else {
-		Set-CheckBox $ExemptShipChk -Off
+	if ( $Product.'Exempt Shipping' -notlike $null ) {
+		$ExemptShipChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
+		if ( $Product.'Exempt Shipping' -in $YesValues ) {
+			Set-CheckBox $ExemptShipChk
+		} else {
+			Set-CheckBox $ExemptShipChk -Off
+		}
 	}
 	
 	# Exempt from Sales Tax?
-	$ExemptTaxChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
-	if ( $Product.'Exempt Tax' -in $YesValues ) {
-		Set-CheckBox $ExemptTaxChk
-	} else {
-		Set-CheckBox $ExemptTaxChk -Off
+	if ( $Product.'Exempt Tax' -notlike $null ) {
+		$ExemptTaxChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
+		if ( $Product.'Exempt Tax' -in $YesValues ) {
+			Set-CheckBox $ExemptTaxChk
+		} else {
+			Set-CheckBox $ExemptTaxChk -Off
+		}
 	}
 	
 	# Show on the mobile version of the site?
-	$MobileSupportYes = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
-	$MobileSupportNo = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
-	if ( ( $Product.'Mobile' -in $YesValues ) -or ( $Product.'Mobile' -like $null ) ) {
-		# Set if Yes or unspecified.
-		$MobileSupportYes | Set-RadioButton
-	} else {
-		# Set No if we specifically don't want mobile support.
-		$MobileSupportNo | Set-RadioButton
+	if ( $Product.'Mobile' -notlike $null ) {
+		$MobileSupportYes = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
+		$MobileSupportNo = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
+		if ( $Product.'Mobile' -in $YesValues ) {
+			# Set if Yes or unspecified.
+			$MobileSupportYes | Set-RadioButton
+		} else {
+			# Set No if we specifically don't want mobile support.
+			$MobileSupportNo | Set-RadioButton
+		}
 	}
 
 	<#
@@ -1482,13 +1488,13 @@ function Update-Product {
 	
 	switch ( $Product.'Manage Inventory' ) {
 		# If explicitly set to "Yes," turn the checkbox on.
-		{ $_ -in $YesValues }	{ Write-DebugLog "ManageInv = True" ; $ManageInventory = $true }
+		{ $_ -in $YesValues }	{ Write-DebugLog "ManageInv = True" ; $ManageInventory = $true ; continue }
 		
 		# If explicitly set to "No," turn the checkbox off.
-		{ $_ -in $NoValues }	{ Write-DebugLog "ManageInv = False" ; $ManageInventory = $false }
+		{ $_ -in $NoValues }	{ Write-DebugLog "ManageInv = False" ; $ManageInventory = $false ; continue }
 		
-		# Enable management if any inventory management values are given,
-		#	even if Manage isn't specified.  (Sanity check!)
+		# If we got here, Manage Inventory wasn't specified, but if any inventory management values are given,
+		#	enable it anyway.  (Sanity check!)
 		{ $Product.Threshold -or
 			$Product.'Allow Back Order' -or
 			$Product.'Show Inventory with Back Order' -or
@@ -1501,14 +1507,12 @@ function Update-Product {
 								}
 	}
 	
-	# So if none of the conditions are met, $ManageInventory will still be NULL.
+	# So if none of the conditions are met, $ManageInventory will still be NULL.  As it's neither True nor False,
+	#	following check will drop through and do nothing.
 	
 	# Now, if ManageInventory is TRUE, handle the values that depend on it.
-	# In order to do this, we may need to take steps to activate the section of the form
-	#	that is deactivated if this checkbox is not checked.
-	# For now, see what happens if we submit the form anyway.
 	if ( $ManageInventory -eq $true ) {
-		# Check the box for Manage Inventory = Enabled.
+		# Check the box for Manage Inventory = Enabled, otherwise this part of the form will be disabled.
 		Set-CheckBox $MgInvenChk
 		
 		# Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
@@ -1518,19 +1522,23 @@ function Update-Product {
 		}
 		
 		# Allow Back Order, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
-		$AllowBkOrdChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
-		if ( $Product.'Allow Back Order' -in $YesValues ) {
-			Set-CheckBox $AllowBkOrdChk
-		} else {
-			Set-CheckBox $AllowBkOrdChk -Off
+		if ( $Product.'Allow Back Order' -notlike $null ) {
+			$AllowBkOrdChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
+			if ( $Product.'Allow Back Order' -in $YesValues ) {
+				Set-CheckBox $AllowBkOrdChk
+			} else {
+				Set-CheckBox $AllowBkOrdChk -Off
+			}
 		}
 		
 		# Show inventory when back order is allowed, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
-		$ShowInvBOChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
-		if ( $Product.'Show Inventory with Back Order' -in $YesValues ) {
-			Set-CheckBox $ShowInvBOChk
-		} else {
-			Set-CheckBox $ShowInvBOChk -Off
+		if ( $Product.'Show Inventory with Back Order' -notlike $null ) {
+			$ShowInvBOChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
+			if ( $Product.'Show Inventory with Back Order' -in $YesValues ) {
+				Set-CheckBox $ShowInvBOChk
+			} else {
+				Set-CheckBox $ShowInvBOChk -Off
+			}
 		}
 		
 		# Notification Email Id, id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
@@ -1615,7 +1623,7 @@ function Update-Product {
 			break
 		}
 		
-		if ( ( $Product.'Min Qty' -or $Product.'Max Qty' -or $Product.'Mult Qty' ) -notlike $null ) {
+		if ( $Product.'Min Qty' -or $Product.'Max Qty' -or $Product.'Mult Qty' ) {
 			write-log "$($Product.'Product ID') has Min/Max/Mult Qty."
 			# Min quantity can be used by itself or in conjunction with Max.
 			# For this to be available, "By Multiples" button must be clicked.
@@ -1632,9 +1640,7 @@ function Update-Product {
 		# If a Max quantity was specified, check the box to enforce this in shopping cart.
 		if ( $Product.'Max Qty' -notlike $null ) {
 			$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
-			# Set to False and then click, to ensure control is recognized.
 			Set-CheckBox $Checkbox
-			#$Checkbox | Click-Wait
 		}		
 	}	
 	
@@ -1684,44 +1690,54 @@ function Update-Product {
 	if ( $Product.Weight -notlike $null ) {
 		Set-TextField $Field $Product.Weight
 	} else {
-		# OK, somehow the weight IS null, so ensure it's set to zero.
-		# A zero weight will allow the product to be created, though it won't work for shipping quotes.
-		Set-TextField $Field "0"
+		# OK, somehow the weight IS null, so if Weight is currently empty set it to zero.
+		# If Weight is already filled in, leave it alone.
+		if ( $Field.GetAttribute("value") -like $null ) {
+			# A zero weight will allow the product to be created, though it won't work for shipping quotes.
+			Set-TextField $Field "0"
+		}
 	}
 	# Weight units - Get the list object, then select the right value.
-	$WeightList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
-	$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
+	if ( $Product.'Weight Unit' -notlike $null ) {
+		$WeightList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
+		$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
+	}
 	
 	# Ship item separately?
-	$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_chkPackSeparately"
-	if ( $Product.'Ship Separately' -in $YesValues ) {
-		Set-CheckBox $Checkbox
-	} else {
-		Set-CheckBox $Checkbox -Off
+	if ( $Product.'Ship Separately' -notlike $null ) {
+		$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_chkPackSeparately"
+		if ( $Product.'Ship Separately' -in $YesValues ) {
+			Set-CheckBox $Checkbox
+		} else {
+			Set-CheckBox $Checkbox -Off
+		}
 	}
 	
 	# Width
 	# What is with the ForEach-Object stuff here?  Shouldn't we only ever have one value per cell?
-	$Width = $Product.Width | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
-	Set-TextField $NumField $Product.Width
-	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
-	$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
+	if ( $Product.Width -notlike $null ) {
+		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
+		Set-TextField $NumField $Product.Width
+		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
+		$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
+	}
 	
 	# Length
-	$Length = $Product.Length | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
-	Set-TextField $NumField $Product.Length
-	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
-	$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
+	if ( $Product.Length -notlike $null ) {
+		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
+		Set-TextField $NumField $Product.Length
+		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
+		$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
+	}
 	
 	# Height
-	$Height = $Product.Height | ForEach-Object { if ( $_ -notlike $null ) { $_ } else { 0 } }
-	$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Length"
-	Set-TextField $NumField $Product.Height
-	$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
-	$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
-			
+	if ( $Product.Height -notlike $null ) {
+		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Length"
+		Set-TextField $NumField $Product.Height
+		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
+		$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
+	}
+	
 	<#		Pricing section:
 				Note:  Tiered pricing will require creation of table rows, which in the GUI is done
 					by clicking buttons and then modifying the Range Unit fields.
@@ -1761,7 +1777,6 @@ function Update-Product {
 		if ( $Product.'Setup Price' ) {
 			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Regular Price'
 		}
-
 	}
 	
 	# Switch to Security section.
