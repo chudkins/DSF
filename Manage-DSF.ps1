@@ -605,6 +605,7 @@ function Get-PriceRow {
 			Write-DebugLog "${Fn} Failed to find price row with range starting at $( $RangeStart )"
 		} else {
 			Write-DebugLog "${Fn} Got price row with range starting at $( $RangeStart ): $( $PriceRow.ToString() )"
+			Write-DebugLog ( $PriceRow | out-string )
 		}
 		
 		$PriceRow
@@ -983,6 +984,7 @@ function Set-PriceRow {
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 
 	Write-DebugLog "${Fn}: Got price row, $( $PriceRow.ToString() )"
+	Write-DebugLog ( $PriceRow | out-string )
 	
 	if ( $RegularPrice ) {
 		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
