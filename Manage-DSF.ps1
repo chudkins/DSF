@@ -535,24 +535,26 @@ function Get-PriceRow {
 	
 	try {
 		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
-		Write-DebugLog "${Fn} start."
+		Write-DebugLog "${Fn}: Get price row in '$PriceSheetName' with range starting at $RangeStart."
 
-		# Find all tables with class="border-Ads-000001".
-		$colTables = $WebDriver.FindElementsByTagName("table") | Where-Object { $_.GetProperty("class") -eq "border-Ads-000001" }
+		# Find all objects with class="border-Ads-000001".
+		$colTables = $WebDriver.FindElementsByClassName("border-Ads-000001")
+		#$colTables = $WebDriver.FindElementsByTagName("table") | Where-Object { $_.GetProperty("class") -eq "border-Ads-000001" }
 		
-		Write-DebugLog "${Fn} Got document tables:  $( $colTables.GetProperty('id') )"
+		Write-DebugLog "${Fn}: Got document tables, $( $colTables.GetProperty('id') )"
 		
 		# Now search through those for a price sheet.
 		# We can't just use FindElementsByTagName because that will give us a <td> when we really 
 		#	want the entire table containing this data.
 		[OpenQA.Selenium.Remote.RemoteWebElement[]]$colPriceSheets = $null
 		foreach ( $table in $colTables ) {
-			if ( ( $table.FindElementsByTagName("td") | Where-Object { $_.GetProperty("class") -eq "bg-Ads-010000" } ) -notlike $null ) {
+#			if ( ( $table.FindElementsByTagName("td") | Where-Object { $_.GetProperty("class") -eq "bg-Ads-010000" } ) -notlike $null ) {
+			if ( $table.FindElementsByClassName("bg-Ads-010000") -notlike $null ) {
 				$colPriceSheets += $table
 			}
 		}
 			
-		Write-DebugLog "${Fn} Got price sheets:  $( $colPriceSheets.GetProperty('id') )"
+		Write-DebugLog "${Fn}: Got price sheets, $( $colPriceSheets.GetProperty('id') )"
 		
 		# One of these should have $PriceSheetName in a span.
 		foreach ( $sheet in $colPriceSheets ) {
