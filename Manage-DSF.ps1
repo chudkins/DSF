@@ -537,6 +537,7 @@ function Get-PriceRow {
 		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 		Write-DebugLog "${Fn}: Get price row in '$PriceSheetName' with range starting at $RangeStart."
 
+<#
 		# Find all objects with class="border-Ads-000001".
 		$colTables = $WebDriver.FindElementsByClassName("border-Ads-000001")
 		#$colTables = $WebDriver.FindElementsByTagName("table") | Where-Object { $_.GetProperty("class") -eq "border-Ads-000001" }
@@ -553,6 +554,12 @@ function Get-PriceRow {
 				$colPriceSheets += $table
 			}
 		}
+#>
+		# Find the div that holds the price sheets.
+		$PriceSheetGrid = $WebDriver.FindElementByID("ctl00_ctl00_C_M_ctl00_W_ctl01_GridViewPricesheetsUpdatePanel")
+		
+		# Within that, there will be some number of <div class="ctr-contentcontainer" ...>, one for each price sheet.
+		$colPriceSheets = $PriceSheetGrid.FindElementsByClassName("ctr-contentcontainer")
 			
 		Write-DebugLog "${Fn}: Got $( ($colPriceSheets | Measure-Object).Count ) price sheets, $( $colPriceSheets.GetProperty('id') )"
 		
@@ -961,7 +968,7 @@ function Set-PriceRow {
 			Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
 		}
 		
-		Write-Host -fore red "${Fn} does nothing yet!"
+		throw "${Fn} does nothing yet!"
 	}
 	
 	end {}
