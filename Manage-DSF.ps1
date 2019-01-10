@@ -964,23 +964,17 @@ function Set-PriceRow {
 		[float] $SetupPrice
 	)
 	
-	begin {
-		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
+	if ( $RegularPrice ) {
+		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
 	}
 	
-	process {
-		if ( $RegularPrice ) {
-			Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
-		}
-		
-		if ( $SetupPrice ) {
-			Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
-		}
-		
-		throw "${Fn} does nothing yet!"
+	if ( $SetupPrice ) {
+		Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
 	}
 	
-	end {}
+	throw "${Fn} does nothing yet!"
 }
 
 function Set-RadioButton {
@@ -1791,7 +1785,7 @@ function Update-Product {
 			$BasePriceRow | Set-PriceRow -RegularPrice $Product.'Regular Price'
 		}
 		if ( $Product.'Setup Price' ) {
-			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Regular Price'
+			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Setup Price'
 		}
 	}
 	
