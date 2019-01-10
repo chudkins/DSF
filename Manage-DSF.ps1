@@ -576,7 +576,7 @@ function Get-PriceRow {
 		}
 		
 		# Within this, get the contained table that holds the actual rows.
-		$PriceSheet = $PriceSheetSubGrid.FindElementByID("ctl00_ctl00_C_M_ctl00_W_ctl01_GridViewPricesheets_ctl02_PriceItemFrame_ctl17")
+		$PriceSheet = $PriceSheetSubGrid.FindElementByTagName("table") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
 		
 		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetAttribute('class') )"
 		
