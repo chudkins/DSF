@@ -541,7 +541,7 @@ function Get-PriceRow {
 		$colTables = $WebDriver.FindElementsByClassName("border-Ads-000001")
 		#$colTables = $WebDriver.FindElementsByTagName("table") | Where-Object { $_.GetProperty("class") -eq "border-Ads-000001" }
 		
-		Write-DebugLog "${Fn}: Got document tables, $( $colTables.GetProperty('id') )"
+		Write-DebugLog "${Fn}: Got $( ($colTables | Measure-Object).Count ) document tables, $( $colTables.GetProperty('id') )"
 		
 		# Now search through those for a price sheet.
 		# We can't just use FindElementsByTagName because that will give us a <td> when we really 
@@ -554,7 +554,7 @@ function Get-PriceRow {
 			}
 		}
 			
-		Write-DebugLog "${Fn}: Got price sheets, $( $colPriceSheets.GetProperty('id') )"
+		Write-DebugLog "${Fn}: Got $( ($colPriceSheets | Measure-Object).Count ) price sheets, $( $colPriceSheets.GetProperty('id') )"
 		
 		# One of these should have $PriceSheetName in a span.
 		foreach ( $sheet in $colPriceSheets ) {
@@ -564,7 +564,7 @@ function Get-PriceRow {
 			}
 		}
 		
-		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetProperty('id') )"
+		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetProperty('class') )"
 		
 		# Now we've got the right sheet; find the row based on the start of the range.
 		# Again, FindElementByTagName is going to get the actual element, an input field in this case.
@@ -925,22 +925,44 @@ function Set-PriceRow {
 		.Synopsis
 		Given a WebElement containing a pricing row, and price data, sets the prices.
 		
+		.Description
+		Given a WebElement containing a pricing row, and price data, sets the prices.  This function can do
+		both Regular and Setup at once, or individually.  There is no default for either, because if not
+		specified we don't want to overwrite a value that's already present.
+		
 		.Parameter RegularPrice
 		Number representing the normal price for the item, such as 2.55.
 		
 		.Parameter SetupPrice
-		Number representing the setup fee for the item.  Default is 0.
+		Number representing the setup fee for the item.
 	#>
 	
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $PriceRow,
 		
-		[Parameter( Mandatory) ]
 		[float] $RegularPrice,
 		
-		[float] $SetupPrice = 0
+		[float] $SetupPrice
 	)
+	
+	begin {
+		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	}
+	
+	process {
+		if ( $RegularPrice ) {
+			Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
+		}
+		
+		if ( $SetupPrice ) {
+			Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
+		}
+		
+		Write-Host -fore red "${Fn} does nothing yet!"
+	}
+	
+	end {}
 }
 
 function Set-RadioButton {
@@ -1729,8 +1751,16 @@ function Update-Product {
 	$NavTab | Click-Link
 	
 	# Issue 10:  Add price handling.
-	$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
-	$BasePriceRow | Set-PriceRow $Product.'Regular Price'
+	if ( $Product.'Regular Price' -or $Product.'Setup Price' ) {
+		$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
+		if ( $Product.'Regular Price' ) {
+			$BasePriceRow | Set-PriceRow -RegularPrice $Product.'Regular Price'
+		}
+		if ( $Product.'Setup Price' ) {
+			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Regular Price'
+		}
+
+	}
 	
 	# Switch to Security section.
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabSecurity"
