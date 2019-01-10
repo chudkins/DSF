@@ -570,12 +570,13 @@ function Get-PriceRow {
 		# One of these should have $PriceSheetName in a span.
 		foreach ( $sheet in $colPriceSheets ) {
 			# Check each element in collection to see if it contains a span matching $PriceSheetName.
-			#$XPathString = "//table[contains(text(), '$PriceSheetName')]"
-			#if ( ( $sheet.FindElementByXPath( $XPathString ) ) -notlike $null ) {
 			if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
-				$PriceSheet = $sheet
+				$PriceSheetSubGrid = $sheet
 			}
 		}
+		
+		# Within this, get the contained table that holds the actual rows.
+		$PriceSheet = $PriceSheetSubGrid.FindElementByID("ctl00_ctl00_C_M_ctl00_W_ctl01_GridViewPricesheets_ctl02_PriceItemFrame_ctl17")
 		
 		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetAttribute('class') )"
 		
