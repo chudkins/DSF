@@ -557,18 +557,22 @@ function Get-PriceRow {
 #>
 		# Find the div that holds the price sheets.
 		$PriceSheetGrid = $WebDriver.FindElementByID("ctl00_ctl00_C_M_ctl00_W_ctl01_GridViewPricesheetsUpdatePanel")
+		Write-DebugLog "${Fn}: Got $( ($PriceSheetGrid | Measure-Object).Count ) price grids."
 		
 		# Within that, there will be some number of <div class="ctr-contentcontainer" ...>, one for each price sheet.
 		$colPriceSheets = $PriceSheetGrid.FindElementsByClassName("ctr-contentcontainer")
 			
-		Write-DebugLog "${Fn}: Got $( ($colPriceSheets | Measure-Object).Count ) price sheets, $( $colPriceSheets.GetProperty('id') )"
+		Write-DebugLog "${Fn}: Got $( ($colPriceSheets | Measure-Object).Count ) price sheets:"
+		foreach ( $sht in $colPriceSheets ) {
+			Write-DebugLog "$( $sht.ToString() )`n"
+		}
 		
 		# One of these should have $PriceSheetName in a span.
 		foreach ( $sheet in $colPriceSheets ) {
 			# Check each element in collection to see if it contains a span matching $PriceSheetName.
-			$XPathString = "//table[contains(text(), '$PriceSheetName')]"
-			if ( ( $sheet.FindElementByXPath( $XPathString ) ) -notlike $null ) {
-			#if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
+			#$XPathString = "//table[contains(text(), '$PriceSheetName')]"
+			#if ( ( $sheet.FindElementByXPath( $XPathString ) ) -notlike $null ) {
+			if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
 				$PriceSheet = $sheet
 			}
 		}
@@ -577,10 +581,15 @@ function Get-PriceRow {
 		
 		# Now we've got the right sheet; find the row based on the start of the range.
 		# Again, FindElementByTagName is going to get the actual element, an input field in this case.
-		# Search the rows in $PriceSheet to find the row containing the right one.
-		$rows = $PriceSheet.FindElementsByTagName("tr")
+		# Search the rows in $PriceSheet to find the row containing the range start value we need.
 		
-		$PriceRow = $PriceSheet.FindElementByTagName("input") | Where-Object { ( $_.GetProperty("id") -like "_rngbegin_" ) -and ( $_.GetProperty("value") -eq $RangeStart ) }
+		#$rows = $PriceSheet.FindElementsByTagName("tr")
+		
+		$PriceRow = $PriceSheet.FindElementByClassName("bg-AdS-001011") | Where-Object { ( $_.GetProperty("id") -like "_rngbegin_" ) -and ( $_.GetProperty("value") -eq $RangeStart ) }
+		
+		if ( $PriceRow -like $null ) { 
+			Write-DebugLog "${Fn} failed to find price row with range starting at $( $RangeStart )"
+		}
 		
 		$PriceRow
 	}
