@@ -592,7 +592,7 @@ function Get-PriceRow {
 			# Iterate through the <td> in the row.
 			foreach ( $td in $row.FindElementsByTagName("td") ) {
 				# The <td> we want has an <input> with ID matching "_rngbegin_" and value set to range start target.
-				if ( $td.FindElementsByTagName("td") | Where-Object { ( $_.GetProperty("id") -like "*_rngbegin_*" ) -and ( $_.GetProperty("value") -eq $RangeStart ) } ) {
+				if ( $td.FindElementsByTagName("input") | Where-Object { ( $_.GetProperty("id") -like "*_rngbegin_*" ) -and ( $_.GetProperty("value") -eq $RangeStart ) } ) {
 					# Found the row!
 					$PriceRow = $row
 					# Don't bother checking any others.
