@@ -583,12 +583,26 @@ function Get-PriceRow {
 		# Again, FindElementByTagName is going to get the actual element, an input field in this case.
 		# Search the rows in $PriceSheet to find the row containing the range start value we need.
 		
-		#$rows = $PriceSheet.FindElementsByTagName("tr")
+		# Get rows in this table.  They don't necessarily have the class ID attached.
+		$rows = $PriceSheet.FindElementsByTagName("tr")
 		
-		$PriceRow = $PriceSheet.FindElementByClassName("bg-AdS-001011") | Where-Object { ( $_.GetProperty("id") -like "_rngbegin_" ) -and ( $_.GetProperty("value") -eq $RangeStart ) }
+		# This should get the actual <tr> containing the input fields.
+		#$PriceRow = $PriceSheet.FindElementByClassName("bg-AdS-001011") | Where-Object { ( $_.GetProperty("id") -like "*_rngbegin_*" ) -and ( $_.GetProperty("value") -eq $RangeStart ) }
+		:rowscan foreach ( $row in $rows ) {
+			# Iterate through the <td> in the row.
+			foreach ( $td in $row.FindElementsByTagName("td") ) {
+				# The <td> we want has an <input> with ID matching "_rngbegin_" and value set to range start target.
+				if ( $td.FindElementsByTagName("td") | Where-Object { ( $_.GetProperty("id") -like "*_rngbegin_*" ) -and ( $_.GetProperty("value") -eq $RangeStart ) } ) {
+					# Found the row!
+					$PriceRow = $row
+					# Don't bother checking any others.
+					break rowscan
+				}
+			}
+		}
 		
 		if ( $PriceRow -like $null ) { 
-			Write-DebugLog "${Fn} failed to find price row with range starting at $( $RangeStart )"
+			Write-DebugLog "${Fn} Failed to find price row with range starting at $( $RangeStart )"
 		} else {
 			Write-DebugLog "${Fn} Got price row with range starting at $( $RangeStart ): $( $PriceRow.ToString() )"
 		}
