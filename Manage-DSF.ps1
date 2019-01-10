@@ -283,29 +283,34 @@ function FixUp-Unit {
 		The unit name to be standardized.
 	#>
 	
-	# 
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine )]
 		$Input
 	)
 	
-	$InchValues = "in", "inch", "inches"
-	$FootValues = "ft", "foot", "feet"
-	$YardValues = "yd", "yard", "yards", "yds"
-	$PoundValues = "lb", "pound", "pounds", "lbs"
-	$OunceValues = "oz", "ounce", "ounces", "ozs"
-	
-	switch ( $Input ) {
-		# DSF is not consistent with abbreviations or plurals of units!
-		{ $_ -in $InchValues }	{ $Output = "Inches"}
-		{ $_ -in $FootValues }	{ $Output = "Feet"}
-		{ $_ -in $YardValues }	{ $Output = "Yard"}
-		{ $_ -in $PoundValues }	{ $Output = "lb"}
-		{ $_ -in $OunceValues }	{ $Output = "oz"}
-		default					{ $Output = "undefined"}
+	Begin {
+		$InchValues = "in", "inch", "inches"
+		$FootValues = "ft", "foot", "feet"
+		$YardValues = "yd", "yard", "yards", "yds"
+		$PoundValues = "lb", "pound", "pounds", "lbs"
+		$OunceValues = "oz", "ounce", "ounces", "ozs"
 	}
 	
-	$Output
+	Process {
+		switch ( $Input ) {
+			# DSF is not consistent with abbreviations or plurals of units!
+			{ $_ -in $InchValues }	{ $Output = "Inches"}
+			{ $_ -in $FootValues }	{ $Output = "Feet"}
+			{ $_ -in $YardValues }	{ $Output = "Yard"}
+			{ $_ -in $PoundValues }	{ $Output = "lb"}
+			{ $_ -in $OunceValues }	{ $Output = "oz"}
+			default					{ $Output = "undefined"}
+		}
+		
+		$Output
+	}
+	
+	End {}
 }
 
 function Get-Control {
@@ -373,7 +378,8 @@ function Get-Control {
 	)
 
 	try {
-		Write-DebugLog -fore gray "Get-Control: Input element with ID matching `'$ID`'"
+		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+		Write-DebugLog -fore gray "${Fn}: Input element with ID matching `'$ID`'"
 		<#
 			Typical controls would include:
 				Radio button, input type="radio" id="whatever"
@@ -476,7 +482,7 @@ function Get-PriceRow {
 	#>
 
 	param (
-		[Parameter( Mandatory, ValueFromPipeLine )]
+		[Parameter( Position=1, Mandatory, ValueFromPipeLine )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
 		[Parameter( Position=2, Mandatory )]
@@ -527,21 +533,53 @@ function Get-PriceRow {
 				Setup Price ID matches "*_PriceCatalog_setupprice_*".
 	#>
 	
-	Begin {}
-	
-	Process {
-		try {
-			# Find all tables with class="border-Ads-000001".
-			$colTables = $WebDriver | Wait-Link -TagName "table" -Property "class" -Pattern "border-Ads-000001"
-			#$PriceRow
+	try {
+		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+		Write-DebugLog "${Fn} start."
+
+		# Find all tables with class="border-Ads-000001".
+		$colTables = $WebDriver.FindElementsByTagName("table") | Where-Object { $_.GetProperty("class") -eq "border-Ads-000001" }
+		
+		Write-DebugLog "${Fn} Got document tables:  $( $colTables.GetProperty('id') )"
+		
+		# Now search through those for a price sheet.
+		# We can't just use FindElementsByTagName because that will give us a <td> when we really 
+		#	want the entire table containing this data.
+		[OpenQA.Selenium.Remote.RemoteWebElement[]]$colPriceSheets = $null
+		foreach ( $table in $colTables ) {
+			if ( ( $table.FindElementsByTagName("td") | Where-Object { $_.GetProperty("class") -eq "bg-Ads-010000" } ) -notlike $null ) {
+				$colPriceSheets += $table
+			}
+		}
+			
+		Write-DebugLog "${Fn} Got price sheets:  $( $colPriceSheets.GetProperty('id') )"
+		
+		# One of these should have $PriceSheetName in a span.
+		foreach ( $sheet in $colPriceSheets ) {
+			# Check each element in collection to see if it contains a span matching $PriceSheetName.
+			if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
+				$PriceSheet = $sheet
+			}
 		}
 		
-		catch {}
+		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetProperty('id') )"
 		
-		finally {}
+		# Now we've got the right sheet; find the row based on the start of the range.
+		# Again, FindElementByTagName is going to get the actual element, an input field in this case.
+		# Search the rows in $PriceSheet to find the row containing the right one.
+		$rows = $PriceSheet.FindElementsByTagName("tr")
+		
+		$PriceRow = $PriceSheet.FindElementByTagName("input") | Where-Object { ( $_.GetProperty("id") -like "_rngbegin_" ) -and ( $_.GetProperty("value") -eq $RangeStart ) }
+		
+		$PriceRow
 	}
 	
-	End {}
+	catch {
+		throw $_
+	}
+	
+	finally {}
+	
 }
 
 function Invoke-Login {
@@ -1689,6 +1727,8 @@ function Update-Product {
 	$NavTab | Click-Link
 	
 	# Issue 10:  Add price handling.
+	$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
+	$BasePriceRow | Set-PriceRow $Product.'Regular Price'
 	
 	# Switch to Security section.
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabSecurity"
@@ -1786,21 +1826,21 @@ function Wait-Link {
 	
 	Param(
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		$SeObject,
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $SeObject,
 		
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
-		$TagName,
+		[string] $TagName,
 		
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
-		$Property,
+		[string] $Property,
 		
 		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
-		$Pattern,
+		[string] $Pattern,
 		
-		$Timeout = 30
+		[int] $Timeout = 30
 		
 	)
 
