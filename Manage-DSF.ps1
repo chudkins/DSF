@@ -986,13 +986,19 @@ function Set-PriceRow {
 	
 	if ( $RegularPrice ) {
 		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
+		
+		# Find the input box for Regular Price.  It will have ID like "*_PriceCatalog_regularprice_*"
+		$RegPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_regularprice_*" }
+		Set-TextField $RegPriceTxt $RegularPrice
 	}
 	
 	if ( $SetupPrice ) {
 		Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
+		
+		# Find the input box for Setup Price.  It will have ID like "*_PriceCatalog_setupprice_*"
+		$SetPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_setupprice_*" }
+		Set-TextField $SetPriceTxt $SetupPrice
 	}
-	
-	throw "${Fn} does nothing yet!"
 }
 
 function Set-RadioButton {
