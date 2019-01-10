@@ -559,12 +559,14 @@ function Get-PriceRow {
 		# One of these should have $PriceSheetName in a span.
 		foreach ( $sheet in $colPriceSheets ) {
 			# Check each element in collection to see if it contains a span matching $PriceSheetName.
-			if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
+			$XPathString = "//table[contains(text(), '$PriceSheetName')]"
+			if ( ( $sheet.FindElementByXPath( $XPathString ) ) -notlike $null ) {
+			#if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
 				$PriceSheet = $sheet
 			}
 		}
 		
-		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetProperty('class') )"
+		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetAttribute('class') )"
 		
 		# Now we've got the right sheet; find the row based on the start of the range.
 		# Again, FindElementByTagName is going to get the actual element, an input field in this case.
