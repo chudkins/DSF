@@ -294,11 +294,11 @@ function Find-Product {
 	#>
 
 	param (
-		[Parameter( Mandatory )]
-		[PSCustomObject] $Product,
-		
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
+		
+		[Parameter( Mandatory )]
+		[PSCustomObject] $Product
 	)
 	
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
@@ -2450,14 +2450,14 @@ Process {
 		# *** NOTE ***
 		# We should probably bring this in from Excel instead.
 		# Remember to trim leading/trailing whitespace from all values!
-		$Products = import-csv $ProductFile
+		$ProductList = import-csv $ProductFile
 		$Counter = 1
 		
 		# Issue 8:  Check $Product.ProcessedStatus (better name?) and if already set, skip this item.
 		#	When product has been processed, update this property in the data file.
 	
-		foreach ( $product in $Products ) {
-			Manage-Product -BrowserObject $Browser -Mode $product.Operation -Product $product
+		foreach ( $prItem in $ProductList ) {
+			Manage-Product -BrowserObject $Browser -Mode $prItem.Operation -Product $prItem
 			$Counter++
 		}
 		
