@@ -61,6 +61,9 @@
 	
 	.Parameter SkipImageUpload
 	Don't upload product thumbnail images.  Default is to upload them if a valid file path is provided.
+	
+	.Parameter Debug
+	Emit lots of information in the hope of aiding troubleshooting.
 #>
 
 Param (
@@ -79,7 +82,9 @@ Param (
 	[ValidateNotNullOrEmpty()]
 	[string] $Password,
 	
-	[switch] $SkipImageUpload = $false
+	[switch] $SkipImageUpload,
+	
+	[switch] $Debug
 )
 
 Begin {
