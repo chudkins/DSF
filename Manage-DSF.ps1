@@ -1092,13 +1092,14 @@ function Set-PriceRow {
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 
 	Write-DebugLog "${Fn}: Got price row, $( $PriceRow.GetProperty('class') )"
-	Write-DebugLog "'PriceRow' object type '$($PriceRow.GetType().FullName)'"
+<#	Write-DebugLog "'PriceRow' object type '$($PriceRow.GetType().FullName)'"
 	# For debugging, iterate through each <td> and output IDs of any input objects found in them.
 	Write-DebugLog "${Fn}: Price row contains these Input fields:"
 	foreach ( $td in $PriceRow.FindElementsByTagName("td") ) {
 		Write-DebugLog ( ( $td.FindElementsByTagName("input") ).GetProperty("id") | out-string )
 	}
 	Write-DebugLog ( $PriceRow | out-string )
+#>
 	
 	if ( $RegularPrice ) {
 		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
@@ -2453,7 +2454,7 @@ Process {
 		#	When product has been processed, update this property in the data file.
 	
 		foreach ( $product in $Products ) {
-			Manage-Product -BrowserObject $Browser -Mode Add -Product $product
+			Manage-Product -BrowserObject $Browser -Mode $product.Operation -Product $product
 			$Counter++
 		}
 		
