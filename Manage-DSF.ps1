@@ -670,7 +670,9 @@ function Get-PriceRow {
 		}
 		
 		# Within this, get the contained table that holds the actual rows.
-		$PriceSheet = $PriceSheetSubGrid.FindElementByTagName("table") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
+		# Finding by tag name doesn't return tables?!?!
+		#$PriceSheet = $PriceSheetSubGrid.FindElementByTagName("table") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
+		$PriceSheet = $PriceSheetSubGrid.FindElementByClassName("bg-AdS-000110") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
 		
 		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetAttribute('class') )"
 		
@@ -958,7 +960,7 @@ function Select-FromList {
 			# Status indicator
 			$Success = $false
 			
-			Write-DebugLog "Select-FromList: Try to select '$Item' from list containing '$($ListObject.Text)'"
+			Write-DebugLog "Select-FromList: Try to select '$Item' from list containing `n'$($ListObject.Text)'"
 			
 			# Create a Selenium Select object to find what we want.
 			$Selector = New-Object -TypeName OpenQA.Selenium.Support.UI.SelectElement( $ListObject )
