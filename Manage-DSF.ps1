@@ -674,7 +674,7 @@ function Get-PriceRow {
 		#$PriceSheet = $PriceSheetSubGrid.FindElementByTagName("table") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
 		$PriceSheet = $PriceSheetSubGrid.FindElementByClassName("bg-AdS-000110") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
 		
-		Write-DebugLog "${Fn} Got final price sheet:  $( $PriceSheet.GetAttribute('class') )"
+		Write-DebugLog "${Fn} Got final price sheet, ID = $( $PriceSheet.GetAttribute('id') )"
 		
 		# Now we've got the right sheet; find the row based on the start of the range.
 		# Again, FindElementByTagName is going to get the actual element, an input field in this case.
@@ -1096,7 +1096,7 @@ function Set-PriceRow {
 		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
 		
 		# Find the input box for Regular Price.  It will have ID like "*_PriceCatalog_regularprice_*"
-		$RegPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_regularprice_*" }
+		$RegPriceTxt = $PriceRow.FindElementByClassName("frm-textbox w80") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_regularprice_*" }
 		Set-TextField $RegPriceTxt $RegularPrice
 	}
 	
@@ -1104,7 +1104,7 @@ function Set-PriceRow {
 		Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
 		
 		# Find the input box for Setup Price.  It will have ID like "*_PriceCatalog_setupprice_*"
-		$SetPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_setupprice_*" }
+		$SetPriceTxt = $PriceRow.FindElementByClassName("frm-textbox w80") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_setupprice_*" }
 		Set-TextField $SetPriceTxt $SetupPrice
 	}
 }
