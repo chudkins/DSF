@@ -275,6 +275,37 @@ function Dump-ElementInfo {
 	end {}
 }
 
+function Find-Product {
+	<#
+		.Synopsis
+		Given an object containing product details, navigate to the product details page.
+		
+		.Description
+		This function takes a custom object populated with all details pertaining to a DSF product.
+		It will then search the system for that product, and navigate to the product details page
+		if it's found.  If product is not found, it will log an error and return nothing.
+		
+		.Parameter Product
+		Custom object containing the details of a product, typically populated via spreadsheet import.
+		
+		.Parameter BrowserObject
+		Selenium driver object representing the browser we're automating.
+	#>
+
+	param (
+		[Parameter( Mandatory )]
+		[PSCustomObject] $Product,
+		
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
+	)
+	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	Write-DebugLog "${Fn}: Search for product '$( $Product.'Product Id' )'"
+	
+	
+}
+
 function FixUp-Unit {
 	<#
 		.Synopsis
@@ -789,6 +820,12 @@ function Manage-Product {
 		
 		"Change"	{
 			# Go to list of All Products and click the link to it; make changes.
+			
+			# Locate product; Find-Product will ensure a unique match.
+			$BrowserObject | Find-Product $Product
+			
+			# Now we're on the product details page.
+			$BrowserObject | Update-Product -Product $Product
 		}
 		
 		"Other"	{
