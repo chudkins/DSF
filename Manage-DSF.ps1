@@ -670,8 +670,6 @@ function Get-PriceRow {
 		}
 		
 		# Within this, get the contained table that holds the actual rows.
-		# Finding by tag name doesn't return tables?!?!
-		#$PriceSheet = $PriceSheetSubGrid.FindElementByTagName("table") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
 		$PriceSheet = $PriceSheetSubGrid.FindElementByClassName("bg-AdS-000110") | Where-Object { $_.GetProperty("id") -like "*_GridViewPricesheets_ctl*_PriceItemFrame_*" }
 		
 		Write-DebugLog "${Fn} Got final price sheet, ID = $( $PriceSheet.GetAttribute('id') )"
@@ -684,7 +682,6 @@ function Get-PriceRow {
 		$rows = $PriceSheet.FindElementsByTagName("tr")
 		
 		# This should get the actual <tr> containing the input fields.
-		#$PriceRow = $PriceSheet.FindElementByClassName("bg-AdS-001011") | Where-Object { ( $_.GetProperty("id") -like "*_rngbegin_*" ) -and ( $_.GetProperty("value") -eq $RangeStart ) }
 		:rowscan foreach ( $row in $rows ) {
 			# Iterate through the <td> in the row.
 			foreach ( $td in $row.FindElementsByTagName("td") ) {
@@ -1094,7 +1091,8 @@ function Set-PriceRow {
 	
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 
-	Write-DebugLog "${Fn}: Got price row, $( $PriceRow.GetProperty() )"
+	Write-DebugLog "${Fn}: Got price row, $( $PriceRow.GetProperty('class') )"
+	Write-DebugLog "'PriceRow' object type '$($PriceRow.GetType().FullName)'"
 	Write-DebugLog ( $PriceRow | out-string )
 	
 	if ( $RegularPrice ) {
@@ -1102,6 +1100,7 @@ function Set-PriceRow {
 		
 		# Find the input box for Regular Price.  It will have ID like "*_PriceCatalog_regularprice_*"
 		$RegPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("name") -like "*_PriceCatalog_regularprice_*" }
+		Write-DebugLog "'RegPriceTxt' object type '$($RegPriceTxt.GetType().FullName)'"
 		Set-TextField $RegPriceTxt $RegularPrice
 	}
 	
