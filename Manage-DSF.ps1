@@ -44,8 +44,6 @@
 	find-package -Source Nuget.org -Name "Selenium.WebDriver.GeckoDriver.Win64" | install-package -InstallUpdate
 #>
 
-[cmdletbinding()]
-
 <#
 	.Synopsis
 	Given a CSV file, add or update products in EFI's Digital Storefront.
@@ -65,6 +63,8 @@
 	.Parameter Debug
 	Emit lots of information in the hope of aiding troubleshooting.
 #>
+
+#[cmdletbinding()]
 
 Param (
 	[ValidateScript({
@@ -283,7 +283,8 @@ function Find-Product {
 		.Description
 		This function takes a custom object populated with all details pertaining to a DSF product.
 		It will then search the system for that product, and navigate to the product details page
-		if it's found.  If product is not found, it will log an error and return nothing.
+		if it's found.  If product is not found, it will log an error and return False.
+		On success, function returns True.
 		
 		.Parameter Product
 		Custom object containing the details of a product, typically populated via spreadsheet import.
@@ -303,7 +304,64 @@ function Find-Product {
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 	Write-DebugLog "${Fn}: Search for product '$( $Product.'Product Id' )'"
 	
+	<#
+		To find a product, we need to...
+			Go to Products page.
+				Select Products from picklist.
+					ctl00_ctl00_TabNavigatorSFAdministration_QuickMenuSearch
+			Search for it.
+				Search box
+					ctl00_ctl00_C_M_TextBoxSearch
+				Enter product SKU
+				Click Search button
+					ctl00_ctl00_C_M_ButtonSearch
+			Look in the resulting table for <a> where ID matches "*_HyperLinkManageProduct" and link text 
+			matches product Name.
+				If search term isn't found, you get a result page with a table that has headers only.
+				So, check for an empty table and log failure.
+			Click that link and it should take us to the product details page.
+			Verify the details page loaded.  If <div class="ctr-bc-links"> exists, we're good.
+	#>
 	
+	[bool] $FoundResult = $false
+	
+	# Navigate to Products list page.
+	$BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_TabNavigatorSFAdministration_QuickMenuSearch" | Select-FromList "Products"
+	
+	# Search for requested product.
+	$SearchBox = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_TextBoxSearch"
+	$SearchButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonSearch"
+	Set-TextField $SearchBox $Product.'Product Id'
+	Click-Link $SearchButton
+	
+	# Wait for results.
+	$ResultsTable = $BrowserObject | WaitFor-ElementExists -Class "ctr-tabledata"
+	if ( $ResultsTable ) {
+		# We got something back, however it may not have any products listed.
+		Write-DebugLog "${Fn}: Got a result table back."
+		# Verify table actually contains results by counting rows.
+		$ResultCount = ( $ResultsTable.FindElementsByTagName("tr") | Measure-Object ).Count -1
+		if ( $ResultCount -ge 1 ) {
+			# Table has some result rows, meaning we got some hits back.
+			Write-DebugLog "${Fn}: Got $ResultCount results back."
+			# Check through the rows and find the one where Name and ID exactly match our Product.
+			foreach ( $row in $ResultsTable.FindElementsByTagName("tr") ) {
+				if ( $row.FindElementByLinkText($Product.'Product Name') -and $row.FindElementByLinkText($Product.'Product Id') ) {
+					$ProductFoundRow = $row
+					$FoundResult = $true
+					break
+				}
+			}
+			# Now click the product link.
+			$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
+			Click-Link $ProductLink
+		}
+	} else {
+		# We got nothing back, which probably means WaitFor-ElementExists timed out.
+		Write-DebugLog "${Fn}: Something went wrong trying to retrieve search results."
+	}
+	
+	$FoundResult
 }
 
 function FixUp-Unit {
@@ -822,10 +880,13 @@ function Manage-Product {
 			# Go to list of All Products and click the link to it; make changes.
 			
 			# Locate product; Find-Product will ensure a unique match.
-			$BrowserObject | Find-Product $Product
+			if ( $BrowserObject | Find-Product $Product ) {
 			
-			# Now we're on the product details page.
-			$BrowserObject | Update-Product -Product $Product
+				# Now we're on the product details page.
+				$BrowserObject | Update-Product -Product $Product
+			} else {
+				Write-Log -fore yellow "${Fn}: Unable to find '$( $Product.'Product Id' )'; skipping."
+			}
 		}
 		
 		"Other"	{
@@ -2020,6 +2081,9 @@ function WaitFor-ElementExists {
 		.Parameter TimeInSeconds
 		Number of seconds to wait before giving up.  Default is 10.
 		
+		.Parameter Class
+		Class name to search for.
+		
 		.Parameter ID
 		ID tag to search by.
 		
@@ -2031,6 +2095,7 @@ function WaitFor-ElementExists {
 	#>
 	
 	param (
+		[Parameter( Mandatory, Position=1, ParameterSetName="Class" )]
 		[Parameter( Mandatory, Position=1, ParameterSetName="ID" )]
 		[Parameter( Mandatory, Position=1, ParameterSetName="XPath" )]
 		[Parameter( Mandatory, Position=1, ParameterSetName="LinkText" )]
@@ -2038,6 +2103,9 @@ function WaitFor-ElementExists {
 
 		[Parameter( Position=1, ParameterSetName="Element" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
+		
+		[Parameter( Position=2, ParameterSetName="Class" )]
+		[string] $Class,
 		
 		[Parameter( Position=2, ParameterSetName="ID" )]
 		[string] $ID,
@@ -2062,6 +2130,10 @@ function WaitFor-ElementExists {
 		# Check which info we're given, then wait until it exists or times out.
 		# If the waiter times out, it will throw an exception, which we'll handle.
 		switch ( $PSCmdlet.ParameterSetName ) {
+			"Class"		{
+				$Locator = "Class: $Class"
+				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( [OpenQA.Selenium.by]::ClassName($Class)))
+			}
 			"ID"		{
 				$Locator = "ID: $ID"
 				$Gotcha = $Waiter.Until([OpenQA.Selenium.Support.UI.ExpectedConditions]::ElementExists( [OpenQA.Selenium.by]::Id($ID)))
@@ -2284,7 +2356,7 @@ Function Write-Log {
 	
 	$LoggingPreference = "Continue"		# Log all output
 	# Log file name for Write-Log function
-	$LoggingFilePreference = join-path $ScriptLocation "DSF_Task_Log.txt"	
+	$LoggingFilePreference = join-path $ScriptLocation "DSF_Task_Log.txt"
 
 <#	# Setup for Selenium control of IE
 	# Web Driver - location of DLL
