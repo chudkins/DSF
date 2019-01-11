@@ -1096,7 +1096,7 @@ function Set-PriceRow {
 		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
 		
 		# Find the input box for Regular Price.  It will have ID like "*_PriceCatalog_regularprice_*"
-		$RegPriceTxt = $PriceRow.FindElementByClassName("frm-textbox w80") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_regularprice_*" }
+		$RegPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("name") -like "*_PriceCatalog_regularprice_*" }
 		Set-TextField $RegPriceTxt $RegularPrice
 	}
 	
@@ -1104,7 +1104,7 @@ function Set-PriceRow {
 		Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
 		
 		# Find the input box for Setup Price.  It will have ID like "*_PriceCatalog_setupprice_*"
-		$SetPriceTxt = $PriceRow.FindElementByClassName("frm-textbox w80") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_setupprice_*" }
+		$SetPriceTxt = $PriceRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("name") -like "*_PriceCatalog_setupprice_*" }
 		Set-TextField $SetPriceTxt $SetupPrice
 	}
 }
