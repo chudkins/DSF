@@ -2358,31 +2358,6 @@ Function Write-Log {
 	# Log file name for Write-Log function
 	$LoggingFilePreference = join-path $ScriptLocation "DSF_Task_Log.txt"
 
-<#	# Setup for Selenium control of IE
-	# Web Driver - location of DLL
-	$SeWebDriverPath = join-path ( split-path (get-package -name Selenium.WebDriver).Source ) "\lib\net45"
-	Add-Type -Path ( join-path $SeWebDriverPath "WebDriver.dll" )
-	# IE Driver - location of EXE
-	$SeIEDriverPath = join-path ( split-path (get-package -name Selenium.WebDriver.IEDriver).Source ) "\driver"
-	$env:PATH += ";$($SeIEDriverPath)"
-	# IE 64 Driver - location of EXE
-	#$SeIEDriverPath = join-path ( split-path (get-package -name Selenium.WebDriver.IEDriver64).Source ) "\driver"
-	#$env:PATH += ";$($SeIEDriverPath)"
-	# Support - location of DLL
-	$SeSupportPath = join-path ( split-path (get-package -name Selenium.Support).Source ) "\lib\net45"
-	Add-Type -Path ( join-path $SeSupportPath "WebDriver.Support.dll" )
-	
-	# #### Required setup for IE11 with Selenium ####
-	# #### According to:  https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver
-	# "...set a registry entry ... so that the driver can maintain a connection to the instance 
-	#	of Internet Explorer it creates"
-	$IEFeatureControl = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Internet Explorer\Main\FeatureControl"
-	$BFCache = "FEATURE_BFCACHE"
-	if ( ( get-itemproperty ( join-path $IEFeatureControl $BFCache ) -EA SilentlyContinue | select -ExpandProperty "iexplore.exe" ) -ne 0 ) {
-		throw "BFCache not set!"
-	}
-#>
-
 	# Main site URL to start from
 	$SiteURL = "https://store.adocument.net/DSF/"
 
@@ -2390,7 +2365,7 @@ Function Write-Log {
 	#	Use '' instead of "" to avoid accidental substitutions.
 	#$AdminLinkSnip = 'myadmin-link'
 	$AdminLinkText = "Administration"
-	$ProductsLinkSnip = 'ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem'
+	$ProductsLinkSnip = "ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem"
 
 	# What counts as a yes/no value?
 	$YesValues = "yes","y","true","x"
@@ -2405,16 +2380,6 @@ Function Write-Log {
 WebDriverWait wait3 = new WebDriverWait(driver, 10);
 wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv")));
 "@
-	
-<#	# Create IE instance
-	$IE = New-Object -ComObject 'InternetExplorer.Application'
-	# Check if there are extra tabs open, and close them if so.
-#>
-
-<#	# Create IE instance
-	$IE = New-Object OpenQA.Selenium.IE.InternetExplorerDriver
-	# Check if there are extra tabs open, and close them if so.
-#>
 	
 	# Create Firefox instance
 	$Browser = Start-SeFirefox
