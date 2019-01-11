@@ -326,7 +326,10 @@ function Find-Product {
 	[bool] $FoundResult = $false
 	
 	# Navigate to Products list page.
-	$BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_TabNavigatorSFAdministration_QuickMenuSearch" | Select-FromList "Products"
+	#$OpsList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_TabNavigatorSFAdministration_QuickMenuSearch"
+	#$OpsList | Select-FromList "Products"
+	$ManageProductsURL = $SiteURL + "Admin/ManageProducts.aspx"
+	Enter-SeUrl $ManageProductsURL -Driver $BrowserObject
 	
 	# Search for requested product.
 	$SearchBox = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_TextBoxSearch"
@@ -473,7 +476,7 @@ function Get-Control {
 
 	try {
 		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
-		Write-DebugLog -fore gray "${Fn}: Input element with ID matching `'$ID`'"
+		Write-DebugLog -fore gray "${Fn}: Find element with ID matching `'$ID`'"
 		<#
 			Typical controls would include:
 				Radio button, input type="radio" id="whatever"
