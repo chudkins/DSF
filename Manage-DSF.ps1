@@ -887,7 +887,7 @@ function Manage-Product {
 			# Go to list of All Products and click the link to it; make changes.
 			
 			# Locate product; Find-Product will ensure a unique match.
-			if ( $BrowserObject | Find-Product $Product ) {
+			if ( Find-Product -BrowserObject $BrowserObject -Product $Product ) {
 			
 				# Now we're on the product details page.
 				$BrowserObject | Update-Product -Product $Product
