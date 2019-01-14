@@ -1778,11 +1778,11 @@ function Update-Product {
 	
 	# Here, "Any Quantity" is the default.  If neither Fixed, Min, Max, Mult, or Advanced has a value,
 	#	just do nothing and leave it.  If one of those has a value, we need to handle it.
-	if ( $Product.'Fixed Qty' -or
-			$Product.'Min Qty' -or
-			$Product.'Max Qty' -or
-			$Product.'Mult Qty' -or
-			$Product.'Advanced Qty' ) {
+	if ( ( $Product.'Fixed Qty' -notlike $null ) -or
+			( $Product.'Min Qty' -notlike $null ) -or
+			( $Product.'Max Qty' -notlike $null ) -or
+			( $Product.'Mult Qty' -notlike $null ) -or
+			( $Product.'Advanced Qty' -notlike $null ) ) {
 		# One of these is not empty, so act accordingly.
 		write-log -fore red "TODO: [Issue 9] Fixed/Mult/Advanced section is incomplete."
 		
@@ -1805,7 +1805,9 @@ function Update-Product {
 			break
 		}
 		
-		if ( $Product.'Min Qty' -or $Product.'Max Qty' -or $Product.'Mult Qty' ) {
+		if ( ( $Product.'Min Qty' -notlike $null ) -or
+				( $Product.'Max Qty' -notlike $null ) -or
+				( $Product.'Mult Qty' -notlike $null ) ) {
 			write-log "$($Product.'Product ID') has Min/Max/Mult Qty."
 			# Min quantity can be used by itself or in conjunction with Max.
 			# For this to be available, "By Multiples" button must be clicked.
@@ -1953,10 +1955,11 @@ function Update-Product {
 	# Issue 10:  Add price handling.
 	if ( $Product.'Regular Price' -or $Product.'Setup Price' ) {
 		$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
-		if ( $Product.'Regular Price' ) {
+		# Must check numeric values against null because 0 counts as False.
+		if ( $Product.'Regular Price' -notlike $null ) {
 			$BasePriceRow | Set-PriceRow -RegularPrice $Product.'Regular Price'
 		}
-		if ( $Product.'Setup Price' ) {
+		if ( $Product.'Setup Price' -notlike $null ) {
 			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Setup Price'
 		}
 	}
