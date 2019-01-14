@@ -333,7 +333,7 @@ function Find-Product {
 	# Search for requested product.
 	$SearchBox = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_TextBoxSearch"
 	$SearchButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonSearch"
-	Set-TextField $SearchBox $Product.'Product Id'
+	Set-TextField $SearchBox $Product.'Product Id'.Trim()
 	Click-Link $SearchButton
 	
 	# Wait for results.
@@ -359,7 +359,7 @@ function Find-Product {
 					Write-DebugLog "`tText $( $link.Text )`n"
 				}
 			#>
-				if ( $row.FindElementByLinkText($Product.'Product Id') ) {
+				if ( $row.FindElementByLinkText($Product.'Product Id'.Trim()) ) {
 					$ProductFoundRow = $row
 					$FoundResult = $true
 					break
@@ -872,7 +872,7 @@ function Manage-Product {
 	
 	switch ( $Mode ) {
 		"Add"	{
-			write-log "${Fn}: Add product '$($Product.'Product Name')'"
+			write-log "${Fn}: Add product '$($Product.'Product Id')'"
 			
 			# Check if product already exists and refuse to add if so.
 			$ExistingProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
@@ -905,7 +905,7 @@ function Manage-Product {
 		}
 		
 		"Change"	{
-			write-log "${Fn}: Change details for product '$($Product.'Product Name')'"
+			write-log "${Fn}: Change details for product '$($Product.'Product Id')'"
 
 			# Locate product; Find-Product will ensure a unique match.
 			$EditProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
@@ -1416,7 +1416,7 @@ function Update-Product {
 	#	This is the name customers see most of the time.
 	if ( $Product.'Product Name' -notlike $null ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Name"
-		Set-TextField $Field $Product.'Product Name'
+		Set-TextField $Field $Product.'Product Name'.Trim()
 	}
 
 	# Display As, max length unknown
@@ -1424,13 +1424,13 @@ function Update-Product {
 	#	In reality, rarely seen except when editing product.
 	if ( $Product.'Display Name' -notlike $null ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
-		Set-TextField $Field $Product.'Display Name'
+		Set-TextField $Field $Product.'Display Name'.Trim()
 	}
 	
 	# Product ID (SKU), 50 chars max
 	if ( $Product.'Product ID' -notlike $null ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
-		Set-TextField $Field $Product.'Product Id'
+		Set-TextField $Field $Product.'Product Id'.Trim()
 	}
 	
 	<#	Dealing with rich text editors!
@@ -1448,7 +1448,7 @@ function Update-Product {
 	# Brief Description, rich text field
 	if ( $Product.'Brief Description' -notlike $null ) {
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
-		Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'
+		Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'.Trim()
 	}
 	
 	# Now, if there's a thumbnail image to upload, do that.
@@ -1482,7 +1482,7 @@ function Update-Product {
 	if ( $Product.'Long Description' -notlike $null ) {
 		$LongDescField = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
 		# This editor isn't in an iFrame.
-		Set-RichTextField -RichEditFrame $LongDescField -Text $Product.'Long Description'
+		Set-RichTextField -RichEditFrame $LongDescField -Text $Product.'Long Description'.Trim()
 	}
 	
 	# Switch to Settings section.
@@ -1730,7 +1730,7 @@ function Update-Product {
 				# Clear field if cell contains only "-"
 				Set-TextField $NotifyEmailField ""
 			} else {
-				Set-TextField $NotifyEmailField $Product.'Notify Emails'
+				Set-TextField $NotifyEmailField $Product.'Notify Emails'.Trim()
 			}
 		}
 		
@@ -1835,12 +1835,12 @@ function Update-Product {
 	
 	if ( $Product.'Production Notes' -notlike $null ) {
 		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
-		Set-TextField $Field $Product.'Production Notes'
+		Set-TextField $Field $Product.'Production Notes'.Trim()
 	}
 	
 	if ( $Product.Keywords -notlike $null ) {
 		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
-		Set-TextField $Field $Product.Keywords
+		Set-TextField $Field $Product.Keywords.Trim()
 	}
 	
 	<#
