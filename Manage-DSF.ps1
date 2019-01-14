@@ -344,7 +344,7 @@ function Find-Product {
 		Write-DebugLog "${Fn}: Got a result table back."
 		# Verify table actually contains results by counting the rows that are in "bg-AdS-001000" class.
 		# The table header has a different class name.
-		$ResultCount = ( $ResultsTable.FindElementsByTagName("tr") | Where-Object { $_.GetProperty("class") -eq "bg-AdS-001000" } | Measure-Object ).Count
+		$ResultCount = ( $ResultsTable.FindElementsByClassName("bg-AdS-001000") | Measure-Object ).Count
 		if ( $ResultCount -ge 1 ) {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
@@ -359,6 +359,8 @@ function Find-Product {
 			# Now click the product link.
 			$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
 			Click-Link $ProductLink
+		} else {
+			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
 		}
 	} else {
 		# We got nothing back, which probably means WaitFor-ElementExists timed out.
@@ -853,6 +855,8 @@ function Manage-Product {
 		$Mode
 	)
 	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
 	# Need code that will handle Add mode or Change mode.
 	# For each property, if Change, check if a value was supplied; if so, change it, otherwise leave it.
 	# This is probably best handled by a function so we don't need an "if" on every line.
@@ -860,7 +864,7 @@ function Manage-Product {
 	
 	switch ( $Mode ) {
 		"Add"	{
-			write-log "Add product: $($Product.'Product Name')"
+			write-log "${Fn}: Add product '$($Product.'Product Name')'"
 			# Press Create Product button, go about new product stuff.
 			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonCreateProduct" )
 			
