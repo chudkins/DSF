@@ -1405,8 +1405,13 @@ function Update-Product {
 						<img id="ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIconImage" style="height: 50%;" src="/DSF/Images/44d84a1f-8850-4627-bc55-9402d10ae145/Blanks/27.gif">
 	#>
 
-	# Product Name will already be filled in, based on the previous page.
-	
+	# Product Name, max length 50
+	#	This is the name customers see most of the time.
+	if ( $Product.'Product Name' -notlike $null ) {
+		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Name"
+		Set-TextField $Field $Product.'Product Name'
+	}
+
 	# Display As, max length unknown
 	#	Supposedly, product name as customer sees it in the storefront catalog.
 	#	In reality, rarely seen except when editing product.
