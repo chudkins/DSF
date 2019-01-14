@@ -1443,7 +1443,7 @@ function Update-Product {
 	}
 	
 	<#	Dealing with rich text editors!
-		The product Brief description field is a rich text editor in an iFrame.
+		The product Brief Description field is a rich text editor in an iFrame.
 		Unlike "textbox" elements, you can't just set the value and move on.
 		Each one is an iFrame, which you can get like any other element, however
 		after that you have to drill down a bit.
