@@ -1,4 +1,11 @@
 ﻿Operation,Product Name,Display Name,Product Id,Brief Description,Product Icon,Long Description,Display Priority,Start Date,End Date,Turnaround Time,Exempt Shipping,Exempt Tax,Mobile,Manage Inventory,Threshold,Allow Back Order,Show Inventory with Back Order,Notify Emails,Add to Inventory,Reset Inventory,Fixed Qty,Min Qty,Max Qty,Mult Qty,Advanced Qty,Multiple Recip,Production Notes,Keywords,Weight,Weight Unit,Ship Separately,Width,Width Unit,Length,Length Unit,Height,Height Unit,Max Qty Per Subcontainer,Regular Price,Setup Price
-Change,Test - Snorlax,Dummy Product 15,TEST - Dummy 15,Don't wake a sleeping snorlax or it will pound you!,C:\Users\Carl\Pictures\cute_moogle_by_negocio_plz-d5dw8o1.png,They make good defenders.,,,,14,y,yes,yes,y,15,y,n,mis@contoso.com,,355,,,,,,,Notes for production folks.,"test,product,dummy,snorlax",2000,lb,TRUE,3,foot,4,ft,8,feet,1,999.01,0
-Add,Test - Wooper,Dummy Product 15,TEST - Dummy 15,Test collision avoidance system.  Product add should fail because it's a dupe.,C:\Users\Carl\Pictures\cute_moogle_by_negocio_plz-d5dw8o1.png,"This is a long description. Supposedly it can contain formatting, but I don't know how to do that yet. Let's see if ""quotes"" can be included also.",,,5/5/2020,12,y,yes,yes,y,15,y,n,mis@contoso.com,100,,,,,,,,Notes for production folks.,"test,product,dummy",5,lb,TRUE,5,in,4,in,12,in,1,,0.75
-Change,Test - Pikachu,Dummy Product # 2,TEST - Dummy 02,Second name change just for fun.,,,,,,7,,,,,,,,,25,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 01,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 10,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 04,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 05,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 06,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 07,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 08,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 09,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 02,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 15 ,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,

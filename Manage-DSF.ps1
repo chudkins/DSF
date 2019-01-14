@@ -905,8 +905,8 @@ function Manage-Product {
 		}
 		
 		"Change"	{
-			# Go to list of All Products and click the link to it; make changes.
-			
+			write-log "${Fn}: Change details for product '$($Product.'Product Name')'"
+
 			# Locate product; Find-Product will ensure a unique match.
 			$EditProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
 			if ( $EditProduct -notlike $null ) {
