@@ -342,14 +342,15 @@ function Find-Product {
 	if ( $ResultsTable ) {
 		# We got something back, however it may not have any products listed.
 		Write-DebugLog "${Fn}: Got a result table back."
-		# Verify table actually contains results by counting rows.
-		$ResultCount = ( $ResultsTable.FindElementsByTagName("tr") | Measure-Object ).Count -1
+		# Verify table actually contains results by counting the rows that are in "bg-AdS-001000" class.
+		# The table header has a different class name.
+		$ResultCount = ( $ResultsTable.FindElementsByTagName("tr") | Where-Object { $_.GetProperty("class") -eq "bg-AdS-001000" } | Measure-Object ).Count
 		if ( $ResultCount -ge 1 ) {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
-			# Check through the rows and find the one where Name and ID exactly match our Product.
+			# Check through the rows and find the one where ID exactly matches our Product.
 			foreach ( $row in $ResultsTable.FindElementsByTagName("tr") ) {
-				if ( $row.FindElementByLinkText($Product.'Product Name') -and $row.FindElementByLinkText($Product.'Product Id') ) {
+				if ( $row.FindElementByLinkText($Product.'Product Id') ) {
 					$ProductFoundRow = $row
 					$FoundResult = $true
 					break
