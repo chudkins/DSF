@@ -338,7 +338,7 @@ function Find-Product {
 	Click-Link $SearchButton
 	
 	# Wait for results.
-	$ResultsTable = $BrowserObject | WaitFor-ElementExists -Class "ctr-tabledata"
+	$ResultsTable = WaitFor-ElementExists -WebDriver $BrowserObject -ID "ctl00_ctl00_C_M_GridProducts"
 	if ( $ResultsTable ) {
 		# We got something back, however it may not have any products listed.
 		Write-DebugLog "${Fn}: Got a result table back."
@@ -2097,7 +2097,7 @@ function WaitFor-ElementExists {
 		Number of seconds to wait before giving up.  Default is 10.
 		
 		.Parameter Class
-		Class name to search for.
+		Class name to search for.  Only use Class if you know it's unique!
 		
 		.Parameter ID
 		ID tag to search by.
@@ -2137,6 +2137,10 @@ function WaitFor-ElementExists {
 		[Parameter( Position=2, ParameterSetName="Element" )]
 		[int] $TimeInSeconds = 10
 	)
+	
+	if ( $WebElement -notlike $null ) {
+		$WebDriver = $WebElement.WrappedDriver
+	}
 	
 	# This object's job is to wait for something.
 	$Waiter = New-Object OpenQA.Selenium.Support.UI.WebDriverWait($WebDriver, $TimeInSeconds)
