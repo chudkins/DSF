@@ -350,7 +350,6 @@ function Find-Product {
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
 			foreach ( $row in $ResultHitRows ) {
-			<#
 				# Enumerate links for troubleshooting.
 				foreach ( $link in $row.FindElementsByTagName("a") ) {
 					Write-DebugLog "Links found:"
@@ -359,10 +358,20 @@ function Find-Product {
 					Write-DebugLog "`tText $( $link.Text )`n"
 				}
 			#>
-				if ( $row.FindElementByLinkText($Product.'Product Id'.Trim()) ) {
-					$ProductFoundRow = $row
-					$FoundResult = $true
-					break
+				# FindElementByLinkText will throw an exception if nothing is found.
+				# Catch this and continue.
+				try {
+					if ( $row.FindElementByLinkText($Product.'Product Id'.Trim()) ) {
+						$ProductFoundRow = $row
+						$FoundResult = $true
+						break
+					}
+				}
+				catch [OpenQA.Selenium.NoSuchElementException] {
+					Write-DebugLog "${Fn}: Element not found in current result row."
+				}
+				catch {
+					Handle-Exception $_
 				}
 			}
 			# Extract the product management link.
