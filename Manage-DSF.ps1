@@ -282,9 +282,8 @@ function Find-Product {
 		
 		.Description
 		This function takes a custom object populated with all details pertaining to a DSF product.
-		It will then search the system for that product, and navigate to the product details page
-		if it's found.  If product is not found, it will log an error and return False.
-		On success, function returns True.
+		It will then search the system for that product, and return a link to the product details page
+		if it's found.  If product is not found, it will log an error and return nothing.
 		
 		.Parameter Product
 		Custom object containing the details of a product, typically populated via spreadsheet import.
@@ -366,9 +365,8 @@ function Find-Product {
 					break
 				}
 			}
-			# Now click the product link.
+			# Extract the product management link.
 			$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
-			Click-Link $ProductLink
 		} else {
 			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
 		}
@@ -377,7 +375,7 @@ function Find-Product {
 		Write-DebugLog "${Fn}: Something went wrong trying to retrieve search results."
 	}
 	
-	$FoundResult
+	$ProductLink
 }
 
 function FixUp-Unit {
@@ -875,35 +873,44 @@ function Manage-Product {
 	switch ( $Mode ) {
 		"Add"	{
 			write-log "${Fn}: Add product '$($Product.'Product Name')'"
-			# Press Create Product button, go about new product stuff.
-			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonCreateProduct" )
 			
-			# Handle first page, which only asks for name and type.
-			$ProductNameField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_txtName"
-			Set-TextField $ProductNameField $Product.'Product Name'
-			# We only deal with non-printed products, so set Type to that.
-			$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
-			$Picklist | Select-FromList -Item "Non Printed Products"
-			
-			# Click Next to get to product creation page
-			Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_btnNext" )
-			
-			<# Issue 12
-				Function must check to make sure there wasn't a problem.  For example...
-					Attempting to provide a product name that already exists results in this same page
-					loading again, with a message next to the Product Name field reading "This name already exists"
-			#>
-			
-			# The rest of the work is the same whether adding or updating, so let another function do it.
-			$BrowserObject | Update-Product -Product $Product
+			# Check if product already exists and refuse to add if so.
+			$ExistingProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
+			if ( $ExistingProduct ) {
+				Write-Log -fore red "Warning: '$( $Product.'Product Id' )' already exists; not added!"
+				continue
+			} else {
+				# Press Create Product button, go about new product stuff.
+				Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonCreateProduct" )
+				
+				# Handle first page, which only asks for name and type.
+				$ProductNameField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_txtName"
+				Set-TextField $ProductNameField $Product.'Product Name'
+				# We only deal with non-printed products, so set Type to that.
+				$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_drpProductTypes"
+				$Picklist | Select-FromList -Item "Non Printed Products"
+				
+				# Click Next to get to product creation page
+				Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_btnNext" )
+				
+				<# Issue 12
+					Function must check to make sure there wasn't a problem.  For example...
+						Attempting to provide a product name that already exists results in this same page
+						loading again, with a message next to the Product Name field reading "This name already exists"
+				#>
+				
+				# The rest of the work is the same whether adding or updating, so let another function do it.
+				$BrowserObject | Update-Product -Product $Product
+			}
 		}
 		
 		"Change"	{
 			# Go to list of All Products and click the link to it; make changes.
 			
 			# Locate product; Find-Product will ensure a unique match.
-			if ( Find-Product -BrowserObject $BrowserObject -Product $Product ) {
-			
+			$EditProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
+			if ( $EditProduct -notlike $null ) {
+				Click-Link $EditProduct
 				# Now we're on the product details page.
 				$BrowserObject | Update-Product -Product $Product
 			} else {
