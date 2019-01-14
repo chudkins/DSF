@@ -344,12 +344,13 @@ function Find-Product {
 		Write-DebugLog "${Fn}: Got a result table back."
 		# Verify table actually contains results by counting the rows that are in "bg-AdS-001000" class.
 		# The table header has a different class name.
-		$ResultCount = ( $ResultsTable.FindElementsByClassName("bg-AdS-001000") | Measure-Object ).Count
+		$ResultHitRows = $ResultsTable.FindElementsByClassName("bg-AdS-001000")
+		$ResultCount = ( $ResultHitRows | Measure-Object ).Count
 		if ( $ResultCount -ge 1 ) {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
-			foreach ( $row in $ResultsTable.FindElementsByTagName("tr") ) {
+			foreach ( $row in $ResultHitRows.FindElementsByTagName("tr") ) {
 				# Enumerate links for troubleshooting.
 				foreach ( $link in $row.FindElementsByTagName("a") ) {
 					Write-DebugLog "Links found:"
