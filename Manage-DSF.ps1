@@ -351,6 +351,7 @@ function Find-Product {
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
 			foreach ( $row in $ResultHitRows ) {
+			<#
 				# Enumerate links for troubleshooting.
 				foreach ( $link in $row.FindElementsByTagName("a") ) {
 					Write-DebugLog "Links found:"
@@ -358,6 +359,7 @@ function Find-Product {
 					Write-DebugLog "`tHref $( $link.GetProperty('href') )"
 					Write-DebugLog "`tText $( $link.Text )`n"
 				}
+			#>
 				if ( $row.FindElementByLinkText($Product.'Product Id') ) {
 					$ProductFoundRow = $row
 					$FoundResult = $true
