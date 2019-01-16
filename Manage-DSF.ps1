@@ -2033,11 +2033,13 @@ function Upload-Thumbnail {
 				field = driver.find_element_by_id("selectedFile")
 				driver.execute_script("arguments[0].style.display = 'block';", field)
 			#>
+<#
 			$ScriptString = 'document.getElementsByName("ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01")[0].style.display = ''block'';'
 			$BrowserObject.ExecuteScript( $ScriptString )
 			# If that worked, we should be able to set the text field now.
 			# Find it again because it has now changed?
 			$ThumbnailField = $BrowserObject | Get-Control -Type Text -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
+#>
 			Set-TextField $ThumbnailField $ImageURI
 			# Click the "Upload" button, which will cause the page to reload.
 			$UploadButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
