@@ -1,4 +1,2 @@
 ﻿Operation,Product Name,Display Name,Product Id,Brief Description,Product Icon,Long Description,Display Priority,Start Date,End Date,Turnaround Time,Exempt Shipping,Exempt Tax,Mobile,Manage Inventory,Threshold,Allow Back Order,Show Inventory with Back Order,Notify Emails,Add to Inventory,Reset Inventory,Fixed Qty,Min Qty,Max Qty,Mult Qty,Advanced Qty,Multiple Recip,Production Notes,Keywords,Weight,Weight Unit,Ship Separately,Width,Width Unit,Length,Length Unit,Height,Height Unit,Max Qty Per Subcontainer,Regular Price,Setup Price
-Change,,,TEST - Dummy 01,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
-Change,,,TEST - Dummy 02,,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
-Change,,,TEST - Dummy 15 ,ID for this product has a trailing space.,,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,
+Change,,,TEST - Dummy 01,,C:\Users\Carl\Pictures\cute_moogle_by_negocio_plz-d5dw8o1.png,,,,,,,,,y,100,,,mis@contoso.com;supv@contoso.com,,,,,,,,,,,,,,,,,,,,,,

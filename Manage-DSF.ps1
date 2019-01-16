@@ -486,12 +486,13 @@ function Get-Control {
 		[ValidateNotNullOrEmpty()]
 		[string] $Type,
 		
-		[Parameter( Mandatory )]
 		[ValidateNotNullOrEmpty()]
 		[string] $ID,
 		
-		[int] $Timeout = 10
+		[ValidateNotNullOrEmpty()]
+		[string] $Name,
 		
+		[int] $Timeout = 10
 	)
 
 	try {
@@ -518,12 +519,18 @@ function Get-Control {
 			"Text"				{ "input" ; continue }
 			"TextArea"			{ "textarea" ; continue }
 			default	{
-				throw "Get-Control: Unexpected control type '$Type'"
+				throw "${Fn}: Unexpected control type '$Type'"
 			}
 		}
 		
+		if ( $Name ) {
+			$SearchBy = $Name
+		} else {
+			$SearchBy = $ID
+		}
+		
 		# Debug:  Output the TypeTag
-		Write-DebugLog -fore gray "Get-Control: TypeTag '$TypeTag' trying to match Type '$Type'"
+		Write-DebugLog -fore gray "${Fn}: TypeTag '$TypeTag' trying to match Type '$Type'"
 		
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -535,24 +542,26 @@ function Get-Control {
 			# Check if too much time has elapsed; break out if so.
 			if ( $Stopwatch.Elapsed.Seconds -ge $Timeout ) {
 				$TimedOut = $true
-				Write-DebugLog -fore gray "Get-Control: Timed out after $Timeout seconds waiting for control element."
+				Write-DebugLog -fore gray "${Fn}: Timed out after $Timeout seconds waiting for control element."
 				break
 			}
 			
+			# May also want to handle NoSuchElementException or similar...
+			
 				switch ( $PSCmdlet.ParameterSetName ) {
 					"Driver"	{
-						# For most DSF web controls, use the ID tag to find them; double-check control type for sanity.
-						$result = $WebDriver.FindElementsByID( $ID ) | Where-Object { $_.TagName -eq $TypeTag }
+						# For most DSF web controls, use the tag to find them; double-check control type for sanity.
+						$result = $WebDriver.FindElementsByID( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
 					}
 					"Element"	{
-						$result = $WebElement.FindElementsByID( $ID ) | Where-Object { $_.TagName -eq $TypeTag }
+						$result = $WebElement.FindElementsByID( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
 					}
 			}
 		}
 		until ( $result -notlike $null )
 		
 		if ( $TimedOut ) {
-			write-log -fore yellow "Get-Control: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
+			write-log -fore yellow "${Fn}: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
 			throw "Timed out while waiting for Input element with ID matching `'$ID`'"
 		}
 
@@ -881,7 +890,7 @@ function Manage-Product {
 	
 	switch ( $Mode ) {
 		"Add"	{
-			write-log "${Fn}: Add product '$($Product.'Product Id')'"
+			write-log "${Fn}: Add product, $($Product.'Product Id')"
 			
 			# Check if product already exists and refuse to add if so.
 			$ExistingProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
@@ -914,7 +923,7 @@ function Manage-Product {
 		}
 		
 		"Change"	{
-			write-log "${Fn}: Change details for product '$($Product.'Product Id')'"
+			write-log "${Fn}: Change details for product, $($Product.'Product Id')"
 
 			# Locate product; Find-Product will ensure a unique match.
 			$EditProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
@@ -923,7 +932,7 @@ function Manage-Product {
 				# Now we're on the product details page.
 				$BrowserObject | Update-Product -Product $Product
 			} else {
-				Write-Log -fore yellow "${Fn}: Unable to find '$( $Product.'Product Id' )'; skipping."
+				Write-Log -fore yellow "${Fn}: Unable to find ID '$( $Product.'Product Id' )'; skipping."
 			}
 		}
 		
@@ -1998,23 +2007,25 @@ function Upload-Thumbnail {
 		[string] $ImageURI
 	)
 	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
 	# Verify file actually exists.
 	if ( test-path $ImageURI ) {
 		# Seems legit; proceed with upload process.
 		# Start by clicking "Edit" button.
-		$EditButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_EditProductImage"
+		$EditButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_EditProductImage"
 		if ( $EditButton -notlike $null ) {
-			$EditButton.Click()
+			$EditButton | Click-Link
 			# Once clicked, image graphic is replaced with a set of radio buttons.
 			# Select "Upload Custom Icon" to proceed.
-			$UploadIconButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon"
-			$UploadIconButton.Click()
+			$UploadIconButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon"
+			$UploadIconButton | Click-Link
 			# Now we have a checkbox and a text field to manipulate.
 			# Check the box to use this image for all of this product's thumbnails.
-			$SameImageForAllChk = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
+			$SameImageForAllChk = $BrowserObject | Get-Control -Type CheckBox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
 			Set-CheckBox $SameImageForAllChk
 			# Try to set the text field so we don't have to mess with a file dialog.
-			$ThumbnailField = Find-SeElement -Driver $BrowserObject -Name "ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"
+			$ThumbnailField = $BrowserObject | Get-Control -Type Text -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
 			# However, the element may not accept keyboard input.  Try to change its display style
 			#	to work around this problem.
 			<#
@@ -2025,11 +2036,11 @@ function Upload-Thumbnail {
 			$BrowserObject.ExecuteScript( $ScriptString )
 			# If that worked, we should be able to set the text field now.
 			# Find it again because it has now changed?
-			$ThumbnailField = Find-SeElement -Driver $BrowserObject -Name "ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"
+			$ThumbnailField = $BrowserObject | Get-Control -Type Text -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
 			Set-TextField $ThumbnailField $ImageURI
 			# Click the "Upload" button, which will cause the page to reload.
-			$UploadButton = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
-			$UploadButton.Click()
+			$UploadButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
+			$UploadButton | Click-Link
 		} else {
 			throw "Error: Couldn't find Edit button for image upload!"
 		}
