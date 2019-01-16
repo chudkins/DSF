@@ -2034,21 +2034,8 @@ function Upload-Thumbnail {
 			# Check the box to use this image for all of this product's thumbnails.
 			$SameImageForAllChk = $BrowserObject | Get-Control -Type CheckBox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
 			Set-CheckBox $SameImageForAllChk
-			# Try to set the text field so we don't have to mess with a file dialog.
+			# Set the text field because we can't mess with a file dialog.
 			$ThumbnailField = $BrowserObject | Get-Control -Type File -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
-			# However, the element may not accept keyboard input.  Try to change its display style
-			#	to work around this problem.
-			<#
-				field = driver.find_element_by_id("selectedFile")
-				driver.execute_script("arguments[0].style.display = 'block';", field)
-			#>
-<#
-			$ScriptString = 'document.getElementsByName("ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01")[0].style.display = ''block'';'
-			$BrowserObject.ExecuteScript( $ScriptString )
-			# If that worked, we should be able to set the text field now.
-			# Find it again because it has now changed?
-			$ThumbnailField = $BrowserObject | Get-Control -Type Text -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
-#>
 			Set-TextField $ThumbnailField $ImageURI
 			# Click the "Upload" button, which will cause the page to reload.
 			$UploadButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
