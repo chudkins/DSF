@@ -476,25 +476,34 @@ function Get-Control {
 	#>
 	
 	Param(
-		[Parameter( Position=1, Mandatory, ValueFromPipeLine, ParameterSetName="Driver" )]
+		[Parameter( Position=1, ValueFromPipeLine, ParameterSetName="ID" )]
+		[Parameter( Position=1, ValueFromPipeLine, ParameterSetName="Name" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
-		[Parameter( Position=1, Mandatory, ValueFromPipeLine, ParameterSetName="Element" )]
+		[Parameter( Position=1, ValueFromPipeLine, ParameterSetName="ID" )]
+		[Parameter( Position=1, ValueFromPipeLine, ParameterSetName="Name" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
 
-		[Parameter( Mandatory )]
+		[Parameter( Mandatory, Position=2, ParameterSetName="ID" )]
+		[Parameter( Mandatory, Position=2, ParameterSetName="Name" )]
 		[ValidateNotNullOrEmpty()]
 		[string] $Type,
 		
+		[Parameter( Mandatory, Position=3, ParameterSetName="ID" )]
 		[ValidateNotNullOrEmpty()]
 		[string] $ID,
 		
+		[Parameter( Mandatory, Position=3, ParameterSetName="Name" )]
 		[ValidateNotNullOrEmpty()]
 		[string] $Name,
 		
 		[int] $Timeout = 10
 	)
 
+	if ( $WebElement -notlike $null ) {
+		$WebDriver = $WebElement.WrappedDriver
+	}
+	
 	try {
 		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 		Write-DebugLog -fore gray "${Fn}: Find element with ID matching `'$ID`'"
@@ -550,12 +559,12 @@ function Get-Control {
 			# May also want to handle NoSuchElementException or similar...
 			
 				switch ( $PSCmdlet.ParameterSetName ) {
-					"Driver"	{
+					"ID"	{
 						# For most DSF web controls, use the tag to find them; double-check control type for sanity.
 						$result = $WebDriver.FindElementsByID( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
 					}
-					"Element"	{
-						$result = $WebElement.FindElementsByID( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
+					"Name"	{
+						$result = $WebDriver.FindElementsByName( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
 					}
 			}
 		}
@@ -563,7 +572,7 @@ function Get-Control {
 		
 		if ( $TimedOut ) {
 			write-log -fore yellow "${Fn}: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
-			throw "Timed out while waiting for Input element with ID matching `'$ID`'"
+			throw "Timed out while waiting for '$TypeTag' element matching '$SearchBy'"
 		}
 
 		# We made it this far, so presumably we got what we need.  Return it.
