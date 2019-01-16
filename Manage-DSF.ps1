@@ -1,25 +1,30 @@
-<#	This script is horrible alpha quality and will not work!
-	It's very much a work in progress as I learn how to automate things,
-	in order to maybe, one day, not have to add dozens of products by hand.
-	
-	Maybe.
-#>
-
 #requires -Module Selenium
+
+<#
+	.Synopsis
+	Given a CSV file, add or update products in EFI's Digital Storefront.
+	
+	.Parameter ProductFile
+	The file containing product details.
+	
+	.Parameter UserName
+	Account name to use when signing into the web site.
+	
+	.Parameter Password
+	Password associated with the account.
+	
+	.Parameter SkipImageUpload
+	Don't upload product thumbnail images.  Default is to upload them if a valid file path is provided.
+	
+	.Parameter Debug
+	Emit lots of information in the hope of aiding troubleshooting.
+#>
 
 <#	Selenium class documentation for .NET:
 		https://seleniumhq.github.io/selenium/docs/api/dotnet/index.html
 #>
 
-<# Can we automate product creation in DSF?
-	Possibly -- see this page for ideas:
-		http://www.westerndevs.com/simple-powershell-automation-browser-based-tasks/
-	Use case similar to what I want to do:
-		http://cmdrkeene.com/automating-internet-explorer-with-powershell
-	
-	See also this, which uses Invoke-Webrequest for a different approach:
-		https://www.gngrninja.com/script-ninja/2016/7/8/powershell-getting-started-utilizing-the-web
-	
+<#
 	List of web sites set up specifically for automation testing!
 		https://www.ultimateqa.com/best-test-automation-websites-to-practice-using-selenium-webdriver/
 #>
@@ -42,26 +47,6 @@
 	find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver" | install-package -InstallUpdate
 	find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver64" | install-package -InstallUpdate
 	find-package -Source Nuget.org -Name "Selenium.WebDriver.GeckoDriver.Win64" | install-package -InstallUpdate
-#>
-
-<#
-	.Synopsis
-	Given a CSV file, add or update products in EFI's Digital Storefront.
-	
-	.Parameter ProductFile
-	The file containing product details.
-	
-	.Parameter UserName
-	Account name to use when signing into the web site.
-	
-	.Parameter Password
-	Password associated with the account.
-	
-	.Parameter SkipImageUpload
-	Don't upload product thumbnail images.  Default is to upload them if a valid file path is provided.
-	
-	.Parameter Debug
-	Emit lots of information in the hope of aiding troubleshooting.
 #>
 
 #[cmdletbinding()]
@@ -819,7 +804,7 @@ function Invoke-Login {
 		# Sleep after clicking, because we don't yet know how to reliably detect when storefront page is complete.
 		#	Issue 2.
 		#Click-Wait $LoginButton 30
-		$LoginButton.Click()
+		$LoginButton | Click-Link
 		
 		$ReturnLink = $Browser.Url
 
@@ -1499,7 +1484,7 @@ function Update-Product {
 	# Switch to Details section.
 	#	<a class="rtsLink rtsAfter" id="TabDetails" href="#">...
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabDetails"
-	$NavTab.Click()
+	$NavTab | Click-Link
 	
 	<#		Details section
 			x	Long Description, div id="ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
@@ -1515,7 +1500,7 @@ function Update-Product {
 	
 	# Switch to Settings section.
 	$NavTab = $BrowserObject | Wait-Link -TagName "a" -Property "id" -Pattern "TabSettings"
-	$NavTab.Click()
+	$NavTab | Click-Link
 	
 	# Display priority
 	<#
@@ -2410,6 +2395,8 @@ Function Write-Log {
 
 } #end function
 
+	# Save start time for calculating elapsed time later.
+	$StartTime = Get-Date
 
 	[string]$ScriptName = Split-Path $MyInvocation.MyCommand.Path -Leaf	# Name of script file
 	[string]$ScriptLocation = Split-Path $MyInvocation.MyCommand.Path	# Script is in this folder
@@ -2473,11 +2460,10 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 
 	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
 	# By now, the element should no longer be obscured.
-	#$AdminClickable = WaitFor-ElementToBeClickable $Browser -LinkText "Administration" -TimeInSeconds 30
 	$AdminClickable = WaitFor-ElementToBeClickable -WebElement $AdminLink -TimeInSeconds 30
 	if ( $AdminClickable -notlike $null ) {
 		write-log -fore green "Admin link found; successfully logged in!"
-		$AdminClickable.Click()
+		$AdminClickable | Click-Link
 	} else {
 		Dump-ElementInfo $AdminClickable -WebInfo
 		throw "Error: Unable to log in; clickable link to Administration page not found."
@@ -2523,6 +2509,11 @@ Process {
 }
 
 End {
+	# Output how much time elapsed during the run.
+	$StopTime = Get-Date
+	$ElapsedTime = $StopTime - $StartTime
+	write-log "Elapsed time:  $( $ElapsedTime.ToString().SubString(0,8) )"
+	
 	read-host "Press Enter to close browser and quit"
 	# Shut down driver and close browser
 	Stop-SeDriver $Browser
