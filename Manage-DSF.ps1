@@ -513,6 +513,7 @@ function Get-Control {
 		$TypeTag = switch ( $Type ) {
 			"Button"			{ "input" ; continue }
 			"Checkbox"			{ "input" ; continue }
+			"File"				{ "input" ; continue }
 			"List"				{ "select" ; continue }
 			"RadioButton"		{ "input" ; continue }
 			"RichText"			{ "input" ; continue }
@@ -2025,7 +2026,7 @@ function Upload-Thumbnail {
 			$SameImageForAllChk = $BrowserObject | Get-Control -Type CheckBox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
 			Set-CheckBox $SameImageForAllChk
 			# Try to set the text field so we don't have to mess with a file dialog.
-			$ThumbnailField = $BrowserObject | Get-Control -Type Text -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
+			$ThumbnailField = $BrowserObject | Get-Control -Type File -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
 			# However, the element may not accept keyboard input.  Try to change its display style
 			#	to work around this problem.
 			<#
