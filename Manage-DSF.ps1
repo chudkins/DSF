@@ -559,10 +559,11 @@ function Get-Control {
 		}
 	}
 	catch {
-		# Handle any exceptions thrown within function, or they'll pass to main exception handler.
+		# Handle any exceptions thrown within function, or send them to main exception handler.
 		switch -wildcard ( $_.Exception.Message ) {
 			"Timed out while waiting for*"	{
 				write-log -fore yellow "${Fn}: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
+				Write-DebugLog ( $result | out-string )
 			}
 			default	{
 				Handle-Exception $_
