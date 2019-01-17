@@ -893,8 +893,17 @@ function Manage-Product {
 				Write-Log -fore red "Warning: '$( $Product.'Product Id' )' already exists; not added!"
 				continue
 			} else {
-				# Press Create Product button, go about new product stuff.
+				# Press Create Product button, but check for system message if it already exists.
 				Click-Link ( $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonCreateProduct" )
+				
+				# If this is a dupe, system will return the same page again with a text message.
+				# Both of these will be true:
+				#	Still on same page.
+				#	"ItemNameMustBeUnique" span is visible.
+				if ( ( $BrowserObject.Url -like "*/Admin/CreateNewCatalogItem.aspx" ) -and ( $BrowserObject.FindElementByID("ctl00_ctl00_C_M__ItemNameMustBeUnique").Displayed -eq $true ) ) {
+					Write-Log -fore red "Error: '$( $Product.'Product Id' )' not added because '$( $Product.'Product Name' )' is not unique.  Please change the Name and try again."
+					continue
+				}
 				
 				# Handle first page, which only asks for name and type.
 				$ProductNameField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_txtName"
