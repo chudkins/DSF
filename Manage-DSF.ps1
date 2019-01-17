@@ -2486,18 +2486,37 @@ Process {
 		# Now we're on the Product Management page.
 		
 		# Grab details from CSV
+		
 		# *** NOTE ***
 		# We should probably bring this in from Excel instead.
-		# Remember to trim leading/trailing whitespace from all values!
+		
+		# Import-CSV will bring in empty fields as zero-length strings, which are -like but not -eq $null.
+		# However, remember to trim leading/trailing whitespace from all text values!
 		$ProductList = import-csv $ProductFile
-		$Counter = 1
+		
+		# Some counters for information when done.
+		$ProcessCount = 0
+		$SkipCount = 0
 		
 		# Issue 8:  Check $Product.ProcessedStatus (better name?) and if already set, skip this item.
 		#	When product has been processed, update this property in the data file.
 	
 		foreach ( $prItem in $ProductList ) {
-			Manage-Product -BrowserObject $Browser -Mode $prItem.Operation -Product $prItem
-			$Counter++
+			# We use Product ID as the key here, so if it's empty skip this one.
+			# Should help in the case of input files with unnoticed blank lines, too.
+			if ( $prItem.'Product ID'.Trim() -like $null ) {
+				if ( ( $prItem.'Product Name'.Trim() -like $null ) -and ( $prItem.'Display Name'.Trim() -like $null ) ) {
+					# If both Name fields are also blank, the whole line probably is, so skip it.
+					Write-Log "Skipping probable empty row."
+				} else {
+					# ID is empty but Name fields aren't; log warning for user.
+					Write-Log -fore yellow "Warning: Skipping product with empty ID; please check input file."
+				}
+				$SkipCount++
+			} else {
+				Manage-Product -BrowserObject $Browser -Mode $prItem.Operation -Product $prItem
+				$ProcessCount++
+			}
 		}
 		
 	}
