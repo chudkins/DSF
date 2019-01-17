@@ -1126,7 +1126,7 @@ function Set-PriceRow {
 	
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 
-	Write-DebugLog "${Fn}: Got price row, $( $PriceRow.GetProperty('class') )"
+	Write-DebugLog "${Fn}: Got price row, $( $PriceRow.GetHashCode() )"
 <#	Write-DebugLog "'PriceRow' object type '$($PriceRow.GetType().FullName)'"
 	# For debugging, iterate through each <td> and output IDs of any input objects found in them.
 	Write-DebugLog "${Fn}: Price row contains these Input fields:"
