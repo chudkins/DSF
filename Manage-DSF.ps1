@@ -1935,6 +1935,12 @@ function Update-Product {
 		$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
 	}
 	
+	# Max Qty per Subcontainer
+	if ( $Product.'Max Qty Per Subcontainer' -notlike $null ) {
+		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_txtLotSize"
+		Set-TextField $NumField $Product.'Max Qty Per Subcontainer'
+	}
+	
 	<#		Pricing section:
 				Note:  Tiered pricing will require creation of table rows, which in the GUI is done
 					by clicking buttons and then modifying the Range Unit fields.
