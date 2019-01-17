@@ -489,44 +489,44 @@ function Get-Control {
 		$WebDriver = $WebElement.WrappedDriver
 	}
 	
-	try {
-		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
-		Write-DebugLog -fore gray "${Fn}: Find element with ID matching `'$ID`'"
-		<#
-			Typical controls would include:
-				Radio button, input type="radio" id="whatever"
-				Checkbox, input type="checkbox" id="whatever"
-				List, select  id="whatever"
-		#>
-		
-		<#
-			Typical use of Wait-Link:
-				$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
-		#>
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	Write-DebugLog -fore gray "${Fn}: Find element with ID matching `'$ID`'"
+	<#
+		Typical controls would include:
+			Radio button, input type="radio" id="whatever"
+			Checkbox, input type="checkbox" id="whatever"
+			List, select  id="whatever"
+	#>
+	
+	<#
+		Typical use of Wait-Link:
+			$Picklist = $BrowserObject | Wait-Link -TagName "select" -Property "id" -Pattern "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
+	#>
 
-		$TypeTag = switch ( $Type ) {
-			"Button"			{ "input" ; continue }
-			"Checkbox"			{ "input" ; continue }
-			"File"				{ "input" ; continue }
-			"List"				{ "select" ; continue }
-			"RadioButton"		{ "input" ; continue }
-			"RichText"			{ "input" ; continue }
-			"Text"				{ "input" ; continue }
-			"TextArea"			{ "textarea" ; continue }
-			default	{
-				throw "${Fn}: Unexpected control type '$Type'"
-			}
+	$TypeTag = switch ( $Type ) {
+		"Button"			{ "input" ; continue }
+		"Checkbox"			{ "input" ; continue }
+		"File"				{ "input" ; continue }
+		"List"				{ "select" ; continue }
+		"RadioButton"		{ "input" ; continue }
+		"RichText"			{ "input" ; continue }
+		"Text"				{ "input" ; continue }
+		"TextArea"			{ "textarea" ; continue }
+		default	{
+			throw "${Fn}: Unexpected control type '$Type'"
 		}
+	}
+	
+	if ( $Name ) {
+		$SearchBy = $Name
+	} else {
+		$SearchBy = $ID
+	}
+	
+	# Debug:  Output the TypeTag
+	Write-DebugLog -fore gray "${Fn}: TypeTag '$TypeTag' trying to match Type '$Type'"
 		
-		if ( $Name ) {
-			$SearchBy = $Name
-		} else {
-			$SearchBy = $ID
-		}
-		
-		# Debug:  Output the TypeTag
-		Write-DebugLog -fore gray "${Fn}: TypeTag '$TypeTag' trying to match Type '$Type'"
-		
+	try {
 		# Create a Stopwatch object to keep track of time
 		$Stopwatch = New-Object System.Diagnostics.Stopwatch
 		$Stopwatch.Start()
@@ -542,43 +542,36 @@ function Get-Control {
 			}
 			
 			# May also want to handle NoSuchElementException or similar...
-			
-				switch ( $PSCmdlet.ParameterSetName ) {
-					"ID"	{
-						# For most DSF web controls, use the tag to find them; double-check control type for sanity.
-						$result = $WebDriver.FindElementsByID( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
-					}
-					"Name"	{
-						$result = $WebDriver.FindElementsByName( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
-					}
+			switch ( $PSCmdlet.ParameterSetName ) {
+				"ID"	{
+					# For most DSF web controls, use the tag to find them; double-check control type for sanity.
+					$result = $WebDriver.FindElementsByID( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
+				}
+				"Name"	{
+					$result = $WebDriver.FindElementsByName( $SearchBy ) | Where-Object { $_.TagName -eq $TypeTag }
+				}
 			}
 		}
 		until ( $result -notlike $null )
 		
 		if ( $TimedOut ) {
-			write-log -fore yellow "${Fn}: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
 			throw "Timed out while waiting for '$TypeTag' element matching '$SearchBy'"
 		}
-
-		# We made it this far, so presumably we got what we need.  Return it.
-		$result
 	}
-	
 	catch {
-		<# Handle any exceptions thrown within function, or they'll pass to main exception handler.
-		$Msg = $_.Exception.Message
-		
-		if () {
-			# Check for things we want to handle
-		} else {
-			Handle-Exception $_
+		# Handle any exceptions thrown within function, or they'll pass to main exception handler.
+		switch -wildcard ( $_.Exception.Message ) {
+			"Timed out while waiting for*"	{
+				write-log -fore yellow "${Fn}: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
+			}
+			default	{
+				Handle-Exception $_
+			}
 		}
-		#>
-		
-		throw $_
 	}
 	
-	finally {}
+	# We made it this far, so presumably we got what we need.  Return it.
+	$result
 }
 
 function Get-PriceRow {
@@ -2002,14 +1995,15 @@ function Update-Product {
 	
 	# There are many situations that lead to DSF simply refusing to add or update a product.
 	# In most of these cases, there is absolutely no indication on the user-facing site as to why.
-	# Therefore, after pressing 'Finish' we check to see if the URL has changed; if we're still on
-	#	'ManageProduct.aspx' then assume the operation failed.
-	if ( $BrowserObject.Url -like "*/Admin/ManageProduct.aspx*" ) {
+	# Also, Stage 2 is still on 'ManageProduct.aspx' so checking URL doesn't help.
+	# Therefore, after pressing 'Finish' we need to see if the 'Done' button appears.
+	#	If it didn't, then assume the operation failed.
+	$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done"
+	if ( $CategoryDoneBtn -like $null ) {
 		Write-Log -fore red "${Fn}: Error!  DSF refused to save product info for '$( $Product.'Product Id' )'."
 		return
 	}
 	
-	$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done"
 	$CategoryDoneBtn | Click-Link
 }
 
