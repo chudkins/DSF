@@ -931,8 +931,9 @@ function Manage-Product {
 			}
 		}
 		
-		"Other"	{
-			# Some other mode to be added later.
+		"Skip"	{
+			# Ignore this entry; provided in case user wants to leave the row in the file for some reason.
+			Write-Log "${Fn}: Skip input row, $($Product.'Product Id')"
 		}
 		
 		default {
@@ -2082,7 +2083,8 @@ function Wait-Link {
 		
 	)
 
-	Write-DebugLog -fore gray "Wait-Link: Wait for '$TagName' element with '$Property' matching '$Pattern'"
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	Write-DebugLog -fore gray "${Fn}: Wait for '$TagName' element with '$Property' matching '$Pattern'"
 	
 	# Create a Stopwatch object to keep track of time
 	$Stopwatch = New-Object System.Diagnostics.Stopwatch
@@ -2100,12 +2102,23 @@ function Wait-Link {
 		# Test the result of the requested search.
 		# If the document hasn't loaded yet, or otherwise isn't populated, this should return nothing.
 		# Therefore, only when document is complete will we get our result.
-		$result = $SeObject.FindElementsByTagName( $TagName ) | Where-Object { $_.GetProperty($Property) -like $Pattern }
+		$TryCount = 1
+		$MaxTryCount = 3
+		do {
+			try {
+				$result = $SeObject.FindElementsByTagName( $TagName ) | Where-Object { $_.GetProperty($Property) -like $Pattern }
+			}
+			catch [OpenQA.Selenium.StaleElementReferenceException] {
+				Write-DebugLog "${Fn}: Stale element reference, try $TryCount of $MaxTryCount."
+				Start-Sleep -Seconds 1
+			}
+			$TryCount++
+		} until ( $TryCount -ge $MaxTryCount )
 	}
 	until ( $result -notlike $null )
 	
 	if ( $TimedOut ) {
-		write-log -fore yellow "Timeout reached. Add better error handling to Wait-Link!"
+		write-log -fore yellow "${Fn}: Timeout reached. Add better error handling to Wait-Link!"
 		throw "Timed out while waiting for $TagName element with $Property matching `'$Pattern`'"
 	}
 
@@ -2172,6 +2185,8 @@ function WaitFor-ElementExists {
 		[int] $TimeInSeconds = 10
 	)
 	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
 	if ( $WebElement -notlike $null ) {
 		$WebDriver = $WebElement.WrappedDriver
 	}
@@ -2212,7 +2227,7 @@ function WaitFor-ElementExists {
 	catch [OpenQA.Selenium.WebDriverTimeoutException] {
 		# Timed out waiting for element.  What should we do here?
 		# Nothing.  Caller must check if something was returned.
-		write-log -fore yellow "Timed out waiting for '$Locator'"
+		write-log -fore yellow "${Fn}: Timed out waiting for '$Locator'"
 	}
 }
 
@@ -2268,6 +2283,8 @@ function WaitFor-ElementToBeClickable {
 		[int] $TimeInSeconds = 10
 	)
 	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
 	if ( $WebElement -notlike $null ) {
 		$WebDriver = $WebElement.WrappedDriver
 	}
@@ -2304,7 +2321,7 @@ function WaitFor-ElementToBeClickable {
 	catch [OpenQA.Selenium.WebDriverTimeoutException] {
 		# Timed out waiting for element.  What should we do here?
 		# Nothing.  Caller must check if something was returned.
-		write-log -fore yellow "Timed out waiting for clickable '$Locator'"
+		write-log -fore yellow "${Fn}: Timed out waiting for clickable '$Locator'"
 	}
 }
 
@@ -2528,6 +2545,11 @@ Process {
 }
 
 End {
+	# Output count of processed & skipped items.
+	write-log -fore green "Done!  Counts for this run:"
+	write-log -fore green "Items Processed = $ProcessCount"
+	write-log -fore green "Skipped (incl blanks) = $SkipCount"
+	
 	# Output how much time elapsed during the run.
 	$StopTime = Get-Date
 	$ElapsedTime = $StopTime - $StartTime
