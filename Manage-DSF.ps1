@@ -1136,7 +1136,9 @@ function Set-PriceRow {
 	Write-DebugLog ( $PriceRow | out-string )
 #>
 	
-	if ( $RegularPrice ) {
+	# Check if something was supplied, and act on it if so.
+	
+	if ( $PSBoundParameters.ContainsKey('RegularPrice') ) {
 		Write-DebugLog "${Fn}: Set Regular Price to `$${RegularPrice}"
 		
 		# Find the input box for Regular Price.  It will have ID like "*_PriceCatalog_regularprice_*"
@@ -1145,7 +1147,7 @@ function Set-PriceRow {
 		Set-TextField $RegPriceTxt $RegularPrice
 	}
 	
-	if ( $SetupPrice ) {
+	if ( $PSBoundParameters.ContainsKey('SetupPrice') ) {
 		Write-DebugLog "${Fn}: Set Setup Price to `$${SetupPrice}"
 		
 		# Find the input box for Setup Price.  It will have ID like "*_PriceCatalog_setupprice_*"
@@ -1964,6 +1966,7 @@ function Update-Product {
 	$NavTab | Click-Link
 	
 	# Issue 10:  Add price handling.
+	# Issue 19:  Setup Price isn't being set, but only if it's 0; non-zero prices get set as expected.
 	# Don't cast these as [float] because then an empty value becomes 0.
 	if ( ( $Product.'Regular Price' -notlike $null ) -or ( $Product.'Setup Price' -notlike $null ) ) {
 		$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
