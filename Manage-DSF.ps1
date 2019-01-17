@@ -1964,13 +1964,13 @@ function Update-Product {
 	$NavTab | Click-Link
 	
 	# Issue 10:  Add price handling.
-	if ( $Product.'Regular Price' -or $Product.'Setup Price' ) {
+	if ( ( [float]$Product.'Regular Price' -notlike $null ) -or ( [float]$Product.'Setup Price' -notlike $null ) ) {
 		$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
 		# Must check numeric values against null because 0 counts as False.
-		if ( $Product.'Regular Price' -notlike $null ) {
+		if ( [float]$Product.'Regular Price' -notlike $null ) {
 			$BasePriceRow | Set-PriceRow -RegularPrice $Product.'Regular Price'
 		}
-		if ( $Product.'Setup Price' -notlike $null ) {
+		if ( [float]$Product.'Setup Price' -notlike $null ) {
 			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Setup Price'
 		}
 	}
