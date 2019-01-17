@@ -860,7 +860,7 @@ function Manage-Product {
 		Object containing the web browser object we're using.
 		
 		.Parameter Mode
-		Add (create new product) or Change (modify existing product).
+		Add (create new product), Change (modify existing product), Skip (ignore this row).
 		May include "Delete" in future.
 	#>
 
@@ -872,7 +872,7 @@ function Manage-Product {
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
 		
 		[Parameter( Mandatory )]
-		[ValidateSet("Add","Change")]
+		[ValidateSet("Add","Change","Skip")]
 		$Mode
 	)
 	
