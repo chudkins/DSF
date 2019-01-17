@@ -1163,6 +1163,7 @@ function Set-PriceRow {
 		
 		# Find the input box for Setup Price.  It will have ID like "*_PriceCatalog_setupprice_*"
 		$SetPriceTxt = $PriceRow.FindElementsByTagName("input") | Where-Object { $_.GetProperty("id") -like "*_PriceCatalog_setupprice_*" }
+		Write-DebugLog "'SetPriceTxt' object type '$($SetPriceTxt.GetType().FullName)'"
 		Set-TextField $SetPriceTxt $SetupPrice
 	}
 }
@@ -1998,6 +1999,15 @@ function Update-Product {
 	
 	$FinishButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_FinishNavigationTemplateContainerID_FinishButton"
 	$FinishButton | Click-Link
+	
+	# There are many situations that lead to DSF simply refusing to add or update a product.
+	# In most of these cases, there is absolutely no indication on the user-facing site as to why.
+	# Therefore, after pressing 'Finish' we check to see if the URL has changed; if we're still on
+	#	'ManageProduct.aspx' then assume the operation failed.
+	if ( $BrowserObject.Url -like "*/Admin/ManageProduct.aspx*" ) {
+		Write-Log -fore red "${Fn}: Error!  DSF refused to save product info for '$( $Product.'Product Id' )'."
+		return
+	}
 	
 	$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done"
 	$CategoryDoneBtn | Click-Link
