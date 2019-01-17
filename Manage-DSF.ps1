@@ -206,7 +206,7 @@ function Click-Wait {
 function Dump-ElementInfo {
 	<#
 		.Description
-		Print out information about the supplied web element, for debugging purposes.
+		Print information into the Debug log about the supplied web element, for debugging purposes.
 		Call this function instead of sticking "blah | gm | ft-auto | out-string" into the code.
 		
 		If you only want one section, specify it with the appropriate switch.
@@ -236,28 +236,22 @@ function Dump-ElementInfo {
 		[switch] $All
 	)
 	
-	begin {}
-	
-	process {
-		# Check if object is empty; if so, log a message but don't bother trying to dump info.
-		if ( $WebElement -like $null ) {
-			write-log -fore yellow "Warning: Attempted to dump info from a null element."
-		} else {
-			# WebElement info section.
-			if ( $WebInfo -or $All ) {
-				$Output = $WebElement | out-string
-				write-log -fore gray $Output
-			}
-			
-			# Member info section.
-			if ( $MemberInfo -or $All ) {
-				$Output = $WebElement | get-member | format-table -auto | out-string
-				write-log -fore gray $Output
-			}
+	# Check if object is empty; if so, log a message but don't bother trying to dump info.
+	if ( $WebElement -like $null ) {
+		Write-DebugLog -fore yellow "Warning: Attempted to dump info from a null element."
+	} else {
+		# WebElement info section.
+		if ( $WebInfo -or $All ) {
+			$Output = $WebElement | out-string
+			Write-DebugLog -fore gray $Output
+		}
+		
+		# Member info section.
+		if ( $MemberInfo -or $All ) {
+			$Output = $WebElement | get-member | format-table -auto | out-string
+			Write-DebugLog -fore gray $Output
 		}
 	}
-	
-	end {}
 }
 
 function Find-Product {
@@ -563,7 +557,6 @@ function Get-Control {
 		switch -wildcard ( $_.Exception.Message ) {
 			"Timed out while waiting for*"	{
 				write-log -fore yellow "${Fn}: Timeout reached. Either element wasn't found or browser took more than $Timeout seconds to return it."
-				Write-DebugLog ( $result | out-string )
 			}
 			default	{
 				Handle-Exception $_
@@ -2000,7 +1993,12 @@ function Update-Product {
 	# Therefore, after pressing 'Finish' we need to see if the 'Done' button appears.
 	#	If it didn't, then assume the operation failed.
 	$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done"
-	if ( $CategoryDoneBtn -like $null ) {
+	# Gotcha:  There exists [System.Management.Automation.Internal.AutomationNull], which will actually
+	#	produce $null as the result when using "-like $null", instead of returning $true as we'd expect!
+	# For that reason, test using -eq instead, which will work as expected.
+	# See:  https://stackoverflow.com/questions/30016949/why-and-how-are-these-two-null-values-different
+	$CategoryDoneBtn | Dump-ElementInfo -WebInfo
+	if ( $CategoryDoneBtn -eq $null ) {
 		Write-Log -fore red "${Fn}: Error!  DSF refused to save product info for '$( $Product.'Product Id' )'."
 		return
 	}
