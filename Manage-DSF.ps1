@@ -1885,24 +1885,24 @@ function Update-Product {
 
 	# Product weight
 	$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
-	if ( $Product.Weight -notlike $null ) {
-		Set-TextField $Field $Product.Weight
-	} else {
+	if ( [string]::IsNullOrWhiteSpace( $Product.Weight ) ) {
 		# OK, somehow the weight IS null, so if Weight is currently empty set it to zero.
 		# If Weight is already filled in, leave it alone.
-		if ( $Field.GetAttribute("value") -like $null ) {
+		if ( $Field.GetAttribute("value") -eq $null ) {
 			# A zero weight will allow the product to be created, though it won't work for shipping quotes.
 			Set-TextField $Field "0"
 		}
+	} else {
+		Set-TextField $Field $Product.Weight
 	}
 	# Weight units - Get the list object, then select the right value.
-	if ( $Product.'Weight Unit' -notlike $null ) {
+	if ( $Product.'Weight Unit' ) {
 		$WeightList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
 		$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
 	}
 	
 	# Ship item separately?
-	if ( $Product.'Ship Separately' -notlike $null ) {
+	if ( $Product.'Ship Separately' ) {
 		$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_chkPackSeparately"
 		if ( $Product.'Ship Separately' -in $YesValues ) {
 			Set-CheckBox $Checkbox
@@ -1912,8 +1912,7 @@ function Update-Product {
 	}
 	
 	# Width
-	# What is with the ForEach-Object stuff here?  Shouldn't we only ever have one value per cell?
-	if ( $Product.Width -notlike $null ) {
+	if ( $Product.Width ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
 		Set-TextField $NumField $Product.Width
 		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
@@ -1921,7 +1920,7 @@ function Update-Product {
 	}
 	
 	# Length
-	if ( $Product.Length -notlike $null ) {
+	if ( $Product.Length ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
 		Set-TextField $NumField $Product.Length
 		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
@@ -1929,7 +1928,7 @@ function Update-Product {
 	}
 	
 	# Height
-	if ( $Product.Height -notlike $null ) {
+	if ( $Product.Height ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Length"
 		Set-TextField $NumField $Product.Height
 		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
@@ -1937,7 +1936,7 @@ function Update-Product {
 	}
 	
 	# Max Qty per Subcontainer
-	if ( $Product.'Max Qty Per Subcontainer' -notlike $null ) {
+	if ( $Product.'Max Qty Per Subcontainer' ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_txtLotSize"
 		Set-TextField $NumField $Product.'Max Qty Per Subcontainer'
 	}
@@ -1973,16 +1972,15 @@ function Update-Product {
 	$NavTab | Click-Link
 	
 	# Issue 10:  Add price handling.
-	# Issue 19:  Setup Price isn't being set, but only if it's 0; non-zero prices get set as expected.
 	# Don't cast these as [float] because then an empty value becomes 0.
-	if ( ( $Product.'Regular Price' -notlike $null ) -or ( $Product.'Setup Price' -notlike $null ) ) {
+	if ( ( $Product.'Regular Price' ) -or ( $Product.'Setup Price' ) ) {
 		$BasePriceRow = $BrowserObject | Get-PriceRow -PriceSheetName "ADS Base Price Sheet" -RangeStart 1
 		# Must check numeric values against null because 0 counts as False.
 		# Also, Set-PriceRow accepts [float] so we don't want to send a null to it because that would become 0.
-		if ( $Product.'Regular Price' -notlike $null ) {
+		if ( $Product.'Regular Price' ) {
 			$BasePriceRow | Set-PriceRow -RegularPrice $Product.'Regular Price'
 		}
-		if ( $Product.'Setup Price' -notlike $null ) {
+		if ( $Product.'Setup Price' ) {
 			$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Setup Price'
 		}
 	}
