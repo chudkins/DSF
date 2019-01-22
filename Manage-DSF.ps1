@@ -199,6 +199,7 @@ function Click-Wait {
 			Invoke-SeClick $ClickMe
 			# Now wait for a bit
 			Start-Sleep -Seconds $SleepTime
+		}
 		catch {
 			write-log -fore yellow "${Fn}: Some problem clicking object."
 			Handle-Exception $_
@@ -2469,11 +2470,11 @@ Function Write-Log {
 	$AdminLinkText = "Administration"
 	$ProductsLinkSnip = "ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem"
 
-	# Some sets of values for checking
+	# Some sets of values for flexibility
 	$YesValues = "yes","y","true","x"
 	$NoValues = "no","n","false"
-	# In case of copy/paste, user might inadvertently use a non-hyphen dash.
-	$DashValues = "-","—","–"
+	# Hyphen, en dash, em dash
+	$DashValues = "-",[char]0x2013,[char]0x2014
 	
 	# Selenium script snippets, to run using ExecuteScript:
 	$scrGetReadyState = "return document.readyState"
@@ -2554,7 +2555,7 @@ Process {
 			# We use Product ID as the key here, so if it's empty skip this one.
 			# Should help in the case of input files with unnoticed blank lines, too.
 			if ( [string]::IsNullOrWhiteSpace( $prItem.'Product ID' ) ) {
-				if ( ( [string]::IsNullOrWhiteSpace( $prItem.'Product Name' ) ) -and ( [string]::IsNullOrWhiteSpace( $prItem.'Display Name' ) ) {
+				if ( ( [string]::IsNullOrWhiteSpace( $prItem.'Product Name' ) ) -and ( [string]::IsNullOrWhiteSpace( $prItem.'Display Name' ) ) ) {
 					# If both Name fields are also blank, the whole line probably is, so skip it.
 					Write-Log "Skipping probable empty row."
 				} else {
