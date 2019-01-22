@@ -53,7 +53,7 @@
 
 Param (
 	[ValidateScript({
-		if ( ( $_ -like $null ) -or ( test-path $_ ) ) {
+		if ( ( $_ -eq $null ) -or ( test-path $_ ) ) {
 			$true
 		} else {
 			throw "ProductFile - Supplied path not found: $_!"
@@ -237,9 +237,7 @@ function Dump-ElementInfo {
 	)
 	
 	# Check if object is empty; if so, log a message but don't bother trying to dump info.
-	if ( $WebElement -like $null ) {
-		Write-DebugLog -fore yellow "Warning: Attempted to dump info from a null element."
-	} else {
+	if ( $WebElement ) {
 		# WebElement info section.
 		if ( $WebInfo -or $All ) {
 			$Output = $WebElement | out-string
@@ -251,6 +249,8 @@ function Dump-ElementInfo {
 			$Output = $WebElement | get-member | format-table -auto | out-string
 			Write-DebugLog -fore gray $Output
 		}
+	} else {
+		Write-DebugLog -fore yellow "Warning: Attempted to dump info from a null element."
 	}
 }
 
@@ -709,9 +709,7 @@ function Get-PriceRow {
 			}
 		}
 		
-		if ( $PriceRow -like $null ) { 
-			Write-DebugLog "${Fn} Failed to find price row with range starting at $( $RangeStart )"
-		} else {
+		if ( $PriceRow ) { 
 			Write-DebugLog "${Fn} Got price row with range starting at $( $RangeStart ): $( $PriceRow.ToString() )"
 			#Write-DebugLog ( $PriceRow | out-string )
 			# For debugging, iterate through each <td> and output IDs of any input objects found in them.
@@ -719,6 +717,9 @@ function Get-PriceRow {
 			foreach ( $td in $PriceRow.FindElementsByTagName("td") ) {
 				Write-DebugLog ( ( $td.FindElementsByTagName("input") ).GetProperty("id") | out-string )
 			}
+		} else {
+			# $PriceRow still uninitialized by now, so we didn't find anything.
+			Write-DebugLog "${Fn} Failed to find price row with range starting at $( $RangeStart )"
 		}
 		
 		$PriceRow
@@ -2008,6 +2009,8 @@ function Update-Product {
 	#	produce $null as the result when using "-like $null", instead of returning $true as we'd expect!
 	# For that reason, test using -eq instead, which will work as expected.
 	# See:  https://stackoverflow.com/questions/30016949/why-and-how-are-these-two-null-values-different
+	# Also, -like is for string comparisons and will therefore cast things as strings if they aren't already.
+	# We shouldn't use it for non-string data.
 	$CategoryDoneBtn | Dump-ElementInfo -WebInfo
 	if ( $CategoryDoneBtn -eq $null ) {
 		Write-Log -fore red "${Fn}: Error!  DSF refused to save product info for '$( $Product.'Product Id' )'."
