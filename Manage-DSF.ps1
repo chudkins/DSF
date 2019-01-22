@@ -150,18 +150,21 @@ function Click-Link {
 	)
 	
 	Begin {
+		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 	}
 	
 	Process {
-		if ( $Link -notlike $null ) {
+		try {
 			# Make sure link is clickable before trying it.
+			Write-DebugLog "${Fn}: Try to click link with HREF '$($Link.href)'"
 			$ClickableLink = WaitFor-ElementToBeClickable -WebElement $Link
 			Invoke-SeClick $ClickableLink
 			# Now wait for browser to process the click and load the next page
 			$ClickableLink.WrappedDriver | Invoke-Wait
-		} else {
-			write-log -fore yellow "Link is empty?"
-			write-log "Link: $($Link.href)"
+		} 
+		catch {
+			write-log -fore yellow "${Fn}: Problem clicking link, '$($Link.href)'"
+			Handle-Exception $_
 		}
 	}
 	
@@ -180,6 +183,7 @@ function Click-Wait {
 	
 	param (
 		[Parameter( Mandatory, ValueFromPipeLine, Position=1 )]
+		[ValidateNotNullOrEmpty()]
 		$ClickMe,
 		
 		[Parameter( ValueFromPipeLine, Position=2 )]
@@ -187,15 +191,17 @@ function Click-Wait {
 	)
 	
 	Begin {
+		$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 	}
 	
 	Process {
-		if ( $ClickMe -notlike $null ) {
+		try {
 			Invoke-SeClick $ClickMe
 			# Now wait for a bit
 			Start-Sleep -Seconds $SleepTime
-		} else {
-			write-log -fore yellow "ClickMe is empty?"
+		catch {
+			write-log -fore yellow "${Fn}: Some problem clicking object."
+			Handle-Exception $_
 		}
 	}
 	
@@ -479,7 +485,7 @@ function Get-Control {
 		[int] $Timeout = 10
 	)
 
-	if ( $WebElement -notlike $null ) {
+	if ( $WebElement ) {
 		$WebDriver = $WebElement.WrappedDriver
 	}
 	
@@ -546,7 +552,7 @@ function Get-Control {
 				}
 			}
 		}
-		until ( $result -notlike $null )
+		until ( $result )
 		
 		if ( $TimedOut ) {
 			throw "Timed out while waiting for '$TypeTag' element matching '$SearchBy'"
@@ -678,7 +684,7 @@ function Get-PriceRow {
 		# One of these should have $PriceSheetName in a span.
 		foreach ( $sheet in $colPriceSheets ) {
 			# Check each element in collection to see if it contains a span matching $PriceSheetName.
-			if ( ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) -notlike $null ) {
+			if ( $sheet.FindElementByTagName("span") | Where-Object { $_.Text -eq $PriceSheetName } ) {
 				$PriceSheetSubGrid = $sheet
 			}
 		}
@@ -919,7 +925,7 @@ function Manage-Product {
 
 			# Locate product; Find-Product will ensure a unique match.
 			$EditProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
-			if ( $EditProduct -notlike $null ) {
+			if ( $EditProduct ) {
 				Click-Link $EditProduct
 				# Now we're on the product details page.
 				$BrowserObject | Update-Product -Product $Product
@@ -1283,7 +1289,7 @@ function Set-RichTextField {
 		$Editor = $RichEditFrame
 		
 		# Make sure we actually got something we can use.
-		if ( $Editor -notlike $null ) {
+		if ( $Editor ) {
 			# Clear anything that's already there.
 			$Editor.Clear()
 			# Send text to editor field.
@@ -1307,7 +1313,7 @@ function Set-RichTextField {
 		}
 		
 		# Make sure we actually found something.
-		if ( $EditorIFrame -notlike $null ) {
+		if ( $EditorIFrame ) {
 			# By snooping in Dev Mode, we find the editor HTML looks for a Click event,
 			#	on which it sets focus to the text area.
 			# So, let's invoke its Click event.
@@ -1428,7 +1434,7 @@ function Update-Product {
 
 	# Product Name, max length 50
 	#	This is the name customers see most of the time.
-	if ( $Product.'Product Name' -notlike $null ) {
+	if ( $null -notlike $Product.'Product Name' ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Name"
 		Set-TextField $Field $Product.'Product Name'.Trim()
 	}
@@ -1436,13 +1442,13 @@ function Update-Product {
 	# Display As, max length unknown
 	#	Supposedly, product name as customer sees it in the storefront catalog.
 	#	In reality, rarely seen except when editing product.
-	if ( $Product.'Display Name' -notlike $null ) {
+	if ( $null -notlike $Product.'Display Name' ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName"
 		Set-TextField $Field $Product.'Display Name'.Trim()
 	}
 	
 	# Product ID (SKU), 50 chars max
-	if ( $Product.'Product ID' -notlike $null ) {
+	if ( $null -notlike $Product.'Product ID' ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
 		Set-TextField $Field $Product.'Product Id'.Trim()
 	}
@@ -1460,7 +1466,7 @@ function Update-Product {
 	#>
 	
 	# Brief Description, rich text field
-	if ( $Product.'Brief Description' -notlike $null ) {
+	if ( $null -notlike $Product.'Brief Description' ) {
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
 		Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'.Trim()
 	}
@@ -1472,7 +1478,7 @@ function Update-Product {
 	#	an error if it's bad.
 	
 	# If we have a path to image file, and SkipImageUpload isn't set, try to upload.
-	if ( $Product.'Product Icon' -notlike $null ) {
+	if ( $null -notlike $Product.'Product Icon' ) {
 		# Log a message if SkipImageUpload is set.
 		if ( $SkipImageUpload ) {
 			write-log -fore yellow "Warning: File path provided but SkipImageUpload is set; ignoring for '$($Product.'Product ID')'."
@@ -1493,7 +1499,7 @@ function Update-Product {
 	#>
 
 	# Long Description
-	if ( $Product.'Long Description' -notlike $null ) {
+	if ( $null -notlike $Product.'Long Description' ) {
 		$LongDescField = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
 		# This editor isn't in an iFrame.
 		Set-RichTextField -RichEditFrame $LongDescField -Text $Product.'Long Description'.Trim()
@@ -1517,7 +1523,7 @@ function Update-Product {
 				<option value="-2147483647">Lower</option>
 				<option value="-2147483648">Lowest</option>
 	#>
-	if ( $Product.'Display Priority' -notlike $null ) {	
+	if ( $null -notlike $Product.'Display Priority' ) {	
 		# If a value is specified, try to set the selection to a matching value.
 		# If match fails, print a warning and set it to Standard.
 		$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
@@ -1550,7 +1556,7 @@ function Update-Product {
 	# Valid Dates:  Here, we do things a little differently.
 	#	If Start Date is empty, product should become active immediately, so we need to 
 	#	make sure Active is set.
-	if ( $Product.'Start Date' -notlike $null ) {
+	if ( $null -notlike $Product.'Start Date' ) {
 		<#	To make sure we give the form valid data, we will cast the input from CSV as a 
 			PowerShell DateTime object, which can do smart conversion of things like "2017-07-21", 
 			"4 Jul 2017" etc.  It will even handle things like "7/22", though it must assume the 
@@ -1582,7 +1588,7 @@ function Update-Product {
 #>
 
 	# Using similar logic, if End Date is empty, product will be active forever.
-	if ( $Product.'End Date' -notlike $null ) {
+	if ( $null -notlike $Product.'End Date' ) {
 		# Click the button to select End Date.
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductActivationCtrl_rdbEndDate"
 		$RadioButton | Set-RadioButton
@@ -1605,7 +1611,7 @@ function Update-Product {
 	#>
 
 	# Turnaround time is the same deal -- combo radio button and text field.
-	if ( $Product.'Turnaround Time' -notlike $null ) {
+	if ( $null -notlike $Product.'Turnaround Time' ) {
 		# Set Value (the second radio button)
 		$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_TurnAroundTimeCtrl_rdbValue"
 		$RadioButton | Set-RadioButton
@@ -1629,7 +1635,7 @@ function Update-Product {
 	#>
 	
 	# Exempt from Shipping Charge?
-	if ( $Product.'Exempt Shipping' -notlike $null ) {
+	if ( $null -notlike $Product.'Exempt Shipping' ) {
 		$ExemptShipChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShippingExempt"
 		if ( $Product.'Exempt Shipping' -in $YesValues ) {
 			Set-CheckBox $ExemptShipChk
@@ -1639,7 +1645,7 @@ function Update-Product {
 	}
 	
 	# Exempt from Sales Tax?
-	if ( $Product.'Exempt Tax' -notlike $null ) {
+	if ( $null -notlike $Product.'Exempt Tax' ) {
 		$ExemptTaxChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkTaxExempt"
 		if ( $Product.'Exempt Tax' -in $YesValues ) {
 			Set-CheckBox $ExemptTaxChk
@@ -1649,7 +1655,7 @@ function Update-Product {
 	}
 	
 	# Show on the mobile version of the site?
-	if ( $Product.'Mobile' -notlike $null ) {
+	if ( $null -notlike $Product.'Mobile' ) {
 		$MobileSupportYes = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_0"
 		$MobileSupportNo = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_IsMobileSupportedList_1"
 		if ( $Product.'Mobile' -in $YesValues ) {
@@ -1712,13 +1718,13 @@ function Update-Product {
 		Set-CheckBox $MgInvenChk
 		
 		# Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
-		if ( $Product.Threshold -notlike $null ) {
+		if ( $null -notlike $Product.Threshold ) {
 			$InvThreshold = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
-			Set-TextField $InvThreshold $Product.Threshold
+			Set-TextField $InvThreshold [int]$Product.Threshold
 		}
 		
 		# Allow Back Order, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
-		if ( $Product.'Allow Back Order' -notlike $null ) {
+		if ( $null -notlike $Product.'Allow Back Order' ) {
 			$AllowBkOrdChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
 			if ( $Product.'Allow Back Order' -in $YesValues ) {
 				Set-CheckBox $AllowBkOrdChk
@@ -1728,7 +1734,7 @@ function Update-Product {
 		}
 		
 		# Show inventory when back order is allowed, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
-		if ( $Product.'Show Inventory with Back Order' -notlike $null ) {
+		if ( $null -notlike $Product.'Show Inventory with Back Order' ) {
 			$ShowInvBOChk = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_chkShowInventoryWhenBackOrderIsAllowed"
 			if ( $Product.'Show Inventory with Back Order' -in $YesValues ) {
 				Set-CheckBox $ShowInvBOChk
@@ -1739,8 +1745,8 @@ function Update-Product {
 		
 		# Notification Email Id, id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
 		$NotifyEmailField = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtEmailId"
-		if ( $Product.'Notify Emails' -notlike $null ) {
-			if ( $Product.'Notify Emails' -eq "-" ) {
+		if ( $null -notlike $Product.'Notify Emails' ) {
+			if ( $Product.'Notify Emails' -in $DashValues ) {
 				# Clear field if cell contains only "-"
 				Set-TextField $NotifyEmailField ""
 			} else {
@@ -1753,12 +1759,12 @@ function Update-Product {
 				o Reset to XXX
 		#>
 		
-		if ( $Product.'Add to Inventory' -notlike $null ) {
+		if ( $null -notlike $Product.'Add to Inventory' ) {
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInv"
 			$RadioButton | Set-RadioButton
 			$AddToInvText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvAddToExistingInvTextBox" 
 			Set-TextField $AddToInvText $Product.'Add to Inventory'
-		} elseif ( $Product.'Reset Inventory' -notlike $null ) {
+		} elseif ( $null -notlike $Product.'Reset Inventory' ) {
 			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbInvReset"
 			$RadioButton | Set-RadioButton
 			$ResetInvText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_RbResetInvTextBox" 
@@ -1792,15 +1798,15 @@ function Update-Product {
 	
 	# Here, "Any Quantity" is the default.  If neither Fixed, Min, Max, Mult, or Advanced has a value,
 	#	just do nothing and leave it.  If one of those has a value, we need to handle it.
-	if ( ( $Product.'Fixed Qty' -notlike $null ) -or
-			( $Product.'Min Qty' -notlike $null ) -or
-			( $Product.'Max Qty' -notlike $null ) -or
-			( $Product.'Mult Qty' -notlike $null ) -or
-			( $Product.'Advanced Qty' -notlike $null ) ) {
+	if ( ( $Product.'Fixed Qty' ) -or
+			( $Product.'Min Qty' ) -or
+			( $Product.'Max Qty' ) -or
+			( $Product.'Mult Qty' ) -or
+			( $Product.'Advanced Qty' ) ) {
 		# One of these is not empty, so act accordingly.
 		write-log -fore red "TODO: [Issue 9] Fixed/Mult/Advanced section is incomplete."
 		
-		if ( $Product.'Fixed Qty' -notlike $null ) {
+		if ( $Product.'Fixed Qty' ) {
 			<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
 				It's like the pricing sheet, except each row contains only one value.
 				We don't handle this yet, so log a warning and move on.
@@ -1819,9 +1825,9 @@ function Update-Product {
 			break
 		}
 		
-		if ( ( $Product.'Min Qty' -notlike $null ) -or
-				( $Product.'Max Qty' -notlike $null ) -or
-				( $Product.'Mult Qty' -notlike $null ) ) {
+		if ( ( $Product.'Min Qty' ) -or
+				( $Product.'Max Qty' ) -or
+				( $Product.'Mult Qty' ) ) {
 			write-log "$($Product.'Product ID') has Min/Max/Mult Qty."
 			# Min quantity can be used by itself or in conjunction with Max.
 			# For this to be available, "By Multiples" button must be clicked.
@@ -1836,7 +1842,7 @@ function Update-Product {
 		}
 		
 		# If a Max quantity was specified, check the box to enforce this in shopping cart.
-		if ( $Product.'Max Qty' -notlike $null ) {
+		if ( $Product.'Max Qty' ) {
 			$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
 			Set-CheckBox $Checkbox
 		}		
@@ -1847,12 +1853,12 @@ function Update-Product {
 		Keywords, <textarea name="ctl00$ctl00$C$M$ctl00$W$ctl01$_Keywords" id="ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords" style="width: 90%;" rows="10" cols="20"></textarea>
 	#>
 	
-	if ( $Product.'Production Notes' -notlike $null ) {
+	if ( $null -notlike $Product.'Production Notes' ) {
 		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
 		Set-TextField $Field $Product.'Production Notes'.Trim()
 	}
 	
-	if ( $Product.Keywords -notlike $null ) {
+	if ( $null -notlike $Product.Keywords ) {
 		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
 		Set-TextField $Field $Product.Keywords.Trim()
 	}
@@ -2034,7 +2040,7 @@ function Upload-Thumbnail {
 		# Seems legit; proceed with upload process.
 		# Start by clicking "Edit" button.
 		$EditButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_EditProductImage"
-		if ( $EditButton -notlike $null ) {
+		if ( $EditButton ) {
 			$EditButton | Click-Link
 			# Once clicked, image graphic is replaced with a set of radio buttons.
 			# Select "Upload Custom Icon" to proceed.
@@ -2139,7 +2145,7 @@ function Wait-Link {
 			$TryCount++
 		} until ( $TryCount -ge $MaxTryCount )
 	}
-	until ( $result -notlike $null )
+	until ( $result )
 	
 	if ( $TimedOut ) {
 		write-log -fore yellow "${Fn}: Timeout reached. Add better error handling to Wait-Link!"
@@ -2463,9 +2469,11 @@ Function Write-Log {
 	$AdminLinkText = "Administration"
 	$ProductsLinkSnip = "ctl00_ctl00_C_M_LinkColumn3_RepeaterCategories_ctl00_RepeaterItems_ctl02_HyperLinkItem"
 
-	# What counts as a yes/no value?
+	# Some sets of values for checking
 	$YesValues = "yes","y","true","x"
 	$NoValues = "no","n","false"
+	# In case of copy/paste, user might inadvertently use a non-hyphen dash.
+	$DashValues = "-","—","–"
 	
 	# Selenium script snippets, to run using ExecuteScript:
 	$scrGetReadyState = "return document.readyState"
@@ -2502,7 +2510,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
 	# By now, the element should no longer be obscured.
 	$AdminClickable = WaitFor-ElementToBeClickable -WebElement $AdminLink -TimeInSeconds 30
-	if ( $AdminClickable -notlike $null ) {
+	if ( $AdminClickable ) {
 		write-log -fore green "Admin link found; successfully logged in!"
 		$AdminClickable | Click-Link
 	} else {
@@ -2545,8 +2553,8 @@ Process {
 		foreach ( $prItem in $ProductList ) {
 			# We use Product ID as the key here, so if it's empty skip this one.
 			# Should help in the case of input files with unnoticed blank lines, too.
-			if ( $prItem.'Product ID'.Trim() -like $null ) {
-				if ( ( $prItem.'Product Name'.Trim() -like $null ) -and ( $prItem.'Display Name'.Trim() -like $null ) ) {
+			if ( [string]::IsNullOrWhiteSpace( $prItem.'Product ID' ) ) {
+				if ( ( [string]::IsNullOrWhiteSpace( $prItem.'Product Name' ) ) -and ( [string]::IsNullOrWhiteSpace( $prItem.'Display Name' ) ) {
 					# If both Name fields are also blank, the whole line probably is, so skip it.
 					Write-Log "Skipping probable empty row."
 				} else {
