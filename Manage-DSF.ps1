@@ -1469,7 +1469,12 @@ function Update-Product {
 	# Brief Description, rich text field
 	if ( $null -notlike $Product.'Brief Description' ) {
 		$iFrame = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Description_contentIframe"
-		Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'.Trim()
+		if ( $Product.'Brief Description'.Trim() -in $DashValues ) {
+			# Input is just "-" so clear it by setting value to a space.
+			Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text ' '
+		} else {
+			Set-RichTextField -FieldObject $iFrame -XPath "/html/body" -Text $Product.'Brief Description'.Trim()
+		}
 	}
 	
 	# Now, if there's a thumbnail image to upload, do that.
@@ -1501,9 +1506,13 @@ function Update-Product {
 
 	# Long Description
 	if ( $null -notlike $Product.'Long Description' ) {
-		$LongDescField = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
 		# This editor isn't in an iFrame.
-		Set-RichTextField -RichEditFrame $LongDescField -Text $Product.'Long Description'.Trim()
+		$LongDescField = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv"
+		if ( $Product.'Long Description'.Trim() -in $DashValues ) {
+			Set-RichTextField -RichEditFrame $LongDescField -Text ' '
+		} else {
+			Set-RichTextField -RichEditFrame $LongDescField -Text $Product.'Long Description'.Trim()
+		}
 	}
 	
 	# Switch to Settings section.
@@ -1798,7 +1807,7 @@ function Update-Product {
 	#>
 	
 	# Here, "Any Quantity" is the default.  If neither Fixed, Min, Max, Mult, or Advanced has a value,
-	#	just do nothing and leave it.  If one of those has a value, we need to handle it.
+	#	just do nothing and leave it as it is.  If one of those has a value, we need to handle it.
 	if ( ( $Product.'Fixed Qty' ) -or
 			( $Product.'Min Qty' ) -or
 			( $Product.'Max Qty' ) -or
@@ -1856,12 +1865,20 @@ function Update-Product {
 	
 	if ( $null -notlike $Product.'Production Notes' ) {
 		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes"
-		Set-TextField $Field $Product.'Production Notes'.Trim()
+		if ( $Product.'Production Notes'.Trim() -in $DashValues ) {
+			Set-TextField $Field ' '
+		} else {
+			Set-TextField $Field $Product.'Production Notes'.Trim()
+		}
 	}
 	
 	if ( $null -notlike $Product.Keywords ) {
 		$Field = $BrowserObject | Get-Control -Type TextArea -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Keywords"
-		Set-TextField $Field $Product.Keywords.Trim()
+		if ( $Product.Keywords.Trim() -in $DashValues ) {
+			Set-TextField $Field ' '
+		} else {
+			Set-TextField $Field $Product.Keywords.Trim()
+		}
 	}
 	
 	<#
@@ -1922,24 +1939,30 @@ function Update-Product {
 	if ( $Product.Width ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Length"
 		Set-TextField $NumField $Product.Width
-		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
-		$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
+	if ( $Product.'Width Unit' ) {
+			$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxX__Unit"
+			$UnitList | Select-FromList -Item ( $Product.'Width Unit' | FixUp-Unit )
+		}
 	}
 	
 	# Length
 	if ( $Product.Length ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Length"
 		Set-TextField $NumField $Product.Length
-		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
-		$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
+	if ( $Product.'Length Unit' ) {
+			$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxY__Unit"
+			$UnitList | Select-FromList -Item ( $Product.'Length Unit' | FixUp-Unit )
+		}
 	}
 	
 	# Height
 	if ( $Product.Height ) {
 		$NumField = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Length"
 		Set-TextField $NumField $Product.Height
-		$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
-		$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
+	if ( $Product.'Height Unit' ) {
+			$UnitList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__BoxZ__Unit"
+			$UnitList | Select-FromList -Item ( $Product.'Height Unit' | FixUp-Unit )
+		}
 	}
 	
 	# Max Qty per Subcontainer
