@@ -1814,7 +1814,7 @@ function Update-Product {
 			( $Product.'Mult Qty' ) -or
 			( $Product.'Advanced Qty' ) ) {
 		# One of these is not empty, so act accordingly.
-		write-log -fore red "TODO: [Issue 9] Fixed/Mult/Advanced section is incomplete."
+		write-log -fore red "TODO: [Issue 9] Fixed/Advanced handling is incomplete."
 		
 		if ( $Product.'Fixed Qty' ) {
 			<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
@@ -1846,9 +1846,17 @@ function Update-Product {
 			$MinQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Minimum"
 			Set-TextField $MinQtyText $Product.'Min Qty'
 			$MaxQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Maximum"
-			Set-TextField $MaxQtyText $Product.'Max Qty'
+			if ( $Product.'Max Qty' ) {
+				Set-TextField $MaxQtyText $Product.'Max Qty'
+			} else {
+				Set-TextField $MaxQtyText $DefaultMaxQty
+			}
 			$MultQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiple"
-			Set-TextField $MultQtyText $Product.'Mult Qty'
+			if ( $Product.'Mult Qty' ) {
+				Set-TextField $MultQtyText $Product.'Mult Qty'
+			} else {
+				Set-TextField $MultQtyText $DefaultQtyMult
+			}
 		}
 		
 		# If a Max quantity was specified, check the box to enforce this in shopping cart.
@@ -2484,6 +2492,11 @@ Function Write-Log {
 	# Log file name for Write-Log function
 	$LoggingFilePreference = join-path $ScriptLocation "DSF_Task_Log.txt"
 
+<#	######
+	######	Global Defaults
+	######
+#>
+
 	# Main site URL to start from
 	$SiteURL = "https://store.adocument.net/DSF/"
 
@@ -2498,6 +2511,10 @@ Function Write-Log {
 	$NoValues = "no","n","false"
 	# Hyphen, en dash, em dash
 	$DashValues = "-",[char]0x2013,[char]0x2014
+	# Default Max Quantity if not specified
+	$DefaultMaxQty = 10000
+	# Default Multiple if not specified
+	$DefaultQtyMult = 1
 	
 	# Selenium script snippets, to run using ExecuteScript:
 	$scrGetReadyState = "return document.readyState"
@@ -2509,6 +2526,10 @@ WebDriverWait wait3 = new WebDriverWait(driver, 10);
 wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv")));
 "@
 	
+<#	######
+	######	End Global Defaults
+	######
+#>
 	# Create Firefox instance
 	$Browser = Start-SeFirefox
 
@@ -2615,6 +2636,8 @@ End {
 	# Shut down driver and close browser
 	Stop-SeDriver $Browser
 	# if ('browser still running') get-process $BrowserPID | stop-process
+	
+	# Remove-Module Manage-DSF.psm1
 }
 
 <#
