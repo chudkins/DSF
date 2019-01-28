@@ -342,6 +342,9 @@ function Invoke-Login {
 		.Synopsis
 		Log into web site.  Return the URL of the page that loads after login.
 		
+		.Parameter WebDriver
+		Browser object to control.
+		
 		.Parameter SiteURL
 		Link to login page.
 		
@@ -356,13 +359,13 @@ function Invoke-Login {
 	#>
 	
 	param (
-		[Parameter(Position=0)]
+		[Parameter( Mandatory )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
+		
 		[string] $SiteURL,
 		
-		[Parameter(Position=1)]
 		[string] $UserName,
 		
-		[Parameter(Position=2)]
 		[string] $Password
 	)
 	
@@ -377,19 +380,19 @@ function Invoke-Login {
 
 		# Navigate to page and attempt to sign in.
 		write-log -fore cyan "Loading site: $SiteURL"
-		Enter-SeUrl $SiteURL -Driver $Browser
+		Enter-SeUrl $SiteURL -Driver $WebDriver
 		# Issue 7: $Browser is a global variable but not intentionally so.  Fix this for better scoping.
 		
 		##### Log in
 		# Get input fields
-		$UserField = Find-SeElement -Driver $Browser -ID $UserFieldSnip
-		$PassField = Find-SeElement -Driver $Browser -ID $PassFieldSnip
+		$UserField = Find-SeElement -Driver $WebDriver -ID $UserFieldSnip
+		$PassField = Find-SeElement -Driver $WebDriver -ID $PassFieldSnip
 		
 		# Fill in values from stored credential
 		Set-TextField $UserField $UserName
 		Set-TextField $PassField $Password
 		# Find the Login button and click it
-		$LoginButton = Find-SeElement -Driver $Browser -ID $LoginButtonSnip
+		$LoginButton = Find-SeElement -Driver $WebDriver -ID $LoginButtonSnip
 
 		write-log -fore cyan "Logging in..."
 		#Click-Link $LoginButton
@@ -398,7 +401,7 @@ function Invoke-Login {
 		#Click-Wait $LoginButton 30
 		$LoginButton | Click-Link
 		
-		$ReturnLink = $Browser.Url
+		$ReturnLink = $WebDriver.Url
 
 		return $ReturnLink
 	}
