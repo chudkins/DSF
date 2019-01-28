@@ -1,5 +1,8 @@
 #requires -Module Selenium
 
+[string]$ScriptLocation = Split-Path $MyInvocation.MyCommand.Path	# Script is in this folder
+Import-Module ( join-path $ScriptLocation "Manage-DSF.psm1" )
+
 <#
 	.Synopsis
 	Given a CSV file, add or update products in EFI's Digital Storefront.
