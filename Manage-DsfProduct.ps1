@@ -1388,9 +1388,11 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 #>
 	# Create Firefox instance
 	$Browser = Start-SeFirefox
+	#$Browser = Start-SeChrome
 
-	$StorefrontURL = Invoke-Login $SiteURL -UserName $UserName -Password $Password
+	$StorefrontURL = Invoke-Login -WebDriver $Browser -SiteURL $SiteURL -UserName $UserName -Password $Password
 	# Just a string, the URL of the page that loads after logging in.
+	Write-DebugLog "URL loaded: $StorefrontURL"
 	
 	# Wait a few seconds and check if LoadingSpinner is visible.
 	# If "display" attribute is "none" then it's hidden and shouldn't obscure the link.
@@ -1493,7 +1495,7 @@ End {
 	Stop-SeDriver $Browser
 	# if ('browser still running') get-process $BrowserPID | stop-process
 	
-	# Remove-Module Manage-DSF.psm1
+	Remove-Module Manage-DSF.psm1
 }
 
 <#
