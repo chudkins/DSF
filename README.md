@@ -1,5 +1,5 @@
-# Manage-DSF.ps1
-A script for automating product upkeep with EFI's Digital StoreFront.
+# Manage-DSF
+A set of scripts for automating product upkeep with EFI's Digital StoreFront.
 
 ## Goal
 Bulk add, modify, delete non-printed products non-interactively using data from a spreadsheet.
@@ -16,7 +16,7 @@ Digital StoreFront 9.8 series.
 To clear the E-mail Notification field, put `-` as the only data in the cell.
 
 ## Usage
-### `Manage-DSF.ps1 -UserName fred -Password 'blah%293' -ProductFile 'C:\Somewhere\somedata.csv'`
+### `Manage-DsfProduct.ps1 -UserName fred -Password 'blah%293' -ProductFile 'C:\Somewhere\somedata.csv'`
 
 ## Parameters
 ### -UserName
@@ -31,6 +31,8 @@ Causes the script to ignore any image paths provided in the input file; it will 
 Causes the script to emit lots of detailed and possibly useful information about what it's doing.
 
 ## News
+### 2019-01-28
+Very broken due to my first ever attempt at writing a PowerShell module.  Eventually there will be more than one script, so shared functions need to live in a module.
 ### 2019-01-16
 Image upload works now!  `Manage-DSF` can upload an image that will replace all thumbnails for a product.
 ### 2019-01-14
