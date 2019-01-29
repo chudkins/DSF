@@ -1380,9 +1380,11 @@ function Upload-Thumbnail {
 
 	# Suppress Write-Debug's "Confirm" prompt, which occurs because -Debug causes DebugPreference
 	#	to change from SilentlyContinue to Inquire.
-	If ($PSBoundParameters['Debug']) {
-		$DebugPreference = 'Continue'
-		$Global:DebugLogging = $true
+	If ( $PSBoundParameters['Debug'] ) {
+		if ( $Debug -eq $true ) {
+			$Script:DebugPreference = 'Continue'
+			$Script:DebugLogging = $true
+		}
 	}
 	
 	$LoggingPreference = "Continue"		# Log all output
