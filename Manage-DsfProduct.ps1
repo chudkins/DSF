@@ -1122,13 +1122,13 @@ function Update-Product {
 			( $null -notlike $Product.'Advanced Qty' ) {
 				Write-DebugLog "${Fn}: Advanced qty"
 				# Set radio button for Advanced.
-				$AdvQtyRdb = Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Advanced"
+				$AdvQtyRdb = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Advanced"
 				$AdvQtyRdb | Set-RadioButton
 				# Fill in expression.
 				$AdvQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Expression"
 				Set-TextField $AdvQtyText $Product.'Advanced Qty'
 				# Click Done button.
-				$AdvDoneBtn = Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone"
+				$AdvDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone"
 				$AdvDoneBtn | Click-Link
 				continue
 			}
