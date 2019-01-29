@@ -11,7 +11,11 @@
 function Click-Link {
 	<#
 		.Synopsis
-		Given a link, wait until browser is not busy, then click it.
+		Given something that's clickable, wait until browser is not busy, then click it.
+		
+		.Description
+		Given an object with a clickable link, wait for browser to not be busy, then click the object.
+		A WebElement may contain a clickable link despite not having an HREF property.
 		
 		.Parameter Link
 		The link to click.
@@ -30,7 +34,8 @@ function Click-Link {
 	Process {
 		try {
 			# Make sure link is clickable before trying it.
-			Write-DebugLog "${Fn}: Try to click link with HREF '$($Link.href)'"
+			Write-DebugLog "${Fn}: Try to click link:"
+			Dump-ElementInfo $Link -WebInfo
 			$ClickableLink = WaitFor-ElementToBeClickable -WebElement $Link
 			Invoke-SeClick $ClickableLink
 			# Now wait for browser to process the click and load the next page
@@ -369,6 +374,8 @@ function Invoke-Login {
 		[string] $Password
 	)
 	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	
 	try {
 		# What do we return?
 		$ReturnLink = $null
@@ -379,9 +386,8 @@ function Invoke-Login {
 		$PassFieldSnip = 'ctl00_ctl00_C_W__loginWP__myLogin__passwordTB'
 
 		# Navigate to page and attempt to sign in.
-		write-log -fore cyan "Loading site: $SiteURL"
+		write-log -fore cyan "${Fn}: Loading site: $SiteURL"
 		Enter-SeUrl $SiteURL -Driver $WebDriver
-		# Issue 7: $Browser is a global variable but not intentionally so.  Fix this for better scoping.
 		
 		##### Log in
 		# Get input fields
@@ -394,7 +400,7 @@ function Invoke-Login {
 		# Find the Login button and click it
 		$LoginButton = Find-SeElement -Driver $WebDriver -ID $LoginButtonSnip
 
-		write-log -fore cyan "Logging in..."
+		write-log -fore cyan "${Fn}: Logging in..."
 		#Click-Link $LoginButton
 		# Sleep after clicking, because we don't yet know how to reliably detect when storefront page is complete.
 		#	Issue 2.
@@ -429,12 +435,16 @@ function Invoke-Wait {
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
 	)
 	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
+	$scrGetReadyState = "return document.readyState"
+
 	<#	Wait until the main document returns "complete"
 	#>
 	$DocState = $BrowserObject.ExecuteScript($scrGetReadyState)
 	while ( $DocState -notlike "complete" ) {
 		# Not ready yet, so wait 1 second and check again.
-		Write-DebugLog "Waiting for page load to complete..."
+		Write-DebugLog "${Fn}: Waiting for page load to complete..."
 		Start-Sleep -Seconds 1
 		$DocState = $BrowserObject.ExecuteScript($scrGetReadyState)
 	}
@@ -1080,7 +1090,7 @@ function WaitFor-ElementToBeClickable {
 function Write-DebugLog {
 	param ( [string] $Text = " " )
 	
-	if ( $Debug ) { write-log -fore darkyellow $Text }
+	if ( $DebugLogging ) { write-log -fore darkyellow $Text }
 }
 
 Function Write-Log {
