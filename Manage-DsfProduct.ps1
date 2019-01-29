@@ -88,7 +88,8 @@ Begin {
 	# Put setup stuff BELOW functions!
 
 [string]$ScriptLocation = Split-Path $MyInvocation.MyCommand.Path	# Script is in this folder
-Import-Module ( join-path $ScriptLocation "Manage-DSF.psm1" )
+$ManageDSFModule = join-path $ScriptLocation "Manage-DSF.psm1"
+Import-Module $ManageDSFModule
 
 Function Handle-Exception {
 	# Custom error handling for this script
@@ -1341,7 +1342,7 @@ function Upload-Thumbnail {
 	#	to change from SilentlyContinue to Inquire.
 	If ($PSBoundParameters['Debug']) {
 		$DebugPreference = 'Continue'
-		$Debug = $true
+		$Global:DebugLogging = $true
 	}
 	
 	$LoggingPreference = "Continue"		# Log all output
@@ -1373,7 +1374,6 @@ function Upload-Thumbnail {
 	$DefaultQtyMult = 1
 	
 	# Selenium script snippets, to run using ExecuteScript:
-	$scrGetReadyState = "return document.readyState"
 	
 	# Wait for element to become visible if hidden
 	# From:  https://stackoverflow.com/questions/44724185/element-myelement-is-not-clickable-at-point-x-y-other-element-would-receiv
@@ -1495,7 +1495,7 @@ End {
 	Stop-SeDriver $Browser
 	# if ('browser still running') get-process $BrowserPID | stop-process
 	
-	Remove-Module Manage-DSF.psm1
+	Remove-Module -FullyQualifiedName $ManageDSFModule
 }
 
 <#
