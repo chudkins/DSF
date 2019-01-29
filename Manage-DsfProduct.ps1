@@ -1059,13 +1059,14 @@ function Update-Product {
 		switch ( $true ) {
 			# Any quantity should be set if explicitly set or if none of the other options have values,
 			#	however if nothing is specified in the input file we should do nothing.
-			( $Product.'Any Qty' -in $YesValues )	{
-										$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities"
-										$RadioButton | Set-RadioButton
-										continue
-									}
+			( $Product.'Any Qty' -in $YesValues ) {
+				$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities"
+				$RadioButton | Set-RadioButton
+				continue
+			}
+
 			# Fixed Quantities
-			( $Product.'Fixed Qty' )	{
+			( $Product.'Fixed Qty' ) {
 				<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
 					It's like the pricing sheet, except each row contains only one value.
 					We don't handle this yet, so log a warning and move on.
@@ -1089,7 +1090,7 @@ function Update-Product {
 			# By Multiples
 			( ( $Product.'Min Qty' ) -or
 			( $Product.'Max Qty' ) -or
-			( $Product.'Mult Qty' ) )	{
+			( $Product.'Mult Qty' ) ) {
 				# Click the radio button.
 				$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiples"
 				$RadioButton | Set-RadioButton
@@ -1115,21 +1116,21 @@ function Update-Product {
 				}
 				continue
 			}
+			
 			# Advanced is a text field, so just enter whatever was given.
-			( $Product.'Advanced Qty' )	{
+			( $Product.'Advanced Qty' ) {
 				$AdvQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Expression"
 				Set-TextField $AdvQtyText $Product.'Advanced Qty'
 				# Click Done button.
 				$AdvDoneBtn = Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone"
 				$AdvDoneBtn | Click-Link
+				continue
 			}
 		} # end switch
 		
 	} else {
 		Write-DebugLog "No Order Quantity options given."
 	}
-	
-	}	
 	
 	<#
 		Production Notes, <textarea name="ctl00$ctl00$C$M$ctl00$W$ctl01$_ProductionNotes" id="ctl00_ctl00_C_M_ctl00_W_ctl01__ProductionNotes" style="width: 90%;" rows="10" cols="20"></textarea>
