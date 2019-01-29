@@ -1021,7 +1021,7 @@ function Update-Product {
 		Settings section
 			Order Quantities:
 				Set of 4 radio buttons, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities" 
-					Any qty, value="_AnyQuantities"
+					Any qty, id="ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities"
 					Fixed qtys, value="_FixedQuantities"
 						Enables text box, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02__Value"
 					By multiples, value="_Multiples"
@@ -1038,64 +1038,97 @@ function Update-Product {
 						Total qty must add up to a valid qty, value="OrderQtysMultRecipient_TotalQty"
 	#>
 	
-	# Here, "Any Quantity" is the default.  If neither Fixed, Min, Max, Mult, or Advanced has a value,
-	#	just do nothing and leave it as it is.  If one of those has a value, we need to handle it.
-	if ( ( $Product.'Fixed Qty' ) -or
+	<#
+		Possibilities for Order Quantities section are one, and only one, of these options:
+			Any
+			Fixed
+			By Multiples
+			Advanced
+	#>
+	
+	# Are any of the Order Quantity options specified?
+	if ( ( $Product.'Any Qty' ) -or
+			( $Product.'Fixed Qty' ) -or
 			( $Product.'Min Qty' ) -or
 			( $Product.'Max Qty' ) -or
 			( $Product.'Mult Qty' ) -or
 			( $Product.'Advanced Qty' ) ) {
-		# One of these is not empty, so act accordingly.
-		write-log -fore red "TODO: [Issue 9] Fixed/Advanced handling is incomplete."
+		# Something was specified, so now let's act on it.
+		Write-DebugLog "Handling Order Quantity options..."
 		
-		if ( $Product.'Fixed Qty' ) {
-			<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
-				It's like the pricing sheet, except each row contains only one value.
-				We don't handle this yet, so log a warning and move on.
-				Admin will need to update the allowed quantities by hand.
-			#>
-			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantities"
-			$RadioButton | Set-RadioButton
-			$InvFixedQtyText = $BrowserObject | Wait-Link -TagName "input" -Property "id" -Pattern "*FixedQuantitiesValues_ctl02__Value"
-			Set-TextField $InvFixedQtyText $Product.'Fixed Qty'
-			# Now click the Update button, which will post the value to the server.
-			$UpdateButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02_LinkButton1"
-			$UpdateButton | Click-Link
-			# Issue 9:  Add logic to handle this option.
-			write-log -fore red "Warning [Issue 9]: Fixed Quantities selected for $($Product.'Product ID'); values must be entered by hand!"
-			# This option doesn't coexist with others, so break out after doing this.
-			break
-		}
-		
-		if ( ( $Product.'Min Qty' ) -or
-				( $Product.'Max Qty' ) -or
-				( $Product.'Mult Qty' ) ) {
-			write-log "$($Product.'Product ID') has Min/Max/Mult Qty."
-			# Min quantity can be used by itself or in conjunction with Max.
-			# For this to be available, "By Multiples" button must be clicked.
-			$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiples"
-			$RadioButton | Set-RadioButton
-			$MinQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Minimum"
-			Set-TextField $MinQtyText $Product.'Min Qty'
-			$MaxQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Maximum"
-			if ( $Product.'Max Qty' ) {
-				Set-TextField $MaxQtyText $Product.'Max Qty'
-			} else {
-				Set-TextField $MaxQtyText $DefaultMaxQty
+		switch ( $true ) {
+			# Any quantity should be set if explicitly set or if none of the other options have values,
+			#	however if nothing is specified in the input file we should do nothing.
+			( $Product.'Any Qty' -in $YesValues )	{
+										$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities"
+										$RadioButton | Set-RadioButton
+										continue
+									}
+			# Fixed Quantities
+			( $Product.'Fixed Qty' )	{
+				<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
+					It's like the pricing sheet, except each row contains only one value.
+					We don't handle this yet, so log a warning and move on.
+					You will need to update the allowed quantities by hand.
+				#>
+				# Set the radio button.
+				$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantities"
+				$RadioButton | Set-RadioButton
+				# Wait for field and buttons to appear.
+				$UpdateButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02_LinkButton1"
+				# Set the input field to whatever our value is.
+				$InvFixedQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__FixedQuantitiesValues_ctl02__Value"
+				Set-TextField $InvFixedQtyText $Product.'Fixed Qty'
+				# Now click the Update button, which will post the value to the server.
+				$UpdateButton | Click-Link
+				# Issue 9:  Add logic to handle this option.
+				write-log -fore red "Warning [Issue 9]: Fixed Quantities selected for $($Product.'Product ID'); values must be entered by hand!"
+				continue
 			}
-			$MultQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiple"
-			if ( $Product.'Mult Qty' ) {
-				Set-TextField $MultQtyText $Product.'Mult Qty'
-			} else {
-				Set-TextField $MultQtyText $DefaultQtyMult
+			
+			# By Multiples
+			( ( $Product.'Min Qty' ) -or
+			( $Product.'Max Qty' ) -or
+			( $Product.'Mult Qty' ) )	{
+				# Click the radio button.
+				$RadioButton = $BrowserObject | Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiples"
+				$RadioButton | Set-RadioButton
+				# Set the minimum quantity from input.
+				$MinQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Minimum"
+				Set-TextField $MinQtyText $Product.'Min Qty'
+				# If max wasn't given, use the default.
+				$MaxQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Maximum"
+				if ( $Product.'Max Qty' ) {
+					Set-TextField $MaxQtyText $Product.'Max Qty'
+					# Check the box for Enforce Max Quantity Permitted in Cart.
+					$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
+					Set-CheckBox $Checkbox
+				} else {
+					Set-TextField $MaxQtyText $DefaultMaxQty
+				}
+				# If no multiple was given, use the default.
+				$MultQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiple"
+				if ( $Product.'Mult Qty' ) {
+					Set-TextField $MultQtyText $Product.'Mult Qty'
+				} else {
+					Set-TextField $MultQtyText $DefaultQtyMult
+				}
+				continue
 			}
-		}
+			# Advanced is a text field, so just enter whatever was given.
+			( $Product.'Advanced Qty' )	{
+				$AdvQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Expression"
+				Set-TextField $AdvQtyText $Product.'Advanced Qty'
+				# Click Done button.
+				$AdvDoneBtn = Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone"
+				$AdvDoneBtn | Click-Link
+			}
+		} # end switch
 		
-		# If a Max quantity was specified, check the box to enforce this in shopping cart.
-		if ( $Product.'Max Qty' ) {
-			$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
-			Set-CheckBox $Checkbox
-		}		
+	} else {
+		Write-DebugLog "No Order Quantity options given."
+	}
+	
 	}	
 	
 	<#
