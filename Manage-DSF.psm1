@@ -342,6 +342,51 @@ function Get-Control {
 	$result
 }
 
+Function Handle-Exception {
+	# Custom error handling for this script
+	param (
+		$Exc
+	)
+
+	if ( $Exc.Exception.WasThrownFromThrowStatement ) {
+		# Throw statement means we did it on purpose.  Examine error code and
+		#  print appropriate message.
+
+		write-log -fore mag "Caught custom exception:" 
+		write-log -fore mag $( $Exc | Format-List * -force | out-string )
+		
+		$exMsg = $Exc.Exception.Message
+
+		switch -wildcard ( $exMsg ) {
+			"BFCache not set!" { 
+				Write-Log -fore mag $exMsg 
+				Write-Log -fore yel "ERROR: Registry entry is required for proper operation!"
+				Write-Log -fore yel "Please run the following in an Administrator window:"
+				Write-Log -fore cyan '$IEFeatureControl = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Internet Explorer\Main\FeatureControl"'
+				Write-Log -fore cyan '$BFCache = "FEATURE_BFCACHE'
+				Write-Log -fore cyan 'New-Item ( join-path $IEFeatureControl $BFCache )'
+				Write-Log -fore cyan 'New-ItemProperty ( join-path $IEFeatureControl $BFCache ) -Name "iexplore.exe" -Value 0 -PropertyType Dword'
+			}
+			"Timed out while waiting*" {
+				Write-Log -fore mag $exMsg 
+				Write-Log -fore red "Time limit exceeded while waiting for web form element."
+				Write-Log -fore red "Execution cannot continue."
+			}
+
+			default { 
+				write-log -fore red "Unhandled exception:" 
+				write-log ( $Exc.Exception | Format-List | Out-String )
+			}
+		}
+	
+	} else {
+		write-log -fore mag "Caught standard exception:"
+		write-log -fore mag $_.Exception.ErrorRecord.Exception
+		write-log -fore gray $( $_ | fl * -force | out-string )
+	}
+
+}
+
 function Invoke-Login {
 	<#
 		.Synopsis
