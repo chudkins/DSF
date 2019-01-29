@@ -1121,6 +1121,10 @@ function Update-Product {
 			# Advanced is a text field, so just enter whatever was given.
 			( $null -notlike $Product.'Advanced Qty' ) {
 				Write-DebugLog "${Fn}: Advanced qty"
+				# Set radio button for Advanced.
+				$AdvQtyRdb = Get-Control -Type RadioButton -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Advanced"
+				$AdvQtyRdb | Set-RadioButton
+				# Fill in expression.
 				$AdvQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Expression"
 				Set-TextField $AdvQtyText $Product.'Advanced Qty'
 				# Click Done button.
