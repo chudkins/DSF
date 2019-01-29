@@ -1065,7 +1065,7 @@ function Update-Product {
 			}
 
 			# Fixed Quantities
-			( $Product.'Fixed Qty' ) {
+			( $null -notlike $Product.'Fixed Qty' ) {
 				Write-DebugLog "${Fn}: Fixed qty"
 				<#  Fixed Quantity actually creates a set of valid values, which you edit using a GUI.
 					It's like the pricing sheet, except each row contains only one value.
@@ -1119,7 +1119,7 @@ function Update-Product {
 			}
 			
 			# Advanced is a text field, so just enter whatever was given.
-			( $Product.'Advanced Qty' ) {
+			( $null -notlike $Product.'Advanced Qty' ) {
 				Write-DebugLog "${Fn}: Advanced qty"
 				$AdvQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Expression"
 				Set-TextField $AdvQtyText $Product.'Advanced Qty'
