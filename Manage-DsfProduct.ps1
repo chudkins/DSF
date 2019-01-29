@@ -1097,11 +1097,11 @@ function Update-Product {
 				$RadioButton | Set-RadioButton
 				# Set the minimum quantity from input.
 				$MinQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Minimum"
-				Set-TextField $MinQtyText [int]($Product.'Min Qty')
+				Set-TextField $MinQtyText $Product.'Min Qty'
 				# If max wasn't given, use the default.
 				$MaxQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Maximum"
 				if ( $Product.'Max Qty' ) {
-					Set-TextField $MaxQtyText [int]($Product.'Max Qty')
+					Set-TextField $MaxQtyText $Product.'Max Qty'
 					# Check the box for Enforce Max Quantity Permitted in Cart.
 					$Checkbox = $BrowserObject | Get-Control -Type Checkbox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_chkEnforceMaxQtyInCart"
 					Set-CheckBox $Checkbox
@@ -1111,7 +1111,7 @@ function Update-Product {
 				# If no multiple was given, use the default.
 				$MultQtyText = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Multiple"
 				if ( $Product.'Mult Qty' ) {
-					Set-TextField $MultQtyText [int]($Product.'Mult Qty')
+					Set-TextField $MultQtyText $Product.'Mult Qty'
 				} else {
 					Set-TextField $MultQtyText $DefaultQtyMult
 				}
