@@ -224,8 +224,11 @@ function Get-Control {
 	#>
 	
 	<#	
-		TODO: Return something unique if wait times out, so the calling function has a chance to handle
+		TODO: Throw unique exception if wait times out, so the calling function has a chance to handle
 			the lack of link, such as forcing a page reload or navigating to some known location.
+			
+		Issue 27:  Function needs to handle the case where neither WebDriver nor WebElement is supplied,
+			because the coder messed up, instead of going ahead and returning $null.
 	#>
 	
 	Param(
