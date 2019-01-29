@@ -1461,15 +1461,10 @@ Process {
 	#>
 
 	try {
-		# BEGIN should have gotten us to the Administration page.
-		#Click-Link ( $Browser | Wait-Link -TagName "a" -Property "text" -Pattern "Administration" )
-
-		# Find Products link and click it.
-		#$ProductsLink = $Browser | Wait-LinkSe -TagName "a" -Property "id" -Pattern $ProductsLinkSnip
-		$ProductsLink = Find-SeElement -Driver $Browser -ID $ProductsLinkSnip
-		Click-Link $ProductsLink
-		
-		# Now we're on the Product Management page.
+		# Find Products link and click it.  Probably unnecessary because Manage-Product calls Find-Product,
+		#	which always navigates to Products list to start its job.
+		#$ProductsLink = Find-SeElement -Driver $Browser -ID $ProductsLinkSnip
+		#Click-Link $ProductsLink
 		
 		# Grab details from CSV
 		
