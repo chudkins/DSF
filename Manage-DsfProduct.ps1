@@ -102,7 +102,7 @@ Function Handle-Exception {
 		#  print appropriate message.
 
 		write-log -fore mag "Caught custom exception:" 
-		write-log -fore mag $( $Exc | fl * -force | out-string )
+		write-log -fore mag $( $Exc | Format-List * -force | out-string )
 		
 		$exMsg = $Exc.Exception.Message
 
@@ -115,8 +115,6 @@ Function Handle-Exception {
 				Write-Log -fore cyan '$BFCache = "FEATURE_BFCACHE'
 				Write-Log -fore cyan 'New-Item ( join-path $IEFeatureControl $BFCache )'
 				Write-Log -fore cyan 'New-ItemProperty ( join-path $IEFeatureControl $BFCache ) -Name "iexplore.exe" -Value 0 -PropertyType Dword'
-				Write-Log " "
-				Write-Log -fore yel $( get-psdrive -psprovider filesystem | format-table -property name, root, description -autosize | out-string )
 			}
 			"Timed out while waiting*" {
 				Write-Log -fore mag $exMsg 
@@ -126,7 +124,7 @@ Function Handle-Exception {
 
 			default { 
 				write-log -fore red "Unhandled exception:" 
-				write-log ( $Exc.Exception | fl | out-string )
+				write-log ( $Exc.Exception | Format-List | Out-String )
 			}
 		}
 	
