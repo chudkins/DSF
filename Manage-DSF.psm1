@@ -256,7 +256,7 @@ function Get-Control {
 		[int] $Timeout = 10
 	)
 
-	if ( $WebElement ) {
+	if ( $null -notlike $WebElement ) {
 		$WebDriver = $WebElement.WrappedDriver
 	}
 	
@@ -840,6 +840,54 @@ function Set-TextField {
 	
 	# Set it to the string we were given.
 	$FieldObject.SendKeys( $Text )
+}
+
+function Upload-Thumbnail {
+
+	<# Issue 26:  Make this function not specific to products; needs to accept a control instead of being
+		hard-coded to the product form.
+	#>
+	
+	param (
+		[Parameter( Mandatory )]
+		[ValidateNotNullOrEmpty()]
+		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
+
+		[Parameter( Mandatory )]
+		[ValidateNotNullOrEmpty()]
+		[string] $ImageURI
+	)
+	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	
+	$WebDriver = $WebElement.WrappedDriver
+
+	# Verify file actually exists.
+	if ( test-path $ImageURI ) {
+		# Seems legit; proceed with upload process.
+		# Start by clicking "Edit" button.
+		if ( $WebElement ) {
+			$WebElement | Click-Link
+			# Once clicked, image graphic is replaced with a set of radio buttons.
+			# Select "Upload Custom Icon" to proceed.
+			$UploadIconButton = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon"
+			$UploadIconButton | Click-Link
+			# Now we have a checkbox and a text field to manipulate.
+			# Check the box to use this image for all of this product's thumbnails.
+			$SameImageForAllChk = $WebDriver | Get-Control -Type CheckBox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
+			Set-CheckBox $SameImageForAllChk
+			# Set the text field because we can't mess with a file dialog.
+			$ThumbnailField = $WebDriver | Get-Control -Type File -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
+			Set-TextField $ThumbnailField $ImageURI
+			# Click the "Upload" button, which will cause the page to reload.
+			$UploadButton = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
+			$UploadButton | Click-Link
+		} else {
+			throw "Error: Couldn't find Edit button for image upload!"
+		}
+	} else {
+		throw "${Fn:} Error: Image path not found!"
+	}
 }
 
 function Wait-Link {
