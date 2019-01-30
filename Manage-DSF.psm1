@@ -886,7 +886,7 @@ function Upload-Thumbnail {
 			throw "Error: Couldn't find Edit button for image upload!"
 		}
 	} else {
-		throw "${Fn:} Error: Image path not found!"
+		throw "${Fn}: Error: Image path not found!"
 	}
 }
 
@@ -1270,6 +1270,6 @@ Function Write-Log {
 
 } #end function
 
-Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, FixUp-Unit, Get-Control, Invoke-Login, Invoke-Wait, Select-FromList, Set-RadioButton, Set-RichTextField, Set-TextField, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
+Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, FixUp-Unit, Get-Control, Invoke-Login, Invoke-Wait, Select-FromList, Set-RadioButton, Set-RichTextField, Set-TextField, Upload-Thumbnail, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
 
 #Export-ModuleMember -Variable DebugLogging, DebugPreference
