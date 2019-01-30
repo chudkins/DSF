@@ -31,6 +31,8 @@ Causes the script to ignore any image paths provided in the input file; it will 
 Causes the script to emit lots of detailed and possibly useful information about what it's doing.
 
 ## News
+### 2019-01-29
+Stabilized after module split.  `Manage-DsfProduct` can now set Advanced Quantity field in product settings.
 ### 2019-01-28
 Very broken due to my first ever attempt at writing a PowerShell module.  Eventually there will be more than one script, so shared functions need to live in a module.
 ### 2019-01-16
