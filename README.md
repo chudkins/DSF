@@ -1,6 +1,22 @@
 # Manage-DSF
 A set of scripts for automating product upkeep with EFI's Digital StoreFront.
 
+## This project contains:
+### Manage-DSF.psm1
+PowerShell module containing various functions for scripts to use.
+### Manage-DsfProduct.ps1
+Add or change details of non-printed products, using input from a CSV file.  (Coming soon, ability to delete products.)
+
+## Planned:
+### Manage-DsfCategory
+Add, change, or remove storefront categories, using input from a CSV file.
+### Manage-DsfGroup
+Add, change, or remove user groups.
+### Manage-DsfUser
+Add, change, or remove user accounts.
+### Manage-DsfKitProduct
+Add, change, or remove kits that consist of other products.
+
 ## Goal
 Bulk add, modify, delete non-printed products non-interactively using data from a spreadsheet.
 
