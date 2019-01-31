@@ -697,7 +697,12 @@ function Update-Product {
 	}
 	
 	# Product ID (SKU), 50 chars max
-	if ( $null -notlike $Product.'Product ID' ) {
+	# When adding a new product, we'll set this, but if "New ID" is provided we'll use that instead.
+	if ( $null -notlike $Product.'New Id' ) {
+		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
+		Set-TextField $Field $Product.'New Id'.Trim()
+		write-log "${Fn}: Change ID '$($Product.'Product Id'.Trim())' to '$($Product.'New Id'.Trim())'"
+	} elseif ( $null -notlike $Product.'Product Id' ) {
 		$Field = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__SKU"
 		Set-TextField $Field $Product.'Product Id'.Trim()
 	}
