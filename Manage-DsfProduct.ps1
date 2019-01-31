@@ -947,7 +947,7 @@ function Update-Product {
 		}						{ 
 									# Enable and log a warning.
 									$ManageInventory = $true
-									write-log -fore yellow "Warning: Manage Inventory not specified, but management items were; enabling for '$($Product.'Product ID')'."
+									write-log -fore yellow "Warning: Manage Inventory setting wasn't specified, but management items were; ensuring it's on for '$($Product.'Product ID')'."
 								}
 	}
 	
