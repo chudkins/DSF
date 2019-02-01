@@ -531,6 +531,16 @@ function Manage-Product {
 			Write-Log "${Fn}: Skip input row, $($Product.'Product Id')"
 		}
 		
+<#
+		"Delete"	{
+			write-log "${Fn}: Delete product, $($Product.'Product Id')"
+			
+			# Concerns when deleting products:
+			#	DSF won't allow this if product is included in any kits, but it doesn't let you know this
+			#	until AFTER the "Delete X products?" popup.  If this happens, fail because user will need
+			#	to remove the item from any kits.
+		}
+#>		
 		default {
 			# This should never be reached due to parameter validation!
 		}
