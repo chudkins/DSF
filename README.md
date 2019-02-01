@@ -34,6 +34,8 @@ Advanced Quantity is a text field that supports regex-like notation, such as "5.
 To clear text fields, put `-` as the only data in the cell.  Currently, this works for:  Brief Description, Long Description, Notify Emails, Production Notes, and Keywords.
 
 ## Usage
+First, search the file for `# Main site URL to start from` and replace the `$SiteURL` with your own site.  Open the Excel file, fill in your product info and export it to CSV.  Then, run something like the following.
+
 ### `Manage-DsfProduct.ps1 -UserName fred -Password 'blah%293' -ProductFile 'C:\Somewhere\somedata.csv'`
 
 ## Parameters
