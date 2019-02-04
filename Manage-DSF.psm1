@@ -657,6 +657,14 @@ function Publish-Product {
 		To publish any product, procedure is the same if you start from Products list.
 		
 		Find it (Find-Product)
+		Check its box.
+		Hit "Publish" button.
+			Box pops up, "Select Target Category"
+		Search for the category; each result will have a radio button.
+			Radio buttons mean you can't publish to more than one at a time.
+		Select the appropriate button.
+		Hit the "Publish" button.
+		Box clears, leaving you back at the Manage Products page.  Page does not refresh.
 	#>
 }
 
