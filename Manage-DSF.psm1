@@ -654,6 +654,28 @@ function Invoke-Wait {
 
 function Publish-Product {
 	<#
+		.Synopsis
+		Publish a DSF product into a category.
+		
+		.Description
+		Publish a DSF product into a category.  Returns [bool] representing success or failure.
+		
+		.Parameter WebDriver
+		Browser object to control.
+		
+		.Parameter Product
+		Object containing the product to publish.
+		
+		.Parameter Category
+		DSF category to which the product will be added.
+		
+		.Example
+		Add a product to the "ACME - Widgets" category.
+		
+		$result = $Browser | Publish-Product $Product "ACME - Widgets"
+	#>
+
+	<#
 		To publish any product, procedure is the same if you start from Products list.
 		
 		Find it (Find-Product)
@@ -666,6 +688,11 @@ function Publish-Product {
 		Hit the "Publish" button.
 		Box clears, leaving you back at the Manage Products page.  Page does not refresh.
 	#>
+	
+	$CatPublishStatus = $false
+	
+	# Return the result of the operation.
+	$CatPublishStatus
 }
 
 function Run-JavaScript {
