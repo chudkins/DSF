@@ -208,9 +208,7 @@ function Find-Product {
 	[bool] $FoundResult = $false
 	
 	# Navigate to Products list page.
-	#$OpsList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_TabNavigatorSFAdministration_QuickMenuSearch"
-	#$OpsList | Select-FromList "Products"
-	$ManageProductsURL = $SiteURL + "Admin/ManageProducts.aspx"
+	[string] $ManageProductsURL = ( Get-DsfMainPage $BrowserObject ).AbsoluteUri + "/Admin/ManageProducts.aspx"
 	Enter-SeUrl $ManageProductsURL -Driver $BrowserObject
 	
 	# Search for requested product.
@@ -473,6 +471,32 @@ function Get-Control {
 	
 	# We made it this far, so presumably we got what we need.  Return it.
 	$result
+}
+
+function Get-DsfMainPage {
+	<#
+		.Description
+		Get the main, or top-level, page by manipulating the current URL.  Returns a PowerShell URI object.
+
+		.Parameter WebDriver
+		Web browser whose URL we want to grab.
+	#>
+	
+	param (
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver
+	)
+	
+	# Get current location from browser.
+	[uri] $CurrentURI = $WebDriver.URL
+	
+	# Now manipulate it a little to get the main DSF page.
+	[string] $Host = $CurrentURI.Host
+	# Scheme is the protocol, such as HTTPS.
+	[string] $Scheme = $CurrentURI.Scheme
+	# Put 'em all together...
+	[uri] $DsfMainPage = $Scheme + "://" + $Host + "/DSF"
+	
+	$DsfMainPage
 }
 
 Function Handle-Exception {
@@ -1408,6 +1432,6 @@ Function Write-Log {
 
 } #end function
 
-Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, FixUp-Unit, Get-Control, Invoke-Login, Invoke-Wait, Publish-Product, Select-FromList, Set-CheckBox, Set-RadioButton, Set-RichTextField, Set-TextField, Upload-Thumbnail, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
+Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, Find-Product, FixUp-Unit, Get-Control, Get-DsfMainPage, Invoke-Login, Invoke-Wait, Publish-Product, Select-FromList, Set-CheckBox, Set-RadioButton, Set-RichTextField, Set-TextField, Upload-Thumbnail, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
 
 #Export-ModuleMember -Variable DebugLogging, DebugPreference
