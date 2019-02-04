@@ -173,6 +173,9 @@ function Find-Product {
 		
 		.Parameter BrowserObject
 		Selenium driver object representing the browser we're automating.
+		
+		.Parameter Checkbox
+		Return the checkbox element for this item instead of the edit link.
 	#>
 
 	param (
@@ -180,7 +183,9 @@ function Find-Product {
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
 		
 		[Parameter( Mandatory )]
-		[PSCustomObject] $Product
+		[PSCustomObject] $Product,
+		
+		[switch] $Checkbox
 	)
 	
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
@@ -255,8 +260,14 @@ function Find-Product {
 					Handle-Exception $_
 				}
 			}
-			# Extract the product management link.
-			$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
+			# Are we after the Manage link, or the selection checkbox?
+			if ( $Checkbox ) {
+				# Find the checkbox at the beginning of the row.
+				$ProductLink = $ProductFoundRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("type") -eq "checkbox" }
+			} else {
+				# Extract the product management link.
+				$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
+			}
 		} else {
 			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
 		}
@@ -672,7 +683,7 @@ function Publish-Product {
 		.Example
 		Add a product to the "ACME - Widgets" category.
 		
-		$result = $Browser | Publish-Product $Product "ACME - Widgets"
+		$result = $Browser | Publish-Product -Product $Product -Category "ACME - Widgets"
 	#>
 
 	<#
@@ -689,7 +700,24 @@ function Publish-Product {
 		Box clears, leaving you back at the Manage Products page.  Page does not refresh.
 	#>
 	
+	param(
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
+		
+		[Parameter( Mandatory )]
+		[PSCustomObject] $Product,
+
+		[Parameter( Mandatory )]
+		[string] $Category
+	)
+	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	
 	$CatPublishStatus = $false
+	
+	# This will get us to the Product Management page with one or more matches.
+	$ProductLink = Find-Product -Browser $BrowserObject -Product $Product
+	
 	
 	# Return the result of the operation.
 	$CatPublishStatus
