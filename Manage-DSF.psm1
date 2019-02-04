@@ -715,11 +715,70 @@ function Publish-Product {
 	
 	$CatPublishStatus = $false
 	
-	# This will get us to the Product Management page with one or more matches.
-	$ProductLink = Find-Product -Browser $BrowserObject -Product $Product
+	# Get the checkbox to select this product.
+	$ProductSelect = Find-Product -Browser $BrowserObject -Product $Product -Checkbox
+	# Select it.
+	Set-CheckBox $ProductSelect
+	# Hit the "Publish" button.
+	$BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonPublish_Top" | Click-Link
+	# Wait for Search button within the popup table to be clickable.
+	$CatSearchBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_bnSearch" | WaitFor-ElementToBeClickable
+	# Search for the category by name.
+	$CatSearchBox = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_tbSearchText"
+	Set-TextField -FieldObject $CatSearchBox -Text $Category
+	$CatSearchBtn | Click-Link
+	# Results will be listed in a table: id="ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_CategoryListSearch_GridCategories"
+	# Within the table, the label we're looking for (category name) is in the second cell of each row,
+	#	in a nested table that contains a folder icon.
+	# We'll need to look through the rows, and find one where the text label is an exact match.
 	
-	
-	# Return the result of the operation.
+	# Wait for results.
+	$ResultsTable = WaitFor-ElementExists -WebDriver $BrowserObject -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_CategoryListSearch_GridCategories"
+	if ( $ResultsTable ) {
+		# We got something back, however it may not have any categories listed.
+		Write-DebugLog "${Fn}: Got a result table back."
+		# Verify table actually contains results by counting the rows that are in "bg-AdS-001011" class.
+		# The table header has a different class name so it won't be counted.
+		$ResultHitRows = $ResultsTable.FindElementsByClassName("bg-AdS-001011")
+		$ResultCount = ( $ResultHitRows | Measure-Object ).Count
+		if ( $ResultCount -ge 1 ) {
+			# Table has some result rows, meaning we got some hits back.
+			Write-DebugLog "${Fn}: Got $ResultCount results back."
+			# Check through the rows and find the one where ID exactly matches our Product.
+			foreach ( $row in $ResultHitRows ) {
+				# Category Name will be inside a <span> nested in another table.
+				# Check this row for an exact match.
+				try {
+					if ( $row.FindElementsByTagName("span") | Where-Object { $_.Text -eq $Category.Trim() } ) {
+						# Exact match, so grab the radio button.
+						$CatRbutton = $row.FindElementByTagName("input")
+						#$FoundResult = $true
+						break
+					}
+				}
+				catch [OpenQA.Selenium.NoSuchElementException] {
+					Write-DebugLog "${Fn}: Element not found in current result row."
+				}
+				catch {
+					Handle-Exception $_
+				}
+			}
+		} else {
+			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
+		}
+		# Now we have a button, so select it.
+		$CatRbutton | Set-RadioButton
+		# Click the "Publish" button inside the popup table.
+		$BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_ButtonOK" | Click-Link
+		$CatPublishStatus = $true
+		# Once clicked, popup disappears.
+		# What happens if there's an error?
+	} else {
+		# We got nothing back, which probably means WaitFor-ElementExists timed out.
+		Write-DebugLog "${Fn}: Something went wrong trying to retrieve search results."
+	}
+
+	# At this point, we've either succeeded or failed, so return the status.
 	$CatPublishStatus
 }
 
