@@ -1350,15 +1350,10 @@ Process {
 	#>
 
 	try {
-		# Find Products link and click it.  Probably unnecessary because Manage-Product calls Find-Product,
-		#	which always navigates to Products list to start its job.
-		#$ProductsLink = Find-SeElement -Driver $Browser -ID $ProductsLinkSnip
-		#Click-Link $ProductsLink
+		# Grab details from CSV.
 		
-		# Grab details from CSV
-		
-		# *** NOTE ***
-		# We should probably bring this in from Excel instead.
+		# Issue 13:
+		# Optionally, bring this in from Excel instead.  CSV should be retained as it's platform-neutral.
 		
 		# Import-CSV will bring in empty fields as zero-length strings, which are -like but not -eq $null.
 		# However, remember to trim leading/trailing whitespace from all text values!
