@@ -702,7 +702,7 @@ function Publish-Product {
 	
 	param(
 		[Parameter( Mandatory, ValueFromPipeLine )]
-		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject,
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 		
 		[Parameter( Mandatory )]
 		[PSCustomObject] $Product,
@@ -716,15 +716,15 @@ function Publish-Product {
 	$CatPublishStatus = $false
 	
 	# Get the checkbox to select this product.
-	$ProductSelect = Find-Product -Browser $BrowserObject -Product $Product -Checkbox
+	$ProductSelect = Find-Product -Browser $WebDriver -Product $Product -Checkbox
 	# Select it.
 	Set-CheckBox $ProductSelect
 	# Hit the "Publish" button.
-	$BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonPublish_Top" | Click-Link
+	$WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonPublish_Top" | Click-Link
 	# Wait for Search button within the popup table to be clickable.
-	$CatSearchBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_bnSearch" | WaitFor-ElementToBeClickable
+	$CatSearchBtn = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_bnSearch" | WaitFor-ElementToBeClickable
 	# Search for the category by name.
-	$CatSearchBox = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_tbSearchText"
+	$CatSearchBox = $WebDriver | Get-Control -Type Text -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_tbSearchText"
 	Set-TextField -FieldObject $CatSearchBox -Text $Category
 	$CatSearchBtn | Click-Link
 	# Results will be listed in a table: id="ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_CategoryListSearch_GridCategories"
@@ -733,7 +733,7 @@ function Publish-Product {
 	# We'll need to look through the rows, and find one where the text label is an exact match.
 	
 	# Wait for results.
-	$ResultsTable = WaitFor-ElementExists -WebDriver $BrowserObject -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_CategoryListSearch_GridCategories"
+	$ResultsTable = WaitFor-ElementExists -WebDriver $WebDriver -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_CategoryListSearch_GridCategories"
 	if ( $ResultsTable ) {
 		# We got something back, however it may not have any categories listed.
 		Write-DebugLog "${Fn}: Got a result table back."
@@ -769,7 +769,7 @@ function Publish-Product {
 		# Now we have a button, so select it.
 		$CatRbutton | Set-RadioButton
 		# Click the "Publish" button inside the popup table.
-		$BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_ButtonOK" | Click-Link
+		$WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_ButtonOK" | Click-Link
 		$CatPublishStatus = $true
 		# Once clicked, popup disappears.
 		# What happens if there's an error?
