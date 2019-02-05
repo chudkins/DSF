@@ -582,7 +582,7 @@ function Update-Product {
 	# First, check if this is a pure category update.  If so, we'll only have Product ID and Category.
 	# To do this, iterate through all the properties except those two, and look for non-empty values.
 	$PropertyCounter = 0
-	foreach ( $prop in ( $Product.PSObject.Properties | Where-Object { $_.Name -notin "Product Id","Category" } ) {
+	foreach ( $prop in ( $Product.PSObject.Properties | Where-Object { $_.Name -notin "Product Id","Category" } ) ) {
 		if ( -not ( [string]::IsNullOrWhiteSpace( $prop.Value ) ) ) { $PropertyCounter++ }
 	}
 	
@@ -1358,7 +1358,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 
 	# Admin link exists; now we have to wait until it's not obscured by "Loading" gizmo.
 	# By now, the element should no longer be obscured.
-	$AdminClickable = WaitFor-ElementToBeClickable -WebElement $AdminLink -TimeInSeconds 30
+	$AdminClickable = WaitFor-ElementToBeClickable -WebElement $AdminLink -TimeOut 30
 	if ( $AdminClickable ) {
 		write-log -fore green "Admin link found; successfully logged in!"
 		$AdminClickable | Click-Link
