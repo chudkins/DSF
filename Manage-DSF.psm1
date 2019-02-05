@@ -722,7 +722,7 @@ function Publish-Product {
 	# Hit the "Publish" button.
 	$WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ButtonPublish_Top" | Click-Link
 	# Wait for Search button within the popup table to be clickable.
-	$CatSearchBtn = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_bnSearch" | WaitFor-ElementToBeClickable
+	$CatSearchBtn = WaitFor-ElementToBeClickable -WebDriver $WebDriver -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_bnSearch"
 	# Search for the category by name.
 	$CatSearchBox = $WebDriver | Get-Control -Type Text -ID "ctl00_ctl00_C_M_PublishingCategoryPicker_Categories_tbSearchText"
 	Set-TextField -FieldObject $CatSearchBox -Text $Category
@@ -914,7 +914,7 @@ function Set-CheckBox {
 				# If this happens, the element reference will become stale.
 				
 				# Verify it's now checked.
-				$RealCheckBox = WaitFor-ElementToBeClickable $ChkBoxDriver -ID $ChkBoxID 5
+				$RealCheckBox = WaitFor-ElementToBeClickable -WebDriver $ChkBoxDriver -ID $ChkBoxID -TimeOut 5
 				if ( $RealCheckBox.Selected -ne $True ) {
 					throw "Error:  Unable to check $($RealCheckBox.GetAttribute('ID'))!"
 				}
@@ -1396,33 +1396,33 @@ function WaitFor-ElementToBeClickable {
 		.Parameter LinkText
 		Link text string to search by.
 		
-		.Parameter TimeInSeconds
+		.Parameter TimeOut
 		Number of seconds to wait before giving up.  Default is 10.
 	#>
 	
 	param (
-		[Parameter( Mandatory, Position=1, ParameterSetName="ID" )]
-		[Parameter( Mandatory, Position=1, ParameterSetName="XPath" )]
-		[Parameter( Mandatory, Position=1, ParameterSetName="LinkText" )]
+		[Parameter( Mandatory, ParameterSetName="ID" )]
+		[Parameter( Mandatory, ParameterSetName="XPath" )]
+		[Parameter( Mandatory, ParameterSetName="LinkText" )]
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
 
-		[Parameter( Position=1, ParameterSetName="Element" )]
+		[Parameter( ParameterSetName="Element" )]
 		[OpenQA.Selenium.Remote.RemoteWebElement] $WebElement,
 		
-		[Parameter( Position=2, ParameterSetName="ID" )]
+		[Parameter( ParameterSetName="ID" )]
 		[string] $ID,
 		
-		[Parameter( Position=2, ParameterSetName="XPath" )]
+		[Parameter( ParameterSetName="XPath" )]
 		[string] $XPath,
 		
-		[Parameter( Position=2, ParameterSetName="LinkText" )]
+		[Parameter( ParameterSetName="LinkText" )]
 		[string] $LinkText,
 		
-		[Parameter( Position=3, ParameterSetName="ID" )]
-		[Parameter( Position=3, ParameterSetName="XPath" )]
-		[Parameter( Position=3, ParameterSetName="LinkText" )]
-		[Parameter( Position=2, ParameterSetName="Element" )]
-		[int] $TimeInSeconds = 10
+		[Parameter( ParameterSetName="ID" )]
+		[Parameter( ParameterSetName="XPath" )]
+		[Parameter( ParameterSetName="LinkText" )]
+		[Parameter( ParameterSetName="Element" )]
+		[int] $TimeOut = 10
 	)
 	
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
@@ -1432,7 +1432,7 @@ function WaitFor-ElementToBeClickable {
 	}
 	
 	# This object's job is to wait for something.
-	$Waiter = New-Object OpenQA.Selenium.Support.UI.WebDriverWait($WebDriver, $TimeInSeconds)
+	$Waiter = New-Object OpenQA.Selenium.Support.UI.WebDriverWait($WebDriver, $TimeOut)
 	
 	try {
 		# Check which info we're given, then wait until it exists or times out.
