@@ -987,7 +987,7 @@ function Update-Product {
 			Write-DebugLog "Handling Order Quantity options..."
 			
 			switch ( $true ) {
-				# Any quantity should be set if explicitly set or if none of the other options have values,
+				# Any Quantity should be set if explicitly set or if none of the other options have values,
 				#	however if nothing is specified in the input file we should do nothing.
 				( $Product.'Any Qty' -in $YesValues ) {
 					Write-DebugLog "${Fn}: Any qty"
