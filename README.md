@@ -53,6 +53,8 @@ Causes the script to ignore any image paths provided in the input file; it will 
 Causes the script to emit lots of detailed and possibly useful information about what it's doing.
 
 ## News
+### 2019-02-05
+Added ability to publish products into categories.
 ### 2019-01-29
 Stabilized after module split.  `Manage-DsfProduct` can now set Advanced Quantity field in product settings.
 ### 2019-01-28
