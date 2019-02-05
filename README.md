@@ -38,7 +38,9 @@ To publish a product into multiple categories, put them in the **Category** fiel
 ## Usage
 First, search the file for `# Main site URL to start from` and replace the `$SiteURL` with your own site.  Open the Excel file, fill in your product info and export it to CSV.  Then, run something like the following.
 
-### `Manage-DsfProduct.ps1 -UserName fred -Password 'blah%293' -ProductFile 'C:\Somewhere\somedata.csv'`
+```powershell
+Manage-DsfProduct.ps1 -UserName fred -Password 'blah%293' -ProductFile 'C:\Somewhere\somedata.csv'
+```
 
 ## Parameters
 ### -UserName
