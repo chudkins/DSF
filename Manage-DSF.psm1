@@ -810,16 +810,14 @@ function Publish-Product {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
-			Set-PSDebug -Trace 1
 			foreach ( $row in $ResultHitRows ) {
 				# Category Name will be inside a <span> nested in another table.
 				# Check this row for an exact match.
 				try {
-					$FindCatSpan = $row.FindElementsByTagName("span") #| Where-Object { $_.Text -eq $Category }
-					write-log ( $FindCatSpan | out-string )
+					$FindCatSpan = $row.FindElementsByTagName("span") #
 					if ( $null -ne $FindCatSpan ) {
 						# Exact match, so grab the radio button.
-						$CatRbutton = $row.FindElementByTagName("input")
+						$CatRbutton = $row.FindElementsByTagName("input") | Where-Object { $_.GetAttribute("type") -eq "radio" }
 						#$FoundResult = $true
 						break
 					}
@@ -834,7 +832,6 @@ function Publish-Product {
 		} else {
 			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
 		}
-		Set-PSDebug -Trace 0
 		# Now we have a button, so select it.
 		$CatRbutton | Set-RadioButton
 		# Click the "Publish" button inside the popup table.
@@ -968,7 +965,7 @@ function Set-CheckBox {
 				$CheckBoxObject.Click()
 				
 				# Verify it's now unchecked.
-				$RealCheckBox = WaitFor-ElementToBeClickable $ChkBoxDriver -ID $ChkBoxID 5
+				$RealCheckBox = WaitFor-ElementToBeClickable -WebDriver $ChkBoxDriver -ID $ChkBoxID -TimeOut 5
 				if ( $RealCheckBox.Selected -ne $False ) {
 					throw "Error:  Unable to uncheck $($RealCheckBox.GetAttribute('ID'))!"
 				}
@@ -1031,7 +1028,7 @@ function Set-RadioButton {
 			# If this happens, the element reference will become stale.
 			
 			# Verify it's now checked.
-			$RealRButton = WaitFor-ElementToBeClickable $RButnDriver -ID $RButnID 5
+			$RealRButton = WaitFor-ElementToBeClickable -WebDriver $RButnDriver -ID $RButnID -TimeOut 5
 			if ( $RealRButton.Selected -ne $True ) {
 				throw "Error:  Unable to select $($RealRButton.GetAttribute('ID'))!"
 			}
