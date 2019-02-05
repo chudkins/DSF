@@ -29,9 +29,11 @@ Categories and security groups aren't handled yet.
 Digital StoreFront 9.8 series.
 
 ## Notes on input data
-Advanced Quantity is a text field that supports regex-like notation, such as "5..20[5]|100|500" and will be entered verbatim from the input data.  This example would produce a drop-down list containing 5, 10, 15, 20, 100, 500.
+**Advanced Quantity** is a text field that supports regex-like notation, such as "5..20[5]|100|500" and will be entered verbatim from the input data.  This example would produce a drop-down list containing 5, 10, 15, 20, 100, 500.
 
 To clear text fields, put `-` as the only data in the cell.  Currently, this works for:  Brief Description, Long Description, Notify Emails, Production Notes, and Keywords.
+
+To publish a product into multiple categories, put them in the **Category** field and separate them with a semicolon (`;`) just like DSF's e-mail fields.
 
 ## Usage
 First, search the file for `# Main site URL to start from` and replace the `$SiteURL` with your own site.  Open the Excel file, fill in your product info and export it to CSV.  Then, run something like the following.
