@@ -214,7 +214,9 @@ function Find-Product {
 	
 	# Navigate to Products list page.
 	[string] $ManageProductsURL = ( Get-DsfMainPage $BrowserObject ).AbsoluteUri + "/Admin/ManageProducts.aspx"
-	Enter-SeUrl $ManageProductsURL -Driver $BrowserObject
+	if ( -not ( Load-Page -Url $ManageProductsURL -WebDriver $BrowserObject ) ) {
+		throw "Error:  ${Fn} unable to load Product Management page!"
+	}
 	
 	# Search for requested product.
 	$SearchBox = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_TextBoxSearch"
@@ -663,6 +665,67 @@ function Invoke-Wait {
 	}
 }
 
+function Load-Page {
+	<#
+		.Description
+		Try a specified number of times to load a web page.
+		
+		.Parameter WebDriver
+		Selenium WebDriver object containing the browser to use.
+		
+		.Parameter Url
+		Fully qualified address, such as "http://schmoo.com/fnord.aspx".
+		
+		.Parameter Count
+		Number of times to try loading this page before giving up.  Default is 3.
+		
+		.Parameter AllowPartialMatch
+		Set if a partial match is acceptable.  For example, requesting "http://blah.com/new.aspx" might
+		result in a page like "http://blah.com/new.aspx?create_new...".  If the original requested
+		URL is contained in the loaded page, this switch will cause function to report success; 
+		otherwise an exact match is required.
+	#>
+	
+	param (
+		[Parameter( Mandatory, ValueFromPipeLine )]
+		[OpenQA.Selenium.Remote.RemoteWebDriver] $WebDriver,
+		
+		[Parameter( Mandatory )]
+		[ValidateNotNullOrEmpty()]
+		[string] $Url,
+		
+		[int] $Count = 3,
+		
+		[switch] $AllowPartialMatch
+	)
+	
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+	
+	Write-DebugLog "Load page:  $Url"
+	
+	# Try up to $Count times to load the requested page.
+	$PageLoaded = $false
+	$UrlLength = $Url.Length
+	for ( $i=1; $i -lt $Count; $i++) {
+		# Request page from browser.
+		Enter-SeUrl -Url $Url -Driver $WebDriver
+		# Check if page loaded.
+		if ( $AllowPartialMatch ) { 
+			$match = ( $WebDriver.Url.Substring(0, $UrlLength) -eq $Url )
+		} else {
+			$match = ( $WebDriver.Url -eq $Url )
+		}
+		if ( $match ) { 
+			$PageLoaded = $true
+			break
+		}
+		# Wait a bit before retrying.
+		Start-Sleep -Seconds 5
+	}
+	
+	$PageLoaded
+}
+
 function Publish-Product {
 	<#
 		.Synopsis
@@ -714,6 +777,8 @@ function Publish-Product {
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 	
 	$CatPublishStatus = $false
+	# Remove any leading/trailing whitespace
+	$Category = $Category.Trim()
 	
 	# Get the checkbox to select this product.
 	$ProductSelect = Find-Product -Browser $WebDriver -Product $Product -Checkbox
@@ -745,11 +810,14 @@ function Publish-Product {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
+			Set-PSDebug -Trace 1
 			foreach ( $row in $ResultHitRows ) {
 				# Category Name will be inside a <span> nested in another table.
 				# Check this row for an exact match.
 				try {
-					if ( $row.FindElementsByTagName("span") | Where-Object { $_.Text -eq $Category.Trim() } ) {
+					$FindCatSpan = $row.FindElementsByTagName("span") #| Where-Object { $_.Text -eq $Category }
+					write-log ( $FindCatSpan | out-string )
+					if ( $null -ne $FindCatSpan ) {
 						# Exact match, so grab the radio button.
 						$CatRbutton = $row.FindElementByTagName("input")
 						#$FoundResult = $true
@@ -766,6 +834,7 @@ function Publish-Product {
 		} else {
 			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
 		}
+		Set-PSDebug -Trace 0
 		# Now we have a button, so select it.
 		$CatRbutton | Set-RadioButton
 		# Click the "Publish" button inside the popup table.
@@ -1554,6 +1623,6 @@ Function Write-Log {
 
 } #end function
 
-Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, Find-Product, FixUp-Unit, Get-Control, Get-DsfMainPage, Invoke-Login, Invoke-Wait, Publish-Product, Select-FromList, Set-CheckBox, Set-RadioButton, Set-RichTextField, Set-TextField, Upload-Thumbnail, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
+Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, Find-Product, FixUp-Unit, Get-Control, Get-DsfMainPage, Invoke-Login, Invoke-Wait, Load-Page, Publish-Product, Select-FromList, Set-CheckBox, Set-RadioButton, Set-RichTextField, Set-TextField, Upload-Thumbnail, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
 
 #Export-ModuleMember -Variable DebugLogging, DebugPreference
