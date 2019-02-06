@@ -305,17 +305,27 @@ function FixUp-Unit {
 		$YardValues = "yd", "yard", "yards", "yds"
 		$PoundValues = "lb", "pound", "pounds", "lbs"
 		$OunceValues = "oz", "ounce", "ounces", "ozs"
+		$GramValues = "g", "gram", "grams", "gs", "gramme", "grammes"
+		$KilogramValues = "kg", "kilo", "kilos", "kgs", "kilogram", "kilogramme", "kilograms", "kilogrammes"
+		$MeterValues = "m", "meter", "meters", "metre", "metres"
+		$CmValues = "cm", "centimeter", "centimeters", "cms", "centimetre", "centimetres"
+		$MmValues = "mm", "millimeter", "millimeters", "mms", "millimetre", "milimetre", "millimetres", "milimetres"
 	}
 	
 	Process {
 		switch ( $Input ) {
 			# DSF is not consistent with abbreviations or plurals of units!
-			{ $_ -in $InchValues }	{ $Output = "Inches"}
-			{ $_ -in $FootValues }	{ $Output = "Feet"}
-			{ $_ -in $YardValues }	{ $Output = "Yard"}
-			{ $_ -in $PoundValues }	{ $Output = "lb"}
-			{ $_ -in $OunceValues }	{ $Output = "oz"}
-			default					{ $Output = "undefined"}
+			{ $_ -in $InchValues }		{ $Output = "Inches"}
+			{ $_ -in $FootValues }		{ $Output = "Feet"}
+			{ $_ -in $YardValues }		{ $Output = "Yard"}
+			{ $_ -in $PoundValues }		{ $Output = "lb"}
+			{ $_ -in $OunceValues }		{ $Output = "oz"}
+			{ $_ -in $GramValues }		{ $Output = "g"}
+			{ $_ -in $KilogramValues }	{ $Output = "kg"}
+			{ $_ -in $MeterValues }		{ $Output = "Meters"}
+			{ $_ -in $CmValues }		{ $Output = "Centimeters"}
+			{ $_ -in $MmValues }		{ $Output = "mm"}
+			default						{ $Output = "undefined"}
 		}
 		
 		$Output
