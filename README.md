@@ -48,7 +48,7 @@ The Digital StoreFront account name you would use when logging into the site.
 ### -Password
 Password for your DSF account.
 ### -ProductFile
-Full path to a data file containing the products to be handled.  (#17 provide a sample data file.)
+Full path to a data file containing the products to be handled.  (Issue #17 provide a sample data file.)
 ### -SkipImageUpload
 Causes the script to ignore any image paths provided in the input file; it will not touch the icon section of any product.
 ### -Debug
