@@ -602,7 +602,7 @@ function Invoke-Login {
 
 		# Navigate to page and attempt to sign in.
 		write-log -fore cyan "${Fn}: Loading site: $SiteURL"
-		Enter-SeUrl $SiteURL -Driver $WebDriver
+		Load-Page -Url $SiteURL -WebDriver $WebDriver -AllowPartialMatch
 		
 		##### Log in
 		# Get input fields
@@ -708,7 +708,7 @@ function Load-Page {
 	$UrlLength = $Url.Length
 	for ( $i=1; $i -lt $Count; $i++) {
 		# Request page from browser.
-		Enter-SeUrl -Url $Url -Driver $WebDriver
+		$WebDriver.Navigate().GoToUrl($Url)
 		# Check if page loaded.
 		if ( $AllowPartialMatch ) { 
 			$match = ( $WebDriver.Url.Substring(0, $UrlLength) -eq $Url )
@@ -805,7 +805,10 @@ function Publish-Product {
 		# Verify table actually contains results by counting the rows that are in "bg-AdS-001011" class.
 		# The table header has a different class name so it won't be counted.
 		$ResultHitRows = $ResultsTable.FindElementsByClassName("bg-AdS-001011")
-		$ResultCount = ( $ResultHitRows | Measure-Object ).Count
+		# If array contains only one member that is empty, its Count will be 1, throwing us off.
+		# However, an empty member will evaluate to False, so:
+		$ResultCount = if ( $ResultHitRows ) { $ResultHitRows.Count } else { 0 }
+		#$ResultCount = ( $ResultHitRows | Measure-Object ).Count
 		if ( $ResultCount -ge 1 ) {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
