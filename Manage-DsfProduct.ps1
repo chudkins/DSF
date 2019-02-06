@@ -406,8 +406,6 @@ function Manage-Product {
 			# Locate product; Find-Product will ensure a unique match.
 			$EditProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
 			if ( $EditProduct ) {
-				Click-Link $EditProduct
-				# Now we're on the product details page.
 				$BrowserObject | Update-Product -Product $Product
 			} else {
 				Write-Log -fore yellow "${Fn}: Unable to find ID '$( $Product.'Product Id' )'; skipping."
@@ -586,8 +584,10 @@ function Update-Product {
 		if ( -not ( [string]::IsNullOrWhiteSpace( $prop.Value ) ) ) { $PropertyCounter++ }
 	}
 	
-	# Now, if we're not just doing a category update, go through all the settings.
+	# Now, if we're not just doing a category update, find the product and go through all the settings.
 	if ( $PropertyCounter -gt 0 ) {
+		# Manage-Product checks for existence before we get here, so this should always work.
+		Find-Product -BrowserObject $BrowserObject -Product $Product | Click-Link
 		# Product Name, max length 50
 		#	This is the name customers see most of the time.
 		if ( $null -notlike $Product.'Product Name' ) {
