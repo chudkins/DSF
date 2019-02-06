@@ -892,7 +892,7 @@ function Update-Product {
 			# Threshold, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
 			if ( $null -notlike $Product.Threshold ) {
 				$InvThreshold = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_txtThQty"
-				Set-TextField $InvThreshold [int]$Product.Threshold
+				Set-TextField $InvThreshold $Product.Threshold
 			}
 			
 			# Allow Back Order, input id="ctl00_ctl00_C_M_ctl00_W_ctl01_chkBackOrderAllowed"
