@@ -29,6 +29,8 @@ Categories and security groups aren't handled yet.
 Digital StoreFront 9.8 series.
 
 ## Notes on input data
+You may rearrange the spreadsheet columns however you like; data is sorted by column name, not position.
+
 **Advanced Quantity** is a text field that supports regex-like notation, such as "5..20[5]|100|500" and will be entered verbatim from the input data.  This example would produce a drop-down list containing 5, 10, 15, 20, 100, 500.
 
 To clear text fields, put `-` as the only data in the cell.  Currently, this works for:  Brief Description, Long Description, Notify Emails, Production Notes, and Keywords.
