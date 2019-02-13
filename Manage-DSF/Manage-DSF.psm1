@@ -334,6 +334,10 @@ function FixUp-Unit {
 	End {}
 }
 
+Get-ConfigFile {}
+
+Get-ConfigSettings {}
+
 function Get-Control {
 	<#
 		.Synopsis
@@ -735,6 +739,8 @@ function Load-Page {
 	
 	$PageLoaded
 }
+
+New-ConfigFile {}
 
 function Publish-Product {
 	<#
@@ -1632,7 +1638,3 @@ Function Write-Log {
 	}
 
 } #end function
-
-Export-ModuleMember -Function Click-Link, Click-Wait, Dump-ElementInfo, Find-Product, FixUp-Unit, Get-Control, Get-DsfMainPage, Invoke-Login, Invoke-Wait, Load-Page, Publish-Product, Select-FromList, Set-CheckBox, Set-RadioButton, Set-RichTextField, Set-TextField, Upload-Thumbnail, Wait-Link, WaitFor-ElementExists, WaitFor-ElementToBeClickable, Write-DebugLog, Write-Log
-
-#Export-ModuleMember -Variable DebugLogging, DebugPreference
