@@ -361,9 +361,7 @@ function Manage-Product {
 			write-log "${Fn}: Add product, $($Product.'Product Id')"
 			
 			# Check if product already exists and refuse to add if so.
-			Set-PSDebug -Trace 2
 			$ExistingProduct = Find-Product -BrowserObject $BrowserObject -Product $Product
-			Set-PSDebug -Trace 0
 			if ( $ExistingProduct ) {
 				Write-Log -fore red "Warning: '$( $Product.'Product Id' )' already exists; not added!"
 				continue
