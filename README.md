@@ -5,7 +5,9 @@ A set of scripts for automating product upkeep with EFI's Digital StoreFront.
 ### Manage-DSF.psm1
 PowerShell module containing various functions for scripts to use.
 ### Manage-DsfProduct.ps1
-Add or change details of non-printed products, using input from a CSV file.  (Coming soon, ability to delete products.)
+Using input from a CSV file, you can...
+* Add or change details of non-printed products.  (Coming soon, ability to delete products.)
+* Publish product to one or more categories.
 
 ## Planned:
 ### Manage-DsfCategory
@@ -23,7 +25,7 @@ Bulk add, modify, delete non-printed products non-interactively using data from 
 ## Current State
 Alpha quality, but it's becoming usable.  Script can now add and update products, including thumbnail images.  (All images will be set to the same file.)
 
-Categories and security groups aren't handled yet.
+Security groups aren't handled yet.
 
 ## Compatibility
 Digital StoreFront 9.8 series.
