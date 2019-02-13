@@ -1,5 +1,5 @@
 #requires -Module Selenium
-#requires -Module Manage-DSF 0.11
+#requires -Module Manage-DSF
 
 <#
 	Manage-DsfProduct.ps1 - Manipulate products on EFI's Digital StoreFront by automating a web browser.
@@ -107,8 +107,6 @@ Begin {
 	# Put setup stuff BELOW functions!
 
 [string]$ScriptLocation = Split-Path $MyInvocation.MyCommand.Path	# Script is in this folder
-$ManageDSFModule = join-path $ScriptLocation "Manage-DSF.psm1"
-Import-Module $ManageDSFModule
 
 Function Handle-Exception {
 	# Custom error handling for this script
