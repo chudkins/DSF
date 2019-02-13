@@ -1,4 +1,5 @@
 #requires -Module Selenium
+#requires -Module Manage-DSF 0.11
 
 <#
 	Manage-DsfProduct.ps1 - Manipulate products on EFI's Digital StoreFront by automating a web browser.
@@ -1430,8 +1431,6 @@ End {
 	# Shut down driver and close browser
 	Stop-SeDriver $Browser
 	# if ('browser still running') get-process $BrowserPID | stop-process
-	
-	Remove-Module -FullyQualifiedName $ManageDSFModule
 }
 
 <#
