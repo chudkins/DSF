@@ -30,7 +30,7 @@ CompanyName = 'Classroom In A Box, Inc.'
 Copyright = '(c) 2019 Carl Hudkins. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Provides functions to help manage EFI`'s Digital StoreFront by automating a web browser.'
+Description = 'Provides functions to help manage EFI''s Digital StoreFront by automating a web browser.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.0'
