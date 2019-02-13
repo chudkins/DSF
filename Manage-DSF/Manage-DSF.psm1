@@ -237,6 +237,7 @@ function Find-Product {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
+			Set-PSDebug -Trace 1
 			foreach ( $row in $ResultHitRows ) {
 				# Enumerate links for troubleshooting.
 				foreach ( $link in $row.FindElementsByTagName("a") ) {
@@ -262,19 +263,23 @@ function Find-Product {
 					Handle-Exception $_
 				}
 			}
-			# Are we after the Manage link, or the selection checkbox?
-			if ( $Checkbox ) {
-				# Find the checkbox at the beginning of the row.
-				$ProductLink = $ProductFoundRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("type") -eq "checkbox" }
-			} else {
-				# Extract the product management link.
-				$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
+			Set-PSDebug -Trace 0
+			# If we got here, we got some matches, but we need to check if there was an exact match.
+			if ( $ProductFoundRow ) {
+				# Are we after the Manage link, or the selection checkbox?
+				if ( $Checkbox ) {
+					# Find the checkbox at the beginning of the row.
+					$ProductLink = $ProductFoundRow.FindElementByTagName("input") | Where-Object { $_.GetProperty("type") -eq "checkbox" }
+				} else {
+					# Extract the product management link.
+					$ProductLink = $ProductFoundRow.FindElementByTagName("a") | Where-Object { $_.GetProperty("id") -like "*_HyperLinkManageProduct" }
+				}
 			}
 		} else {
 			Write-DebugLog "${Fn}: Table doesn't seem to contain any hits."
 		}
 	} else {
-		# We got nothing back, which probably means WaitFor-ElementExists timed out.
+		# We got no result rows back, which probably means WaitFor-ElementExists timed out.
 		Write-DebugLog "${Fn}: Something went wrong trying to retrieve search results."
 	}
 	
@@ -334,9 +339,9 @@ function FixUp-Unit {
 	End {}
 }
 
-Get-ConfigFile {}
+function Get-ConfigFile {}
 
-Get-ConfigSettings {}
+function Get-ConfigSettings {}
 
 function Get-Control {
 	<#
@@ -740,7 +745,7 @@ function Load-Page {
 	$PageLoaded
 }
 
-New-ConfigFile {}
+function New-ConfigFile {}
 
 function Publish-Product {
 	<#
