@@ -237,7 +237,6 @@ function Find-Product {
 			# Table has some result rows, meaning we got some hits back.
 			Write-DebugLog "${Fn}: Got $ResultCount results back."
 			# Check through the rows and find the one where ID exactly matches our Product.
-			Set-PSDebug -Trace 1
 			foreach ( $row in $ResultHitRows ) {
 				# Enumerate links for troubleshooting.
 				foreach ( $link in $row.FindElementsByTagName("a") ) {
@@ -263,7 +262,6 @@ function Find-Product {
 					Handle-Exception $_
 				}
 			}
-			Set-PSDebug -Trace 0
 			# If we got here, we got some matches, but we need to check if there was an exact match.
 			if ( $ProductFoundRow ) {
 				# Are we after the Manage link, or the selection checkbox?
