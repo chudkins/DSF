@@ -86,6 +86,8 @@ Param (
 	[ValidateNotNullOrEmpty()]
 	[string] $Password,
 	
+	[string] $LogLevel = 1,
+	
 	[switch] $SkipImageUpload,
 	
 	[switch] $Debug
