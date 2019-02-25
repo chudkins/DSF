@@ -700,11 +700,11 @@ function Update-Product {
 			# If a value is specified, try to set the selection to a matching value.
 			# If match fails, print a warning and set it to Standard.
 			$Picklist = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__Rank_DropDownListRank"
-			$Set = $Picklist | Select-FromList $Product.'Display Priority'
+			$Set = $Picklist | Select-FromList -Item $Product.'Display Priority'
 			# Check result of request; log a message if it defaults to Standard.
 			if ( $Set -ne $true ) {
 				write-log -fore yellow "Warning: No Display Priority option matched the imported data; setting to Standard for '$($Product.'Product ID')'."
-				$null = $Picklist | Select-FromList "Standard"
+				$null = $Picklist | Select-FromList -Item "Standard"
 			}
 		}
 		
