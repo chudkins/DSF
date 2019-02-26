@@ -1221,10 +1221,10 @@ function Update-Product {
 			# Must check numeric values against null because 0 counts as False.
 			# Also, Set-PriceRow accepts [float] so we don't want to send a null to it because that would become 0.
 			if ( $Product.'Regular Price' ) {
-				$BasePriceRow | Set-PriceRow -RegularPrice $Product.'Regular Price'
+				$BasePriceRow | Set-PriceRow -RegularPrice $( $Product.'Regular Price'.Trim() -as [float] )
 			}
 			if ( $Product.'Setup Price' ) {
-				$BasePriceRow | Set-PriceRow -SetupPrice $Product.'Setup Price'
+				$BasePriceRow | Set-PriceRow -SetupPrice $( $Product.'Setup Price'.Trim() -as [float] )
 			}
 		}
 		
