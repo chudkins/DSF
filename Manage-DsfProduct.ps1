@@ -90,6 +90,9 @@ Param (
 	
 	[switch] $SkipImageUpload,
 	
+	[ValidateSet("chrome","firefox")]
+	[string] $UseBrowser = "firefox",
+	
 	[switch] $Debug
 )
 
@@ -1333,8 +1336,13 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	######	End Global Defaults
 	######
 #>
-	# Create Firefox instance
-	$Browser = Start-SeFirefox
+	# Start a browser, depending on user's choice.
+	switch ( $UseBrowser ) {
+		"chrome" { $Browser = Start-SeChrome }
+		"firefox" { $Browser = Start-SeFirefox }
+		default { $Browser = Start-SeFirefox }
+	}
+	
 	#$Browser = Start-SeChrome
 
 	$StorefrontURL = Invoke-Login -WebDriver $Browser -SiteURL $SiteURL -UserName $UserName -Password $Password
