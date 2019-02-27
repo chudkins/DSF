@@ -12,7 +12,7 @@
 RootModule = 'Manage-DSF.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.11'
+ModuleVersion = '0.12'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -72,13 +72,15 @@ PowerShellVersion = '5.0'
 FunctionsToExport = 'Click-Link', 'Click-Wait', 'Dump-ElementInfo', 'Find-Product', 'FixUp-Unit', 'Get-ConfigSettings', 'Get-Control', 'Get-DsfMainPage', 'Invoke-Login', 'Invoke-Wait', 'Load-Page', 'Publish-Product', 'Select-FromList', 'Set-CheckBox', 'Set-RadioButton', 'Set-RichTextField', 'Set-TextField', 'Upload-Thumbnail', 'Wait-Link', 'WaitFor-ElementExists', 'WaitFor-ElementToBeClickable', 'Write-DebugLog', 'Write-Log'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = '*'
+#CmdletsToExport = '*'
+CmdletsToExport = @()
 
 # Variables to export from this module
 VariablesToExport = '*'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = '*'
+#AliasesToExport = '*'
+AliasesToExport = @()
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -92,24 +94,24 @@ AliasesToExport = '*'
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{
 
-    PSData = @{
+	PSData = @{
 
-        # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+		# Tags applied to this module. These help with module discovery in online galleries.
+		# Tags = @()
 
-        # A URL to the license for this module.
-        LicenseUri = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+		# A URL to the license for this module.
+		LicenseUri = 'https://www.gnu.org/licenses/gpl-3.0.txt'
 
-        # A URL to the main website for this project.
-        # ProjectUri = ''
+		# A URL to the main website for this project.
+		ProjectUri = 'https://github.com/chudkins/DSF'
 
-        # A URL to an icon representing this module.
-        # IconUri = ''
+		# A URL to an icon representing this module.
+		# IconUri = ''
 
-        # ReleaseNotes of this module
-        # ReleaseNotes = ''
+		# ReleaseNotes of this module
+		# ReleaseNotes = ''
 
-    } # End of PSData hashtable
+	} # End of PSData hashtable
 
 } # End of PrivateData hashtable
 
