@@ -801,10 +801,6 @@ function Load-Page {
 
 function New-ConfigFile {}
 
-function New-LogEntry {
-
-}
-
 function Publish-Product {
 	<#
 		.Synopsis
