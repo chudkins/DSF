@@ -23,7 +23,63 @@
 <#
 	Are any of these functions used ONLY within other functions of this module?
 	
-	If so, we need to use an Export statement so that they aren't exposed.
+	If so, don't export them in the manifest so that they aren't exposed.
+#>
+
+<#
+	###
+	###	Classes
+	###
+#>
+
+enum PriorityLevels {
+	# Priority levels for log entries, leaving room for insertions between levels in the future,
+	#	or for modification if inherited.
+
+	Debug = -10		# The most verbose level, generally for debugging purposes.
+	Info = -5		# Extra info for whenever you want extra info?
+	Normal = 0		# Default level, if not specified.
+	Warning = 5		# Something to note, but execution can continue.
+	Error = 10		# Something failed; execution may continue in some cases.
+	Critical = 20	# Show-stopper; at the very least, the current operation can't continue.
+}
+
+class LogEntry {
+	[datetime] $TimeStamp
+	[PriorityLevels] $Priority
+	#[string] $Product
+	[string] $Message
+	
+	<#
+		A basic class for informational log entries.  Each entry will automatically be stamped with the 
+		current time.  User may optionally specify a Priority, but if this property is not supplied it
+		will default to "Normal."
+		
+		Because Priority is an enum, you can do comparisons such as "if $log.Priority -le 'Error'..." to
+		filter the messages later.
+	#>
+
+	LogEntry( [string] $Message ) {
+		# When no priority is supplied, use Normal.
+		$this.TimeStamp = Get-Date
+		$this.Priority = "Normal"
+		$this.Message = $Message
+	}
+	
+	LogEntry( [PriorityLevels] $Priority, [string] $Message ) {
+		# Use the priority we're given.
+		$this.TimeStamp = Get-Date
+		$this.Priority = $Priority
+		$this.Message = $Message
+	}
+	
+	# Member functions would go here if there were any.
+}
+
+<#
+	###
+	###	Functions
+	###
 #>
 
 function Click-Link {
@@ -744,6 +800,10 @@ function Load-Page {
 }
 
 function New-ConfigFile {}
+
+function New-LogEntry {
+
+}
 
 function Publish-Product {
 	<#
