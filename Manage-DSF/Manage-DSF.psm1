@@ -32,7 +32,7 @@
 	###
 #>
 
-enum PriorityLevels {
+enum PriorityLevel {
 	# Priority levels for log entries, leaving room for insertions between levels in the future,
 	#	or for modification if inherited.
 
@@ -46,7 +46,7 @@ enum PriorityLevels {
 
 class LogEntry {
 	[datetime] $TimeStamp
-	[PriorityLevels] $Priority
+	[PriorityLevel] $Priority
 	#[string] $Product
 	[string] $Message
 	
@@ -1662,14 +1662,31 @@ Function Write-Log {
 	#[cmdletbinding()]
 
 	Param(
-		[ConsoleColor]$ForegroundColor = "white",
+		[Parameter( ParameterSetName="OldStyle" )]
+		[ConsoleColor] $ForegroundColor = "white",
 		
-		[Parameter(Mandatory = $true, Position = 0)]
+		[Parameter( Mandatory = $true, Position = 0 )]
+		[Parameter( ParameterSetName="OldStyle" )]
+		[Parameter( ParameterSetName="NewStyle" )]
 		[AllowEmptyString()]
-		[string]$Message = "",
+		[string] $Message = "",
 		
-		[string]$Path
+		[Parameter( ParameterSetName="NewStyle" )]
+		[PriorityLevel] $Priority = "Normal",
+		
+		[Parameter( ParameterSetName="OldStyle" )]
+		[string] $Path
 	)
+
+	<#
+		With old-style input, we don't actually know what the priority is, so just display it
+		as requested.  This is for temporary compatibility and will be removed.
+		
+		With new-style input, we may have a priority along with the message.  
+		
+		If neither a color nor priority is supplied, assume it's a new-style call.  Can built-in
+		parameter sets handle that?
+	#>
 
 	#Pass on the message to Write-Verbose if -Verbose was detected
 	Write-Host -fore $ForegroundColor -object $Message
