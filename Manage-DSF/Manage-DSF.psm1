@@ -1688,28 +1688,43 @@ Function Write-Log {
 		parameter sets handle that?
 	#>
 
-	#Pass on the message to Write-Verbose if -Verbose was detected
-	Write-Host -fore $ForegroundColor -object $Message
-
-	#only write to the log file if the $LoggingPreference variable is set to Continue
-	if ($LoggingPreference -eq "Continue")
-	{
+	# Only write to the log file if the $LoggingPreference variable is set to Continue
+	if ( $LoggingPreference -eq "Continue" ) {
 
 		#if a $loggingFilePreference variable is found in the scope
 		#hierarchy then use that value for the file, otherwise use the default
 		#$path
-		if ($loggingFilePreference)
-		{
-			$LogFile=$loggingFilePreference
-		}
-		else
-		{
-			$LogFile=$Path
+		if ( $loggingFilePreference ) {
+			$LogFile = $loggingFilePreference
+		} else {
+			$LogFile = $Path
 		}
 		
 		# Don't bother to log an empty message
 		if ( $Message ) {
-			Write-Output "$(Get-Date) $Message" | Out-File -FilePath $LogFile -Append
+			if ( $PSCmdlet.ParameterSetName -eq "OldStyle" ) {
+				# Old style, write the message in specified color.
+				Write-Host -fore $ForegroundColor -object $Message
+			} else {
+				# Compose output string
+				$LogString = "$(Get-Date) $Priority: $Message"
+				
+				# Set color based on priority.
+				$color = switch ( $Priority ) {
+					Debug		{ darkyellow }
+					Info 		{ gray }
+					Normal		{ white }
+					Warning		{ yellow }
+					Error 		{ red }
+					Critical 	{ magenta }
+				}
+				
+				# Output to host console.
+				Write-Host -fore $color $LogString
+
+				# Also output to file.
+				$LogString | Out-File -FilePath $LogFile -Append
+			}
 		}
 	}
 
