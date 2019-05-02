@@ -66,7 +66,7 @@ class LogEntry {
 		$this.Message = $Message
 	}
 	
-	LogEntry( [PriorityLevels] $Priority, [string] $Message ) {
+	LogEntry( [PriorityLevel] $Priority, [string] $Message ) {
 		# Use the priority we're given.
 		$this.TimeStamp = Get-Date
 		$this.Priority = $Priority
@@ -1637,6 +1637,10 @@ Function Write-Log {
 	The filename and path for the log file. The default is $env:temp\PowerShellLog.txt, 
 	unless the $loggingFilePreference variable is found. If so, then this value will be
 	used.
+	
+	.Parameter Priority
+	Message priority, such as Info or Debug.  See PriorityLevel enum defined in Classes section of
+	this script.
 
 	.Notes
 	NAME: Write-Log
@@ -1659,13 +1663,17 @@ Function Write-Log {
 	None
 #>
 
-	#[cmdletbinding()]
+	[cmdletbinding(
+		DefaultParameterSetName = "OldStyle"
+	)]
 
 	Param(
 		[Parameter( ParameterSetName="OldStyle" )]
+		[Parameter( Position = 0 )]
+		[Alias( 'fore' )]
 		[ConsoleColor] $ForegroundColor = "white",
 		
-		[Parameter( Mandatory = $true, Position = 0 )]
+		[Parameter( Mandatory = $true )]
 		[Parameter( ParameterSetName="OldStyle" )]
 		[Parameter( ParameterSetName="NewStyle" )]
 		[AllowEmptyString()]
@@ -1707,7 +1715,7 @@ Function Write-Log {
 				Write-Host -fore $ForegroundColor -object $Message
 			} else {
 				# Compose output string
-				$LogString = "$(Get-Date) $Priority: $Message"
+				$LogString = "$(Get-Date) ${Priority}: $Message"
 				
 				# Set color based on priority.
 				$color = switch ( $Priority ) {
