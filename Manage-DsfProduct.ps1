@@ -26,11 +26,14 @@
 	.Parameter ProductFile
 	The file containing product details.
 	
+	.Parameter Credential
+	PSCredential containing user name and password to use.
+	
 	.Parameter UserName
-	Account name to use when signing into the web site.
+	DEPRECATED - Account name to use when signing into the web site.
 	
 	.Parameter Password
-	Password associated with the account.
+	DEPRECATED - Password associated with the account.
 	
 	.Parameter SkipImageUpload
 	Don't upload product thumbnail images.  Default is to upload them if a valid file path is provided.
@@ -81,11 +84,8 @@ Param (
 	[string] $ProductFile,
 
 	[ValidateNotNullOrEmpty()]
-	[string] $UserName = "DefaultUser",
+	[PSCredential] $Credential,
 
-	[ValidateNotNullOrEmpty()]
-	[string] $Password,
-	
 	[string] $LogLevel = 1,
 	
 	[switch] $SkipImageUpload,
@@ -1345,7 +1345,7 @@ wait3.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("ele_to_inv
 	
 	#$Browser = Start-SeChrome
 
-	$StorefrontURL = Invoke-Login -WebDriver $Browser -SiteURL $SiteURL -UserName $UserName -Password $Password
+	$StorefrontURL = Invoke-Login -WebDriver $Browser -SiteURL $SiteURL -UserName $Credential.GetNetworkCredential().UserName -Password $Credential.GetNetworkCredential().Password
 	# Just a string, the URL of the page that loads after logging in.
 	Write-DebugLog "URL loaded: $StorefrontURL"
 	
