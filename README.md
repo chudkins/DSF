@@ -43,14 +43,13 @@ To publish a product into multiple categories, put them in the **Category** fiel
 First, search the file for `# Main site URL to start from` and replace the `$SiteURL` with your own site.  Open the Excel file, fill in your product info and export it to CSV.  Then, run something like the following.
 
 ```powershell
-Manage-DsfProduct.ps1 -UserName fred -Password 'blah%293' -ProductFile 'C:\Somewhere\somedata.csv'
+$mycred = Get-Credential
+Manage-DsfProduct.ps1 -Credential $mycred -ProductFile 'C:\Somewhere\somedata.csv'
 ```
 
 ## Parameters
-### -UserName
-The Digital StoreFront account name you would use when logging into the site.
-### -Password
-Password for your DSF account.
+### -Credential
+A PSCredential object containing the user name and password for the Digital StoreFront account you would use when logging into the site.
 ### -ProductFile
 Full path to a data file containing the products to be handled.  (Issue #17 provide a sample data file.)
 ### -SkipImageUpload
