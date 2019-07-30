@@ -29,12 +29,6 @@
 	.Parameter Credential
 	PSCredential containing user name and password to use.
 	
-	.Parameter UserName
-	DEPRECATED - Account name to use when signing into the web site.
-	
-	.Parameter Password
-	DEPRECATED - Password associated with the account.
-	
 	.Parameter SkipImageUpload
 	Don't upload product thumbnail images.  Default is to upload them if a valid file path is provided.
 	
