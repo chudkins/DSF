@@ -53,16 +53,21 @@
 	$pkg = find-package -Source Nuget.org -Name "selenium*"
 	$pkg | where Name -eq "Selenium.WebDriver" | install-package
 	$pkg | where Name -eq "Selenium.Support" | install-package
-	$pkg | where Name -eq "Selenium.WebDriver.IEDriver" | install-package
+	# Not going to bother supporting Internet Explorer unless I have a need.
+	#$pkg | where Name -eq "Selenium.WebDriver.IEDriver" | install-package
 	#$pkg | where Name -eq "Selenium.WebDriver.IEDriver64" | install-package
 	
 	To update Selenium, we need to grab currently installed packages and install them:
 	
+	find-package -source PSGallery -Name "Selenium" | install-package -InstallUpdate
 	find-package -Source Nuget.org -Name "Selenium.WebDriver" | install-package -InstallUpdate
 	find-package -Source Nuget.org -Name "Selenium.Support" | install-package -InstallUpdate
-	find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver" | install-package -InstallUpdate
-	find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver64" | install-package -InstallUpdate
+	#find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver" | install-package -InstallUpdate
+	#find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver64" | install-package -InstallUpdate
 	find-package -Source Nuget.org -Name "Selenium.WebDriver.GeckoDriver.Win64" | install-package -InstallUpdate
+#>
+
+<#	Issue #44 - Add help for parameters!
 #>
 
 #[cmdletbinding()]
