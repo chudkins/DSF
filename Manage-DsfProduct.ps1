@@ -539,6 +539,8 @@ function Update-Product {
 		[OpenQA.Selenium.Remote.RemoteWebDriver] $BrowserObject
 	)
 
+	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
+
 	<#	Lots of conditionals here, but this way we have one function that handles the form filling.
 		If a DSF update or process change alters what we have to deal with, we only have to 
 		change one section instead of multiple parts of the code.
@@ -1242,7 +1244,8 @@ function Update-Product {
 		# Also, Stage 2 is still on 'ManageProduct.aspx' so checking URL doesn't help.
 		# Therefore, after pressing 'Finish' we need to see if the 'Done' button appears.
 		#	If it didn't, then assume the operation failed.
-		$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done"
+		#	We'll use a 20-second timeout here in case the site is being slow.
+		$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done" -TimeOut 20
 		# Gotcha:  There exists [System.Management.Automation.Internal.AutomationNull], which will actually
 		#	produce $null as the result when using "-like $null", instead of returning $true as we'd expect!
 		# For that reason, test using -eq instead, which will work as expected.
