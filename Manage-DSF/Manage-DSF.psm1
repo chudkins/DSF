@@ -1289,32 +1289,43 @@ function Upload-Thumbnail {
 	$Fn = (Get-Variable MyInvocation -Scope 0).Value.MyCommand.Name
 	
 	$WebDriver = $WebElement.WrappedDriver
+	
+	# There may be a better way to do this, but for now here is the list of image file types
+	#	you can upload as an image thumbnail.
+	$DSFThumbnailImageTypes = 'gif','jpg','jpeg','png'
 
 	# Verify file actually exists.
 	if ( test-path $ImageURI ) {
-		# Seems legit; proceed with upload process.
-		# Start by clicking "Edit" button.
-		if ( $WebElement ) {
-			$WebElement | Click-Link
-			# Once clicked, image graphic is replaced with a set of radio buttons.
-			# Select "Upload Custom Icon" to proceed.
-			$UploadIconButton = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon"
-			$UploadIconButton | Click-Link
-			# Now we have a checkbox and a text field to manipulate.
-			# Check the box to use this image for all of this product's thumbnails.
-			$SameImageForAllChk = $WebDriver | Get-Control -Type CheckBox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
-			Set-CheckBox $SameImageForAllChk
-			# Set the text field because we can't mess with a file dialog.
-			$ThumbnailField = $WebDriver | Get-Control -Type File -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
-			Set-TextField $ThumbnailField $ImageURI
-			# Click the "Upload" button, which will cause the page to reload.
-			$UploadButton = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
-			$UploadButton | Click-Link
+		# Seems legit; sanity check to ensure file is of a supported type.
+		$ImageData = New-Object -ComObject Wia.ImageFile
+		$ImageData.LoadFile( ( Get-Item $ImageURI ).FullName )
+		if ( $ImageData.FileExtension -in $DSFThumbnailImageTypes ) {
+			# Now we can proceed with upload process.
+			# Start by clicking "Edit" button.
+			if ( $WebElement ) {
+				$WebElement | Click-Link
+				# Once clicked, image graphic is replaced with a set of radio buttons.
+				# Select "Upload Custom Icon" to proceed.
+				$UploadIconButton = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon"
+				$UploadIconButton | Click-Link
+				# Now we have a checkbox and a text field to manipulate.
+				# Check the box to use this image for all of this product's thumbnails.
+				$SameImageForAllChk = $WebDriver | Get-Control -Type CheckBox -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon"
+				Set-CheckBox $SameImageForAllChk
+				# Set the text field because we can't mess with a file dialog.
+				$ThumbnailField = $WebDriver | Get-Control -Type File -Name 'ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01'
+				Set-TextField $ThumbnailField $ImageURI
+				# Click the "Upload" button, which will cause the page to reload.
+				$UploadButton = $WebDriver | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_Upload"
+				$UploadButton | Click-Link
+			} else {
+				throw "${Fn}: Error: Couldn't find Edit button for image upload!"
+			}
 		} else {
-			throw "Error: Couldn't find Edit button for image upload!"
+			Write-Log -fore yellow "${Fn}: Warning: Supplied image type is not supported for storefront thumbnail; skipping upload."
 		}
 	} else {
-		throw "${Fn}: Error: Image path not found!"
+		Write-Log -fore yellow "${Fn}: Warning: Image path not found; skipping upload."
 	}
 }
 
