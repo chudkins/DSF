@@ -585,7 +585,8 @@ function Update-Product {
 	#>
 
 	# Check if the product is a kit.  Kits will have an extra cell at the top called "Products in Kit".
-	$isKit = $null -notlike ( Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_ProgressBarRepeater_ctl01_ProgressText" )
+	$ProgressText = Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_ProgressBarRepeater_ctl01_ProgressText" )
+	if ( $ProgressText.Text -eq "Products in Kit" ) { $isKit = $True }
 
 	# Check if this is a pure category update.  If so, we'll only have Operation, Product ID and Category.
 	# To do this, iterate through all the properties except those three, and look for non-empty values.
