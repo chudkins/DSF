@@ -67,7 +67,7 @@
 	find-package -Source Nuget.org -Name "Selenium.WebDriver.GeckoDriver.Win64" | install-package -InstallUpdate
 #>
 
-<#	Issue #44 - Add help for parameters!
+<#	Issue #44 - Verify comment-based help is correct!
 #>
 
 #[cmdletbinding()]
