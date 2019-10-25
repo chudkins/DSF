@@ -584,8 +584,8 @@ function Update-Product {
 						<img id="ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIconImage" style="height: 50%;" src="/DSF/Images/44d84a1f-8850-4627-bc55-9402d10ae145/Blanks/27.gif">
 	#>
 
-	# First, check if this is a pure category update.  If so, we'll only have Operation, Product ID and Category.
-	# To do this, iterate through all the properties except those two, and look for non-empty values.
+	# Check if this is a pure category update.  If so, we'll only have Operation, Product ID and Category.
+	# To do this, iterate through all the properties except those three, and look for non-empty values.
 	$PropertyCounter = 0
 	foreach ( $prop in ( $Product.PSObject.Properties | Where-Object { $_.Name -notin "Operation","Product Id","Category" } ) ) {
 		if ( -not ( [string]::IsNullOrWhiteSpace( $prop.Value ) ) ) { $PropertyCounter++ }
