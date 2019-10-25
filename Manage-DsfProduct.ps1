@@ -1254,19 +1254,31 @@ function Update-Product {
 		$FinishButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_FinishNavigationTemplateContainerID_FinishButton"
 		$FinishButton | Click-Link
 		
-		# There are many situations that lead to DSF simply refusing to add or update a product.
-		# In most of these cases, there is absolutely no indication on the user-facing site as to why.
-		# Also, Stage 2 is still on 'ManageProduct.aspx' so checking URL doesn't help.
-		# Therefore, after pressing 'Finish' we need to see if the 'Done' button appears.
-		#	If it didn't, then assume the operation failed.
-		#	We'll use a 20-second timeout here in case the site is being slow.
-		$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done" -TimeOut 20
-		# Gotcha:  There exists [System.Management.Automation.Internal.AutomationNull], which will actually
-		#	produce $null as the result when using "-like $null", instead of returning $true as we'd expect!
-		# For that reason, test using -eq instead, which will work as expected.
-		# See:  https://stackoverflow.com/questions/30016949/why-and-how-are-these-two-null-values-different
-		# Also, -like is for string comparisons and will therefore cast things as strings if they aren't already.
-		# We shouldn't use it for non-string data.
+		<#
+			There are many situations that lead to DSF simply refusing to add or update a product.
+			In most of these cases, there is absolutely no indication on the user-facing site as to why.
+			Also, Stage 2 is still on 'ManageProduct.aspx' so checking URL doesn't help.
+			Therefore, after pressing 'Finish' we need to see if the 'Done' button appears.
+			If it didn't, then assume the operation failed.
+			We'll use a 20-second timeout here in case the site is being slow.
+			
+			Testing for product kit showed the Done button has a different ID, so check for each
+			accordingly.
+		#>
+		if ( $isKit ) {
+			$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl03__Done" -TimeOut 20
+		} else {
+			$CategoryDoneBtn = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_ctl02__Done" -TimeOut 20
+		}
+		
+		<#
+			Gotcha:  There exists [System.Management.Automation.Internal.AutomationNull], which will actually
+			produce $null as the result when using "-like $null", instead of returning $true as we'd expect!
+			For that reason, test using -eq instead, which will work as expected.
+			See:  https://stackoverflow.com/questions/30016949/why-and-how-are-these-two-null-values-different
+			Also, -like is for string comparisons and will therefore cast things as strings if they aren't already.
+			We shouldn't use it for non-string data.
+		#>
 		$CategoryDoneBtn | Dump-ElementInfo -WebInfo
 		if ( $CategoryDoneBtn -eq $null ) {
 			Write-Log -fore red "${Fn}: Error!  DSF refused to save product info for '$( $Product.'Product Id' )'."
