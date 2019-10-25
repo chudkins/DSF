@@ -584,6 +584,9 @@ function Update-Product {
 						<img id="ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIconImage" style="height: 50%;" src="/DSF/Images/44d84a1f-8850-4627-bc55-9402d10ae145/Blanks/27.gif">
 	#>
 
+	# Check if the product is a kit.  Kits will have an extra cell at the top called "Products in Kit".
+	$isKit = $null -notlike ( Find-SeElement -Driver $BrowserObject -ID "ctl00_ctl00_C_M_ctl00_ProgressBarRepeater_ctl01_ProgressText" )
+
 	# Check if this is a pure category update.  If so, we'll only have Operation, Product ID and Category.
 	# To do this, iterate through all the properties except those three, and look for non-empty values.
 	$PropertyCounter = 0
@@ -1240,6 +1243,13 @@ function Update-Product {
 		
 		# For now, just click the Finish button to save the updated product.
 		# Also, hit the Done button on the following page, to get through Category assignment.
+		
+		# For a kit, we'll have a Next button instead of Finish.  Once clicked, we'll get the 
+		# next page with the kit contents, which *will* have a Finish button.
+		if ( $isKit ) {
+			$NextButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_StartNavigationTemplateContainerID_Button1"
+			$NextButton | Click-Link
+		}
 		
 		$FinishButton = $BrowserObject | Get-Control -Type Button -ID "ctl00_ctl00_C_M_ctl00_W_FinishNavigationTemplateContainerID_FinishButton"
 		$FinishButton | Click-Link
