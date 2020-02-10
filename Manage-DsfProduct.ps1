@@ -45,6 +45,12 @@
 		https://www.ultimateqa.com/best-test-automation-websites-to-practice-using-selenium-webdriver/
 #>
 
+<#	Module Info:
+	Before using this script for the first time, either install the module to your system or
+	copy the files:
+		copy-item .\Manage-DSF $(join-path $env:USERPROFILE "Documents\WindowsPowerShell\Modules") -recurse
+#>
+
 <#	To install Selenium, I had to set up NuGet.org as a package source.
 	After hours, I found the correct instructions on that here:  https://github.com/OneGet/oneget
 
