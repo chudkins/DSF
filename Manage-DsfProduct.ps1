@@ -78,7 +78,6 @@
 	find-package -Source Nuget.org -Name "Selenium.Support" | install-package -InstallUpdate
 	#find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver" | install-package -InstallUpdate
 	#find-package -Source Nuget.org -Name "Selenium.WebDriver.IEDriver64" | install-package -InstallUpdate
-	find-package -Source Nuget.org -Name "Selenium.WebDriver.GeckoDriver.Win64" | install-package -InstallUpdate
 #>
 
 <#	Issue #44 - Verify comment-based help is correct!
