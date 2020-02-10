@@ -48,11 +48,19 @@
 <#	To install Selenium, I had to set up NuGet.org as a package source.
 	After hours, I found the correct instructions on that here:  https://github.com/OneGet/oneget
 
-	Register-PackageSource -name "Nuget.org" -providername NuGet -Location https://www.nuget.org/api/v2
+	Register-PackageSource -name "Nuget.org" -providername NuGet -Location https://www.nuget.org/api/v2 -ForceBootstrap
 	Set-PackageSource -Name "Nuget.org" -Trusted
-	$pkg = find-package -Source Nuget.org -Name "selenium*"
-	$pkg | where Name -eq "Selenium.WebDriver" | install-package
-	$pkg | where Name -eq "Selenium.Support" | install-package
+	Set-PackageSource -Name "PSGallery" -Trusted
+	find-package -source PSGallery -Name "Selenium" | install-package
+	# 2020-02-10
+	# There is a bug in Install-Package cmdlet; see:  https://github.com/dotnet/runtime/issues/31065
+	# This bug results in a false positive report of dependency loop when it gets to System.Diagnostics.DiagnosticSource, so to get past it we need to install a specific version of DiagnosticSource before proceeding.
+	Install-Package System.Diagnostics.DiagnosticSource -RequiredVersion 4.5.1 -Provider nuget
+	find-package -Source Nuget.org -Name "Selenium.WebDriver" | Install-Package
+	# Now let it grab the current version of DiagnosticSource
+	Install-Package System.Diagnostics.DiagnosticSource -Provider nuget
+	# Support classes that we need, in particular for Object.SelectByValue
+	find-package -Source Nuget.org -Name "Selenium.Support" | Install-Package
 	# Not going to bother supporting Internet Explorer unless I have a need.
 	#$pkg | where Name -eq "Selenium.WebDriver.IEDriver" | install-package
 	#$pkg | where Name -eq "Selenium.WebDriver.IEDriver64" | install-package
