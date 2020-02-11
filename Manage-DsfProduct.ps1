@@ -1142,21 +1142,26 @@ function Update-Product {
 		#>
 
 		# Product weight
-		$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
-		if ( [string]::IsNullOrWhiteSpace( $Product.Weight ) ) {
-			# OK, somehow the weight IS null, so if Weight is currently empty set it to zero.
-			# If Weight is already filled in, leave it alone.
-			if ( $Field.GetAttribute("value") -eq $null ) {
-				# A zero weight will allow the product to be created, though it won't work for shipping quotes.
-				Set-TextField $Field "0"
+		# Skip if we're updating a kit, because it doesn't apply there.
+		if ( -not $isKit ) {
+			# Need to handle this differently from other fields, because we can't just leave it empty.
+			# If no value was supplied, and the field isn't already populated, set the field to zero.
+			$Field = $BrowserObject | Get-Control -Type Text -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Weight"
+			if ( [string]::IsNullOrWhiteSpace( $Product.Weight ) ) {
+				# Input value not supplied, so if Weight is currently empty set it to zero.
+				# If Weight is already filled in, leave it alone.
+				if ( $Field.GetAttribute("value") -eq $null ) {
+					# A zero weight will allow the product to be created, though it won't work for shipping quotes.
+					Set-TextField $Field "0"
+				}
+			} else {
+				Set-TextField $Field $Product.Weight
 			}
-		} else {
-			Set-TextField $Field $Product.Weight
-		}
-		# Weight units - Get the list object, then select the right value.
-		if ( $Product.'Weight Unit' ) {
-			$WeightList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
-			$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
+			# Weight units - Get the list object, then select the right value.
+			if ( $Product.'Weight Unit' ) {
+				$WeightList = $BrowserObject | Get-Control -Type List -ID "ctl00_ctl00_C_M_ctl00_W_ctl01_WeightCtrl__Unit"
+				$WeightList | Select-FromList -Item ( $Product.'Weight Unit' | FixUp-Unit )
+			}
 		}
 		
 		# Ship item separately?
