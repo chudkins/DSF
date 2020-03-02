@@ -1454,6 +1454,8 @@ Process {
 				}
 				$SkipCount++
 			} else {
+				# Replace any extra whitespace in ID with a single space.
+				$prItem.'Product ID' = $prItem.'Product ID' -ireplace "\s+", ' '
 				Manage-Product -BrowserObject $Browser -Mode $prItem.Operation -Product $prItem
 				$ProcessCount++
 			}
