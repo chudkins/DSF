@@ -319,6 +319,7 @@ function Find-Product {
 				}
 			}
 			# If we got here, we got some matches, but we need to check if there was an exact match.
+			# Issue #47:  Code to ensure we got an exact match is missing.
 			if ( $ProductFoundRow ) {
 				# Are we after the Manage link, or the selection checkbox?
 				if ( $Checkbox ) {
