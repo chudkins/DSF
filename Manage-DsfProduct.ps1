@@ -1360,7 +1360,7 @@ function Update-Product {
 	$YesValues = "yes","y","true","x"
 	$NoValues = "no","n","false"
 	# Hyphen, en dash, em dash
-	$DashValues = "-",[char]0x2013,[char]0x2014
+	[char[]]$DashValues = '-',[char]0x2013,[char]0x2014
 	# Default Max Quantity if not specified
 	$DefaultMaxQty = 10000
 	# Default Multiple if not specified
@@ -1455,7 +1455,12 @@ Process {
 				$SkipCount++
 			} else {
 				# Replace any extra whitespace in ID with a single space.
-				$prItem.'Product ID' = $prItem.'Product ID' -ireplace "\s+", ' '
+				$prItem.'Product ID' = $prItem.'Product ID' -replace "\s+", ' '
+				# Also, replace any en or em dashes with normal hyphens.
+				foreach ( [char]$ch in $DashValues ) {
+					$prItem.'Product ID' = $prItem.'Product ID' -replace $ch, '-'
+				}
+				#$prItem.'Product ID' = $prItem.'Product ID' -ireplace "\s+", ' '
 				Manage-Product -BrowserObject $Browser -Mode $prItem.Operation -Product $prItem
 				$ProcessCount++
 			}
