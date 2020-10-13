@@ -1348,7 +1348,7 @@ function Update-Product {
 #>
 
 	# Main site URL to start from
-	$SiteURL = "https://store.adocument.net/DSF/"
+	$SiteURL = "https://store.classroominabox.com/DSF/"
 
 	# Snips of text we need to match, to find various controls or input fields
 	#	Use '' instead of "" to avoid accidental substitutions.
